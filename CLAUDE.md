@@ -65,12 +65,26 @@ Fase 1 completa y verificada en local (2026-10-08): tests de `shared` pasan (8/8
 compila todo, `/health` responde con `db.ok=true` y la PWA muestra "Conectado". Docker Desktop (WSL 2)
 ya está instalado en el equipo de desarrollo y la BD corre con `npm run db:up` (`db:down` conserva los datos).
 
+Fase 1b completa (2026-10-09): publicado y validado desde el celular y el computador.
+- Código: https://github.com/josveg1987/taller (rama `main`).
+- BD: Neon (proyecto `taller`, Postgres 17, AWS US East 2 Ohio, rama `production`, conexión pooled).
+- API: Render, servicio `taller-api` (Docker, Free, región Ohio), https://taller-api-5n9i.onrender.com
+  Dockerfile `apps/api/Dockerfile`, contexto `.`, health check `/health`.
+  Variables: `DATABASE_URL` (Neon) y `CORS_ORIGIN`.
+- Web: Cloudflare Pages, proyecto `taller`, https://taller-6hb.pages.dev
+  Build `npm run build -w @taller/shared && npm run build -w @taller/web`, salida `apps/web/dist`.
+  Variables: `VITE_API_URL` (URL de Render, sin barra final) y `NODE_VERSION=24`.
+- Render y Cloudflare redespliegan solos con cada push a `main`.
+
 Pendiente al retomar:
-- Código subido a GitHub (2026-10-09): https://github.com/josveg1987/taller (rama `main`, commit "Fase 1").
-- Elegir el orden: Fase 2 (modelo de datos + login + datos del taller) directo, o antes la Fase 1b
-  (publicar en GitHub, Neon, Render, Cloudflare). Ver `docs/plan-de-trabajo.md`.
-- El `apps/api/Dockerfile` nunca se ha construido ni probado; probarlo antes de desplegar en Render
-  (`docker build -f apps/api/Dockerfile -t taller-api .`).
+- **Cambiar la contraseña de la BD en Neon** (quedó visible en una captura del chat): Neon > Connect >
+  Reset password, y actualizar `DATABASE_URL` en Render.
+- Siguiente: Fase 2 (modelo de datos + login + datos del taller). Para las migraciones usar la conexión
+  directa de Neon (sin `-pooler`); con el pooler (pgbouncer en modo transacción) el RLS debe usar
+  `SET LOCAL` / `set_config(..., true)` dentro de una transacción.
+- Respaldo diario con GitHub Actions (puede esperar a la Fase 2).
+- Antes del piloto: dominio propio para la API (p. ej. `api.<dominio>`). Brave Shields bloquea
+  `onrender.com` (`ERR_BLOCKED_BY_CLIENT`) y la web dice "Sin conexión" en ese navegador.
 
 Notas del entorno (Windows):
 - La API tarda ~13 s en arrancar. Para probarla desde PowerShell usar `127.0.0.1` en vez de `localhost`
