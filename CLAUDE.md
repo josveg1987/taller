@@ -127,14 +127,30 @@ Fase 1b completa (2026-10-09): publicado y validado desde el celular y el comput
   Variables: `VITE_API_URL` (URL de Render, sin barra final) y `NODE_VERSION=24`.
 - Render y Cloudflare redespliegan solos con cada push a `main`.
 
+**ESTADO DE PRODUCCIÓN (2026-10-09, al cerrar la sesión):** el código de la Fase 2 completa + diseño móvil se
+subió a `main`, así que Render y Cloudflare publican la versión nueva, **pero producción NO funciona para
+iniciar sesión**: (1) las 3 migraciones **no se han aplicado en Neon** (no existen usuarios, sesiones ni
+administradores allá), (2) no hay ningún administrador de la APP en Neon, y (3) la cookie de sesión no se
+envía entre `pages.dev` y `onrender.com` (hace falta dominio propio). La web pública hoy muestra el login
+y no deja entrar. Es aceptable porque aún no hay usuarios reales. La app completa se prueba en local.
+
+Para dejar producción funcionando, en este orden:
+1. Comprar dominio y configurar `app.<dominio>` (Cloudflare Pages) y `api.<dominio>` (Render); actualizar
+   `CORS_ORIGIN` (Render) y `VITE_API_URL` (Cloudflare) y volver a desplegar la web.
+2. Aplicar migraciones en Neon con la conexión directa (sin `-pooler`):
+   `$env:DATABASE_URL='<directa>'; npm run db:migrate`.
+3. Crear el administrador de la APP en Neon (`crear-admin` con la misma `DATABASE_URL`; ver nota de nombres
+   con espacios en Windows) y crear el primer taller y su usuario desde el panel.
+4. Cambiar la contraseña de la BD de Neon y actualizar `DATABASE_URL` en Render.
+Después: passkeys (2e).
+
 Pendiente al retomar:
 - **Cambiar la contraseña de la BD en Neon** (quedó visible en una captura del chat): Neon > Connect >
   Reset password, y actualizar `DATABASE_URL` en Render.
 - Fase 2 en curso. **2a hecha en local** (2026-10-09): migración `1791562700525_modelo-inicial.sql`
   (8 tablas + RLS + rol `taller_app` + numeración por taller), `conTaller()` y 13 tests de aislamiento.
-  **Se trabaja en local; no se hace push ni se migra Neon hasta que el dueño del proyecto lo decida**
-  (acordado 2026-10-09). Al publicar: push a `main` (redespliega Render y Cloudflare) y aplicar las
-  migraciones en Neon con la conexión directa, sin `-pooler`.
+  Regla de trabajo: no hacer push ni migrar Neon sin que el dueño del proyecto lo pida (el push a `main`
+  redespliega Render y Cloudflare). El push del 2026-10-09 lo pidió él al cerrar la Fase 2.
   **2b-1 hecha en local** (API de autenticación): migración `1791563400978_usuarios-roles-sesiones.sql`,
   módulo `apps/api/src/auth/` (scrypt, sesiones en BD, guard global, `/auth/login|logout|me`),
   comando `crear-admin` y 38 tests (`npm run test:db`). Sin commit aún al escribir esto.
