@@ -9,23 +9,27 @@ function Pantalla() {
 
   if (estado.fase === 'cargando') {
     return (
-      <main>
-        <h1>Presupuestos</h1>
-        <p className="estado conectando">Conectando con el servidor…</p>
-      </main>
+      <div className="app">
+        <main className="contenido centrado" aria-busy="true">
+          <h1>Presupuestos</h1>
+          <p className="chip conectando">Conectando con el servidor…</p>
+        </main>
+      </div>
     );
   }
   if (estado.fase === 'sin-conexion') {
     return (
-      <main>
-        <h1>Presupuestos</h1>
-        <p className="estado sin-conexion">Sin conexión con el servidor</p>
-        <p>
+      <div className="app">
+        <main className="contenido centrado">
+          <h1>Presupuestos</h1>
+          <p className="chip sin-conexion" role="alert">
+            Sin conexión con el servidor
+          </p>
           <button type="button" className="boton" onClick={reintentar}>
             Reintentar
           </button>
-        </p>
-      </main>
+        </main>
+      </div>
     );
   }
   return estado.fase === 'activa' ? <Aplicacion perfil={estado.perfil} /> : <Login />;

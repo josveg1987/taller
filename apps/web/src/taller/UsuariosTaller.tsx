@@ -33,7 +33,7 @@ export function UsuariosTaller() {
       .catch((e: unknown) => setErrorCarga(mensajeDe(e, 'No se pudieron cargar los usuarios')));
   }, []);
   useEffect(cargar, [cargar]);
-  const { error, aviso, ejecutar } = useAcciones(cargar);
+  const { error, aviso, ejecutar, limpiarError } = useAcciones(cargar);
 
   if (!usuarios || !limites) {
     return errorCarga ? (
@@ -41,14 +41,14 @@ export function UsuariosTaller() {
         {errorCarga}
       </p>
     ) : (
-      <p className="detalle">Cargando…</p>
+      <p className="vacio">Cargando…</p>
     );
   }
 
   return (
     <section>
       <h1>Usuarios</h1>
-      <p className="detalle">Quienes pueden entrar a la app de este taller. Todos tienen los mismos permisos.</p>
+      <p className="subtitulo">Quienes pueden entrar a la app de este taller. Todos tienen los mismos permisos.</p>
       {error && (
         <p className="error" role="alert">
           {error}
@@ -65,7 +65,10 @@ export function UsuariosTaller() {
         maxUsuarios={limites.maxUsuarios}
         rutas={RUTAS}
         miId={miId}
+        principal
         ejecutar={ejecutar}
+        error={error}
+        limpiarError={limpiarError}
       />
     </section>
   );

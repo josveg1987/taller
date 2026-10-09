@@ -56,6 +56,33 @@ El dueño crea un presupuesto desde el celular en menos de 5 minutos y se lo env
     la sesión es una cookie `httpOnly` con token opaco (en la BD solo su hash), así desactivar una cuenta
     o un taller corta la sesión al instante. `taller_app` no puede leer `password_hash` ni `sesiones`.
 
+## Diseño móvil
+La app debe sentirse como una app móvil (PWA), no como un sitio web. Reglas para toda pantalla nueva:
+- **Mobile-first**: se diseña primero para celular; en computador el contenido se centra y se ensancha
+  (columna de `--ancho-max`), sin cambiar la estructura.
+- **Navegación en una barra inferior** de 3 a 4 secciones, alcanzable con el pulgar. Lo secundario
+  (cuenta, cerrar sesión) va en una hoja, no en la barra.
+- **Título grande** al inicio de cada pantalla y **una sola acción principal**, ancha (`.boton`). Las demás
+  acciones son secundarias (`.boton.secundario`) o enlaces (`.enlace`); la acción destructiva, `.boton.peligro`.
+- **Listas como tarjetas agrupadas** con esquinas redondeadas (`.grupo` > `.item`), no tablas.
+- **Selecciones** (pieza, monto, estado, tipo de anticipo) y confirmaciones **en hojas que suben desde
+  abajo** (`<Hoja>`), no en `<select>` ni en `window.confirm`.
+- **Áreas seguras**: respetar `env(safe-area-inset-*)` arriba, abajo y a los lados (ya incluido en el marco).
+- **Táctil**: botones y filas de al menos 48 px (`--toque`); campos de texto de 16 px o más para que iOS no
+  haga zoom al enfocar. No bloquear el zoom del usuario.
+- **Sin selección de texto ni resaltado azul** en botones y filas tocables; **sin rebote de toda la página**
+  (la página no se desplaza: lo hace `.contenido`, con `overscroll-behavior: contain`).
+- **Transiciones de 150 a 250 ms** (`--t-rapida`, `--t-media`), respetando `prefers-reduced-motion`.
+  Sin librerías de animación.
+- **Tipografía del sistema** (`system-ui`). No copiar íconos ni marca de Apple: los íconos son propios y
+  genéricos (`Iconos.tsx`).
+- **Accesibilidad**: contraste suficiente, foco visible, `aria-current` en la barra, hojas con
+  `role="dialog"` y cierre con Escape.
+- **Colores, espacios y tamaños siempre como variables CSS** de `:root` en `apps/web/src/styles.css`
+  (`--color-*`, `--esp-*`, `--radio-*`, `--toque`, `--t-*`). No escribir valores sueltos en los componentes.
+  Pantalla nueva = reutilizar `.grupo`, `.item`, `.campo`, `.boton`, `.chip`, `<Hoja>` y la barra inferior de
+  `Aplicacion.tsx`.
+
 ## Comandos
 ```bash
 npm install              # instala todo el monorepo
@@ -117,6 +144,10 @@ Pendiente al retomar:
     (`datosLocales.ts`). Cuenta de prueba solo en la BD local: `admin@taller.local` (contraseña que mostró
     `crear-admin`; para otra, crear una nueva con ese comando).
   - 2e (después del dominio): passkeys (huella / Face ID). Ver `docs/plan-de-trabajo.md`.
+  - Diseño móvil aplicado a todas las pantallas (login, administración, taller): tokens en `styles.css`,
+    `Hoja.tsx` (hojas, confirmación, selector) e `Iconos.tsx`; marco con barra inferior en `Aplicacion.tsx`.
+    Revisado con capturas en 390 y 1280 px: ningún elemento tocable < 48 px, ningún campo < 16 px, sin
+    desborde horizontal.
   - 2c hecha en local: mantenedores del administrador de la APP. API en `apps/api/src/admin/`
     (`/admin/talleres`, `/admin/usuarios/:id`, `/admin/talleres/:id/entrar`, `/admin/salir-taller`; usa
     `db.admin()` sin RLS a propósito, solo con `@SoloAdminApp()`); pantallas en `apps/web/src/admin/` con
@@ -142,4 +173,7 @@ Notas del entorno (Windows):
   (`Invoke-RestMethod` a `localhost` puede fallar por IPv6 aunque la API esté bien).
 - **No editar archivos con tildes usando `Get-Content`/`Set-Content` de PowerShell 5.1**: lee en ANSI y
   escribe con BOM, y deja el texto como "mÃ¡ximo". Usar siempre la herramienta de edición.
+- `npm run crear-admin ... --nombre "Nombre Apellido"` en Windows guarda el nombre con símbolos `^` (cmd.exe
+  mastica las comillas). Usar un nombre sin espacios, o ejecutar `node dist/cli/crear-admin.js ...` directo,
+  o corregirlo después con SQL. Igual con tildes enviadas por `Invoke-RestMethod`: mandar el cuerpo en UTF-8.
 - En desarrollo solo la BD va en Docker; API y web corren directo con `npm run dev:api` / `dev:web`.

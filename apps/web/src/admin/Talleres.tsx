@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
+import { Icono } from '../Iconos';
 import { irA } from '../ruta';
 import type { TallerResumen } from './tipos';
 
@@ -15,9 +16,12 @@ export function Talleres() {
 
   return (
     <section>
-      <div className="fila">
-        <h1>Talleres</h1>
+      <h1>Talleres</h1>
+      <p className="subtitulo">Los talleres que usan la app.</p>
+
+      <div className="pila">
         <button type="button" className="boton" onClick={() => irA('/talleres/nuevo')}>
+          <Icono nombre="mas" />
           Nuevo taller
         </button>
       </div>
@@ -27,22 +31,27 @@ export function Talleres() {
           {error}
         </p>
       )}
-      {!talleres && !error && <p className="detalle">Cargando…</p>}
-      {talleres?.length === 0 && <p className="detalle">Aún no hay talleres. Crea el primero con “Nuevo taller”.</p>}
+      {!talleres && !error && <p className="vacio">Cargando…</p>}
+      {talleres?.length === 0 && <p className="vacio">Aún no hay talleres. Crea el primero con “Nuevo taller”.</p>}
 
-      <ul className="lista">
-        {talleres?.map((t) => (
-          <li key={t.id}>
-            <button type="button" className="tarjeta" onClick={() => irA(`/talleres/${t.id}`)}>
-              <span className="tarjeta-titulo">{t.nombre}</span>
-              <span className="detalle">
-                {t.usuariosActivos} de {t.maxUsuarios} usuarios
-              </span>
-              <span className={`chip ${t.activo ? 'activo' : 'suspendido'}`}>{t.activo ? 'Activo' : 'Suspendido'}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+      {talleres && talleres.length > 0 && (
+        <ul className="grupo">
+          {talleres.map((t) => (
+            <li key={t.id}>
+              <button type="button" className="item" onClick={() => irA(`/talleres/${t.id}`)}>
+                <span className="item-texto">
+                  <span className="item-titulo">{t.nombre}</span>
+                  <span className="detalle">
+                    {t.usuariosActivos} de {t.maxUsuarios} usuarios
+                  </span>
+                </span>
+                <span className={`chip ${t.activo ? 'activo' : 'suspendido'}`}>{t.activo ? 'Activo' : 'Suspendido'}</span>
+                <Icono nombre="chevron" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

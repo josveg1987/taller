@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { mensajeDe, useAcciones, type Ejecutar } from '../acciones';
+import { HojaConfirmar } from '../Hoja';
+import { Icono } from '../Iconos';
 import { irA } from '../ruta';
 import { useSesion } from '../sesion';
 import { GestionUsuarios, type RutasUsuarios } from '../usuarios/GestionUsuarios';
@@ -18,7 +20,7 @@ export function TallerDetalle({ id }: { id: string }) {
   }, [id]);
 
   useEffect(cargar, [cargar]);
-  const { error, aviso, ejecutar } = useAcciones(cargar);
+  const { error, aviso, ejecutar, limpiarError } = useAcciones(cargar);
 
   const rutas: RutasUsuarios = {
     crear: `/admin/talleres/${id}/usuarios`,
@@ -40,18 +42,25 @@ export function TallerDetalle({ id }: { id: string }) {
         {errorCarga}
       </p>
     ) : (
-      <p className="detalle">Cargando…</p>
+      <p className="vacio">Cargando…</p>
     );
   }
 
   return (
     <section>
-      <button type="button" className="enlace" onClick={() => irA('/talleres')}>
-        ← Talleres
+      <button type="button" className="enlace volver" onClick={() => irA('/talleres')}>
+        <Icono nombre="atras" />
+        Talleres
       </button>
-      <div className="fila">
+      <div className="titulo-fila">
         <h1>{taller.nombre}</h1>
         <span className={`chip ${taller.activo ? 'activo' : 'suspendido'}`}>{taller.activo ? 'Activo' : 'Suspendido'}</span>
+      </div>
+
+      <div className="pila">
+        <button type="button" className="boton" onClick={() => void entrar()}>
+          Entrar a este taller
+        </button>
       </div>
 
       {error && (
@@ -65,10 +74,6 @@ export function TallerDetalle({ id }: { id: string }) {
         </p>
       )}
 
-      <button type="button" className="boton" onClick={() => void entrar()}>
-        Entrar a este taller
-      </button>
-
       <DatosTaller taller={taller} ejecutar={ejecutar} />
 
       <GestionUsuarios
@@ -77,57 +82,84 @@ export function TallerDetalle({ id }: { id: string }) {
         maxUsuarios={taller.maxUsuarios}
         rutas={rutas}
         ejecutar={ejecutar}
+        error={error}
+        limpiarError={limpiarError}
       />
+
+      <SuspenderTaller taller={taller} ejecutar={ejecutar} />
     </section>
   );
 }
 
 function DatosTaller({ taller, ejecutar }: { taller: Detalle; ejecutar: Ejecutar }) {
   const [nombre, setNombre] = useState(taller.nombre);
-  const [maxUsuarios, setMaxUsuarios] = useState(taller.maxUsuarios);
+  const [maxUsuarios, setMaxUsuarios] = useState(String(taller.maxUsuarios));
 
   function guardar(e: FormEvent) {
     e.preventDefault();
-    void ejecutar(() => api(`/admin/talleres/${taller.id}`, { method: 'PATCH', json: { nombre, maxUsuarios } }), 'Cambios guardados');
-  }
-
-  function cambiarEstado() {
-    const quiere = taller.activo
-      ? `¿Suspender “${taller.nombre}”? Sus usuarios perderán el acceso de inmediato.`
-      : `¿Reactivar “${taller.nombre}”?`;
-    if (!window.confirm(quiere)) return;
-    void ejecutar(() => api(`/admin/talleres/${taller.id}`, { method: 'PATCH', json: { activo: !taller.activo } }));
+    void ejecutar(
+      () => api(`/admin/talleres/${taller.id}`, { method: 'PATCH', json: { nombre, maxUsuarios: Number(maxUsuarios) } }),
+      'Cambios guardados',
+    );
   }
 
   return (
     <>
       <h2>Datos</h2>
       <form onSubmit={guardar} className="formulario">
-        <label>
-          Nombre del taller
-          <input required maxLength={120} value={nombre} onChange={(e) => setNombre(e.target.value)} />
-        </label>
-        <label>
-          Máximo de usuarios
-          <input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={50}
-            required
-            value={maxUsuarios}
-            onChange={(e) => setMaxUsuarios(Number(e.target.value))}
-          />
-        </label>
-        <button type="submit" className="boton">
+        <div className="grupo formulario">
+          <label className="campo">
+            Nombre del taller
+            <input required maxLength={120} value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          </label>
+          <label className="campo">
+            Máximo de usuarios
+            <input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={50}
+              required
+              value={maxUsuarios}
+              onChange={(e) => setMaxUsuarios(e.target.value)}
+            />
+          </label>
+        </div>
+        <button type="submit" className="boton secundario">
           Guardar cambios
         </button>
       </form>
-      <p>
-        <button type="button" className="enlace peligro" onClick={cambiarEstado}>
-          {taller.activo ? 'Suspender taller' : 'Reactivar taller'}
+    </>
+  );
+}
+
+function SuspenderTaller({ taller, ejecutar }: { taller: Detalle; ejecutar: Ejecutar }) {
+  const [confirmando, setConfirmando] = useState(false);
+  const suspender = taller.activo;
+
+  return (
+    <>
+      <div className="centro">
+        <button type="button" className={`enlace ${suspender ? 'peligro' : ''}`} onClick={() => setConfirmando(true)}>
+          {suspender ? 'Suspender taller' : 'Reactivar taller'}
         </button>
-      </p>
+      </div>
+      <HojaConfirmar
+        abierta={confirmando}
+        titulo={suspender ? `¿Suspender ${taller.nombre}?` : `¿Reactivar ${taller.nombre}?`}
+        texto={
+          suspender
+            ? 'Sus usuarios perderán el acceso de inmediato. Sus datos se conservan y puedes reactivarlo cuando quieras.'
+            : 'Sus usuarios podrán volver a entrar.'
+        }
+        textoBoton={suspender ? 'Suspender' : 'Reactivar'}
+        peligro={suspender}
+        onCerrar={() => setConfirmando(false)}
+        onConfirmar={() => {
+          setConfirmando(false);
+          void ejecutar(() => api(`/admin/talleres/${taller.id}`, { method: 'PATCH', json: { activo: !taller.activo } }));
+        }}
+      />
     </>
   );
 }

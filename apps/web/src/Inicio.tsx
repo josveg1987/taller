@@ -17,6 +17,12 @@ const ejemplo: LineaInput[] = [
 
 const clp = (n: number) => n.toLocaleString('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
 
+const TEXTO_ESTADO: Record<Estado, string> = {
+  conectando: 'Conectando…',
+  conectado: 'Conectado',
+  'sin-conexion': 'Sin conexión',
+};
+
 export function Inicio() {
   const [estado, setEstado] = useState<Estado>('conectando');
   const [health, setHealth] = useState<Health | null>(null);
@@ -35,18 +41,26 @@ export function Inicio() {
   return (
     <section>
       <h1>Presupuestos</h1>
-      <p className={`estado ${estado}`}>
-        {estado === 'conectando' && 'Conectando con el servidor…'}
-        {estado === 'conectado' && 'Conectado'}
-        {estado === 'sin-conexion' && 'Sin conexión con el servidor'}
-      </p>
-      {health && (
-        <p className="detalle">
-          Base de datos:{' '}
-          {!health.db.configured ? 'no configurada' : health.db.ok ? `ok (${health.db.ms} ms)` : `error: ${health.db.error}`}
-        </p>
-      )}
-      <p className="detalle">Cálculo compartido (ejemplo): {clp(total)}</p>
+      <p className="subtitulo">Aquí aparecerán tus presupuestos.</p>
+
+      <div className="grupo">
+        <div className="item">
+          <span className="item-texto">Servidor</span>
+          <span className={`chip ${estado}`}>{TEXTO_ESTADO[estado]}</span>
+        </div>
+        {health && (
+          <div className="item">
+            <span className="item-texto">Base de datos</span>
+            <span className="detalle">
+              {!health.db.configured ? 'no configurada' : health.db.ok ? `ok (${health.db.ms} ms)` : `error: ${health.db.error}`}
+            </span>
+          </div>
+        )}
+        <div className="item">
+          <span className="item-texto">Cálculo de ejemplo</span>
+          <span className="detalle">{clp(total)}</span>
+        </div>
+      </div>
     </section>
   );
 }

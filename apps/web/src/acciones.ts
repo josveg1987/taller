@@ -28,5 +28,7 @@ export function useAcciones(recargar: () => void) {
     [recargar],
   );
 
-  return { error, aviso, ejecutar, setError };
+  const limpiarError = useCallback(() => setError(null), []);
+
+  return { error, aviso, ejecutar, limpiarError };
 }

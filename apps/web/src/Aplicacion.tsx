@@ -1,5 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from './api';
+import { Hoja } from './Hoja';
+import { Icono, type NombreIcono } from './Iconos';
 import { Inicio } from './Inicio';
 import { irA, useRuta } from './ruta';
 import { useSesion, type Perfil } from './sesion';
@@ -9,10 +11,20 @@ import { Talleres } from './admin/Talleres';
 import { MiTaller } from './taller/MiTaller';
 import { UsuariosTaller } from './taller/UsuariosTaller';
 
-/** Marco de la app con la sesion iniciada: cabecera, menu y la pantalla segun la ruta. */
+interface Pestana {
+  ruta: string;
+  texto: string;
+  icono: NombreIcono;
+  actual: boolean;
+}
+
+/** Marco de la app con la sesion iniciada: barra superior, contenido, barra inferior y hoja de cuenta. */
 export function Aplicacion({ perfil }: { perfil: Perfil }) {
   const { salir, refrescar } = useSesion();
   const ruta = useRuta();
+  const [cuenta, setCuenta] = useState(false);
+  const contenido = useRef<HTMLElement>(null);
+
   const esAdmin = perfil.tipo === 'admin_app';
   const dentro = esAdmin && perfil.taller !== null;
   const enAdmin = esAdmin && ruta.startsWith('/talleres');
@@ -23,6 +35,11 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
   useEffect(() => {
     if (esAdmin && !dentro && !enAdmin) irA('/talleres');
   }, [esAdmin, dentro, enAdmin]);
+
+  // Cada pantalla parte arriba.
+  useEffect(() => {
+    contenido.current?.scrollTo(0, 0);
+  }, [ruta]);
 
   async function salirDelTaller() {
     await api('/admin/salir-taller', { method: 'POST' });
@@ -42,48 +59,85 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
     pantalla = <UsuariosTaller />;
   }
 
-  const items: { ruta: string; texto: string; actual: boolean }[] = [];
-  if (esAdmin) items.push({ ruta: '/talleres', texto: 'Talleres', actual: enAdmin });
+  const pestanas: Pestana[] = [];
+  if (esAdmin) pestanas.push({ ruta: '/talleres', texto: 'Talleres', icono: 'talleres', actual: enAdmin });
   if (hayTaller) {
-    items.push(
-      { ruta: '/', texto: 'Inicio', actual: !enAdmin && ruta !== '/mi-taller' && ruta !== '/usuarios' },
-      { ruta: '/mi-taller', texto: 'Datos del taller', actual: ruta === '/mi-taller' },
-      { ruta: '/usuarios', texto: 'Usuarios', actual: ruta === '/usuarios' },
+    pestanas.push(
+      { ruta: '/', texto: 'Inicio', icono: 'inicio', actual: !enAdmin && ruta !== '/mi-taller' && ruta !== '/usuarios' },
+      { ruta: '/mi-taller', texto: 'Mi taller', icono: 'ajustes', actual: ruta === '/mi-taller' },
+      { ruta: '/usuarios', texto: 'Usuarios', icono: 'usuarios', actual: ruta === '/usuarios' },
     );
   }
 
   return (
-    <main>
-      <header className="barra">
-        <div>
-          <strong>{perfil.nombre}</strong>
-          <div className="detalle">{esAdmin ? 'Administrador de la APP' : perfil.taller?.nombre}</div>
-        </div>
-        <button type="button" className="enlace" onClick={() => void salir()}>
-          Cerrar sesión
+    <div className="app">
+      <header className="barra-superior">
+        <span className="contexto">{esAdmin ? 'Administrador de la APP' : perfil.taller?.nombre}</span>
+        <button type="button" className="avatar" aria-label={`Cuenta de ${perfil.nombre}`} onClick={() => setCuenta(true)}>
+          {(perfil.nombre.match(/\p{L}/u)?.[0] ?? '?').toUpperCase()}
         </button>
       </header>
-
-      <nav className="menu">
-        {items.map((i) => (
-          <button key={i.ruta} type="button" className={`enlace ${i.actual ? 'actual' : ''}`} onClick={() => irA(i.ruta)}>
-            {i.texto}
-          </button>
-        ))}
-      </nav>
 
       {dentro && (
         <div className="banner">
           <span>
-            Estás dentro del taller <strong>{perfil.taller?.nombre}</strong>
+            Dentro de <strong>{perfil.taller?.nombre}</strong>
           </span>
           <button type="button" className="enlace" onClick={() => void salirDelTaller()}>
-            Salir del taller
+            Salir
           </button>
         </div>
       )}
 
-      {pantalla}
-    </main>
+      <main className="contenido" ref={contenido}>
+        {pantalla}
+      </main>
+
+      {/* Con una sola seccion (administrador fuera de un taller) la barra no aporta. */}
+      {pestanas.length > 1 && (
+        <nav className="barra-inferior" aria-label="Secciones">
+          {pestanas.map((p) => (
+            <button
+              key={p.ruta}
+              type="button"
+              className="pestana"
+              aria-current={p.actual ? 'page' : undefined}
+              onClick={() => irA(p.ruta)}
+            >
+              <span className="icono-pestana">
+                <Icono nombre={p.icono} />
+              </span>
+              {p.texto}
+            </button>
+          ))}
+        </nav>
+      )}
+
+      <Hoja abierta={cuenta} titulo="Cuenta" onCerrar={() => setCuenta(false)}>
+        <div className="grupo">
+          <div className="item">
+            <span className="item-texto">
+              <span className="item-titulo">{perfil.nombre}</span>
+              <span className="detalle">{perfil.email}</span>
+            </span>
+          </div>
+          <div className="item">
+            <span className="item-texto detalle">{esAdmin ? 'Administrador de la APP' : `Administrador de ${perfil.taller?.nombre}`}</span>
+          </div>
+        </div>
+        <div className="pila">
+          <button
+            type="button"
+            className="boton secundario"
+            onClick={() => {
+              setCuenta(false);
+              void salir();
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      </Hoja>
+    </div>
   );
 }

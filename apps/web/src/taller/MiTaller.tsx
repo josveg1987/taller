@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
+import { HojaSelector } from '../Hoja';
+import { Icono } from '../Iconos';
 
 type TipoAnticipo = 'ninguno' | 'repuestos' | 'porcentaje' | 'fijo';
 
@@ -16,12 +18,12 @@ interface Config {
   condiciones: string;
 }
 
-const OPCIONES_ANTICIPO: { valor: TipoAnticipo; texto: string }[] = [
+const OPCIONES_ANTICIPO = [
   { valor: 'ninguno', texto: 'Sin anticipo' },
   { valor: 'repuestos', texto: 'Monto de los repuestos' },
   { valor: 'porcentaje', texto: 'Porcentaje del total' },
   { valor: 'fijo', texto: 'Monto fijo' },
-];
+] as const satisfies readonly { valor: TipoAnticipo; texto: string }[];
 
 export function MiTaller() {
   const [config, setConfig] = useState<Config | null>(null);
@@ -40,7 +42,7 @@ export function MiTaller() {
         {errorCarga}
       </p>
     ) : (
-      <p className="detalle">Cargando…</p>
+      <p className="vacio">Cargando…</p>
     );
   }
   return <Formulario config={config} alGuardar={setConfig} />;
@@ -56,8 +58,11 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
   const [tipoAnticipo, setTipoAnticipo] = useState<TipoAnticipo>(config.anticipo.tipo);
   const [valorAnticipo, setValorAnticipo] = useState(String(config.anticipo.valor ?? ''));
   const [condiciones, setCondiciones] = useState(config.condiciones);
+  const [eligiendoAnticipo, setEligiendoAnticipo] = useState(false);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
   const { error, aviso, ejecutar } = useAcciones(() => undefined);
+
+  const textoAnticipo = OPCIONES_ANTICIPO.find((o) => o.valor === tipoAnticipo)?.texto;
 
   function guardar(e: FormEvent) {
     e.preventDefault();
@@ -93,65 +98,79 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
 
   return (
     <section>
-      <h1>Datos del taller</h1>
+      <h1>Mi taller</h1>
+      <p className="subtitulo">Estos datos aparecen en tus presupuestos.</p>
+
       <form onSubmit={guardar} className="formulario">
-        <label>
-          Nombre del taller
-          <input required maxLength={120} value={nombre} onChange={(e) => setNombre(e.target.value)} />
-        </label>
-        <label>
-          Dirección
-          <input maxLength={200} autoComplete="street-address" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
-        </label>
-        <label>
-          Teléfono
-          <input type="tel" maxLength={40} autoComplete="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
-        </label>
-        <label>
-          Datos de transferencia
-          <span className="ayuda">Aparecen en el PDF del presupuesto (banco, tipo y número de cuenta, RUT, titular).</span>
-          <textarea rows={4} maxLength={1000} value={transferencia} onChange={(e) => setTransferencia(e.target.value)} />
-        </label>
+        <h2>Datos</h2>
+        <div className="grupo formulario">
+          <label className="campo">
+            Nombre del taller
+            <input required maxLength={120} value={nombre} onChange={(e) => setNombre(e.target.value)} />
+          </label>
+          <label className="campo">
+            Dirección
+            <input maxLength={200} autoComplete="street-address" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
+          </label>
+          <label className="campo">
+            Teléfono
+            <input type="tel" maxLength={40} autoComplete="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+          </label>
+          <label className="campo">
+            Datos de transferencia
+            <span className="ayuda">Van en el PDF: banco, tipo y número de cuenta, RUT y titular.</span>
+            <textarea rows={4} maxLength={1000} value={transferencia} onChange={(e) => setTransferencia(e.target.value)} />
+          </label>
+        </div>
 
         <h2>Presupuestos</h2>
-        <label>
-          Margen sobre los repuestos (%)
-          <span className="ayuda">Valor por defecto. En cada presupuesto se puede cambiar.</span>
-          <input inputMode="decimal" required value={margen} onChange={(e) => setMargen(e.target.value)} />
-        </label>
-        <label>
-          Validez del presupuesto (días)
-          <input type="number" inputMode="numeric" min={1} max={365} required value={validez} onChange={(e) => setValidez(e.target.value)} />
-        </label>
-        <label>
-          Anticipo para iniciar el trabajo
-          <select value={tipoAnticipo} onChange={(e) => setTipoAnticipo(e.target.value as TipoAnticipo)}>
-            {OPCIONES_ANTICIPO.map((o) => (
-              <option key={o.valor} value={o.valor}>
-                {o.texto}
-              </option>
-            ))}
-          </select>
-        </label>
-        {(tipoAnticipo === 'porcentaje' || tipoAnticipo === 'fijo') && (
-          <label>
-            {tipoAnticipo === 'porcentaje' ? 'Porcentaje del total (%)' : 'Monto fijo ($)'}
-            <input
-              type="number"
-              inputMode="numeric"
-              min={tipoAnticipo === 'porcentaje' ? 1 : 0}
-              max={tipoAnticipo === 'porcentaje' ? 100 : 100000000}
-              required
-              value={valorAnticipo}
-              onChange={(e) => setValorAnticipo(e.target.value)}
-            />
+        <div className="grupo">
+          <label className="item campo-fila">
+            <span className="item-texto">
+              <span className="item-titulo">Margen sobre repuestos (%)</span>
+              <span className="detalle">Por defecto; se puede cambiar en cada presupuesto.</span>
+            </span>
+            <input className="corto" inputMode="decimal" required value={margen} onChange={(e) => setMargen(e.target.value)} />
           </label>
-        )}
-        <label>
-          Condiciones
-          <span className="ayuda">Aparecen en el PDF (plazos, daños ocultos, forma de pago…). Se pueden editar en cada presupuesto.</span>
-          <textarea rows={5} maxLength={4000} value={condiciones} onChange={(e) => setCondiciones(e.target.value)} />
-        </label>
+          <label className="item campo-fila">
+            <span className="item-texto">
+              <span className="item-titulo">Validez (días)</span>
+            </span>
+            <input className="corto" type="number" inputMode="numeric" min={1} max={365} required value={validez} onChange={(e) => setValidez(e.target.value)} />
+          </label>
+          <button type="button" className="item" onClick={() => setEligiendoAnticipo(true)}>
+            <span className="item-texto">
+              <span className="item-titulo">Anticipo para iniciar</span>
+              <span className="detalle">{textoAnticipo}</span>
+            </span>
+            <Icono nombre="chevron" />
+          </button>
+          {(tipoAnticipo === 'porcentaje' || tipoAnticipo === 'fijo') && (
+            <label className="item campo-fila">
+              <span className="item-texto">
+                <span className="item-titulo">{tipoAnticipo === 'porcentaje' ? 'Porcentaje del total (%)' : 'Monto fijo ($)'}</span>
+              </span>
+              <input
+                className="corto"
+                type="number"
+                inputMode="numeric"
+                min={tipoAnticipo === 'porcentaje' ? 1 : 0}
+                max={tipoAnticipo === 'porcentaje' ? 100 : 100000000}
+                required
+                value={valorAnticipo}
+                onChange={(e) => setValorAnticipo(e.target.value)}
+              />
+            </label>
+          )}
+        </div>
+
+        <h2>Condiciones</h2>
+        <div className="grupo formulario">
+          <label className="campo">
+            <span className="ayuda">Van en el PDF (plazos, daños ocultos, forma de pago…). Se editan en cada presupuesto.</span>
+            <textarea rows={5} maxLength={4000} value={condiciones} onChange={(e) => setCondiciones(e.target.value)} />
+          </label>
+        </div>
 
         {(errorLocal ?? error) && (
           <p className="error" role="alert">
@@ -167,6 +186,15 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
           Guardar cambios
         </button>
       </form>
+
+      <HojaSelector<TipoAnticipo>
+        abierta={eligiendoAnticipo}
+        titulo="Anticipo para iniciar el trabajo"
+        opciones={OPCIONES_ANTICIPO}
+        valor={tipoAnticipo}
+        onElegir={setTipoAnticipo}
+        onCerrar={() => setEligiendoAnticipo(false)}
+      />
     </section>
   );
 }
