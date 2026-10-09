@@ -1,0 +1,19 @@
+{
+  "name": "taller-app",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev -w @taller/api",
+    "dev:web": "npm run dev -w @taller/web",
+    "build": "npm run build -w @taller/shared && npm run build -w @taller/api && npm run build -w @taller/web",
+    "test": "npm run test -w @taller/shared",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
