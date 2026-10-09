@@ -1,0 +1,71 @@
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { api, ApiError } from './api';
+import { limpiarDatosLocales } from './datosLocales';
+
+/** Debe coincidir con `Perfil` de apps/api/src/auth/auth.service.ts. */
+export interface Perfil {
+  tipo: 'admin_app' | 'taller';
+  nombre: string;
+  email: string;
+  taller: { id: string; nombre: string } | null;
+}
+
+export type EstadoSesion =
+  | { fase: 'cargando' }
+  | { fase: 'sin-conexion' }
+  | { fase: 'anonimo' }
+  | { fase: 'activa'; perfil: Perfil };
+
+interface Sesion {
+  estado: EstadoSesion;
+  entrar(email: string, password: string): Promise<void>;
+  salir(): Promise<void>;
+  reintentar(): void;
+}
+
+const Contexto = createContext<Sesion | null>(null);
+
+export function ProveedorSesion({ children }: { children: ReactNode }) {
+  const [estado, setEstado] = useState<EstadoSesion>({ fase: 'cargando' });
+
+  const cargar = useCallback(() => {
+    setEstado({ fase: 'cargando' });
+    api<Perfil>('/auth/me')
+      .then((perfil) => setEstado({ fase: 'activa', perfil }))
+      .catch((e: unknown) =>
+        // 401 = no hay sesion. Cualquier otra falla (sin red, servidor dormido) no dice nada de la sesion.
+        setEstado({ fase: e instanceof ApiError && e.status === 401 ? 'anonimo' : 'sin-conexion' }),
+      );
+  }, []);
+
+  useEffect(cargar, [cargar]);
+
+  const valor = useMemo<Sesion>(
+    () => ({
+      estado,
+      reintentar: cargar,
+      async entrar(email, password) {
+        const perfil = await api<Perfil>('/auth/login', { method: 'POST', json: { email, password } });
+        setEstado({ fase: 'activa', perfil });
+      },
+      async salir() {
+        try {
+          await api('/auth/logout', { method: 'POST' });
+        } catch {
+          // Aunque no haya red, igual se limpia este dispositivo.
+        }
+        await limpiarDatosLocales();
+        setEstado({ fase: 'anonimo' });
+      },
+    }),
+    [estado, cargar],
+  );
+
+  return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
+}
+
+export function useSesion(): Sesion {
+  const s = useContext(Contexto);
+  if (!s) throw new Error('useSesion debe usarse dentro de <ProveedorSesion>');
+  return s;
+}

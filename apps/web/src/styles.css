@@ -28,7 +28,84 @@ h1 {
   background: #fee2e2;
   color: #991b1b;
 }
+.estado.conectando {
+  background: #f3f4f6;
+}
 .detalle {
   color: #4b5563;
   font-size: 0.9rem;
+}
+.barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+.formulario label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 500;
+}
+input {
+  font: inherit;
+  font-weight: 400;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #9ca3af;
+  border-radius: 8px;
+}
+input:focus-visible,
+.boton:focus-visible,
+.enlace:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 1px;
+}
+.campo-clave {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.boton {
+  font: inherit;
+  font-weight: 600;
+  min-height: 48px;
+  padding: 8px 20px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: #1f2937;
+  cursor: pointer;
+}
+.boton:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.enlace {
+  font: inherit;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  color: #1d4ed8;
+  background: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #991b1b;
+  background: #fee2e2;
 }

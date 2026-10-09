@@ -112,7 +112,11 @@ Pendiente al retomar:
   módulo `apps/api/src/auth/` (scrypt, sesiones en BD, guard global, `/auth/login|logout|me`),
   comando `crear-admin` y 38 tests (`npm run test:db`). Sin commit aún al escribir esto.
   Pendiente de la Fase 2, en este orden:
-  - 2b-2: pantalla de login en la web (`/auth/me` al abrir; cerrar sesión borra datos locales).
+  - 2b-2 hecha en local: pantalla de login en la web (`apps/web/src/`: `api.ts`, `sesion.tsx`, `Login.tsx`,
+    `Inicio.tsx`). Al abrir llama a `/health` y `/auth/me`; cerrar sesión borra datos locales
+    (`datosLocales.ts`). Cuenta de prueba solo en la BD local: `admin@taller.local` (contraseña que mostró
+    `crear-admin`; para otra, crear una nueva con ese comando).
+  - 2e (después del dominio): passkeys (huella / Face ID). Ver `docs/plan-de-trabajo.md`.
   - 2c: mantenedores del administrador de la APP (talleres con `max_usuarios` y `activo`, usuarios,
     "entrar" a un taller para ver sus datos: `sesiones.taller_activo_id`).
   - 2d: administrador de taller: datos del taller (HU-20, 37, 29, 31, 34) y sus usuarios.

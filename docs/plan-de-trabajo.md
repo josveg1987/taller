@@ -11,6 +11,7 @@ haya reglas de negocio, y commit al terminar cada paso.
 | 2b. Login | API de autenticación (**hecha, local**) y pantalla de login en la web | — |
 | 2c. Admin de la APP | Mantenedores de talleres (límite de usuarios, activar/desactivar) y usuarios; entrar a un taller | — |
 | 2d. Admin de taller | Datos del taller, configuración y sus usuarios | HU-20, 37, 29, 31, 34 |
+| 2e. Passkeys | Entrar con huella / Face ID (WebAuthn) además de la contraseña. **Después de tener el dominio propio** (la passkey queda atada al dominio). Evaluar `@simplewebauthn`. | — |
 | 3. Clientes | Clientes, vehículos y búsqueda por patente | HU-01 a 03 |
 | 4. Catálogo | Piezas, posiciones, combos y montos rápidos | HU-16, 33, 38 |
 | 5. Presupuesto | Flujo de 3 pantallas + cálculo con tests + borradores locales | HU-05 a 10, 13, 28, 30, 32, 35, 43 |
@@ -26,4 +27,6 @@ Repositorio en GitHub, BD en Neon, API en Render (Docker) y PWA en Cloudflare Pa
 ## Pendiente
 - Cambiar la contraseña de la BD en Neon y actualizar `DATABASE_URL` en Render.
 - Respaldo diario con GitHub Actions (puede esperar a la Fase 2).
-- Dominio propio para la API antes del piloto (Brave Shields bloquea `onrender.com`).
+- Dominio propio (`app.` + `api.`) **antes de publicar el login**: la cookie de sesión no funciona entre
+  `pages.dev` y `onrender.com`, y Brave Shields bloquea `onrender.com`. También lo necesitan las passkeys.
+- Entrar con Google: descartado por ahora (más fricción que las passkeys); reevaluar si un taller lo pide.
