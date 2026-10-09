@@ -5,7 +5,9 @@
   "scripts": {
     "build": "nest build",
     "start:dev": "nest start --watch",
-    "start:prod": "node dist/main"
+    "start:prod": "node dist/main",
+    "migrate": "node-pg-migrate -m migrations --envPath ../../.env",
+    "test": "vitest run"
   },
   "dependencies": {
     "@nestjs/common": "^12.1.2",
@@ -21,6 +23,8 @@
     "@nestjs/schematics": "^12.0.6",
     "@types/node": "^26.6.4",
     "@types/pg": "^8.23.1",
-    "typescript": "^6.0.3"
+    "node-pg-migrate": "^9.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
   }
 }

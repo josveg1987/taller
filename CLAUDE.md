@@ -23,6 +23,13 @@ El dueño crea un presupuesto desde el celular en menos de 5 minutos y se lo env
 ## Reglas de arquitectura
 1. **Multi-taller desde el día 1**: toda tabla de negocio lleva `taller_id`. Aislar con Row Level
    Security de PostgreSQL además de filtrar en el código.
+   **Cómo se aplica:** la API consulta con el rol `taller_app` (sujeto a RLS) usando
+   `DatabaseService.conTaller(tallerId, async (db) => ...)`, que abre una transacción, hace
+   `SET LOCAL ROLE taller_app` y fija `app.taller_id`. **Toda consulta de negocio pasa por ahí.** El dueño
+   de las tablas (el rol de la conexión) no pasa por RLS: solo para migraciones y tareas administrativas
+   (alta de taller, buscar usuario al iniciar sesión). Las llaves foráneas incluyen `taller_id`.
+   Toda tabla nueva: `taller_id`, RLS + política `aislamiento`, y `GRANT` explícito a `taller_app`
+   (el test de "red de seguridad" falla si se olvida el RLS).
 2. **El servidor manda en el cálculo**: la PWA muestra totales en vivo, pero al guardar la API
    recalcula con `@taller/shared` y ese valor es el oficial.
 3. **Reglas de cálculo en un solo lugar**: `packages/shared/src/presupuesto.ts`. Deben tener tests.
@@ -48,7 +55,13 @@ npm run dev:web          # PWA en http://localhost:5173
 npm test                 # tests de packages/shared
 npm run build            # compila shared, api y web (en ese orden)
 npm run db:up            # PostgreSQL local con Docker (requiere Docker Desktop)
+npm run db:migrate       # aplica las migraciones SQL pendientes (apps/api/migrations/)
+npm run db:rollback      # deshace la última migración
+npm run test:db          # tests de aislamiento entre talleres (necesita la BD local; se niega a correr contra otra)
 ```
+Migraciones: archivos `.sql` con `-- Up Migration` / `-- Down Migration` (`node-pg-migrate`). Crear una nueva:
+`npx node-pg-migrate create <nombre> -j sql -m migrations` dentro de `apps/api`. **SQL puro, sin ORM** (decidido).
+Para Neon usar la conexión **directa** (sin `-pooler`): `$env:DATABASE_URL='...'; npm run db:migrate`.
 Copia `.env.example` a `.env`. Si no hay `DATABASE_URL`, `/health` responde `db.configured=false`.
 Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/shared`) o usa
 `npm run dev -w @taller/shared` en otra terminal.
@@ -79,9 +92,11 @@ Fase 1b completa (2026-10-09): publicado y validado desde el celular y el comput
 Pendiente al retomar:
 - **Cambiar la contraseña de la BD en Neon** (quedó visible en una captura del chat): Neon > Connect >
   Reset password, y actualizar `DATABASE_URL` en Render.
-- Siguiente: Fase 2 (modelo de datos + login + datos del taller). Para las migraciones usar la conexión
-  directa de Neon (sin `-pooler`); con el pooler (pgbouncer en modo transacción) el RLS debe usar
-  `SET LOCAL` / `set_config(..., true)` dentro de una transacción.
+- Fase 2 en curso. **2a hecha en local** (2026-10-09): migración `1791562700525_modelo-inicial.sql`
+  (8 tablas + RLS + rol `taller_app` + numeración por taller), `conTaller()` y 13 tests de aislamiento.
+  **Falta aplicar la migración en Neon** (conexión directa, sin `-pooler`).
+  Siguiente: 2b (login: usuarios, hash de contraseña, cookie `httpOnly`) y 2c (datos del taller:
+  HU-20, 37, 29, 31, 34, con API y pantalla).
 - Respaldo diario con GitHub Actions (puede esperar a la Fase 2).
 - Antes del piloto: dominio propio para la API (p. ej. `api.<dominio>`). Brave Shields bloquea
   `onrender.com` (`ERR_BLOCKED_BY_CLIENT`) y la web dice "Sin conexión" en ese navegador.

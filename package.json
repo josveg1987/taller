@@ -10,8 +10,11 @@
     "dev:web": "npm run dev -w @taller/web",
     "build": "npm run build -w @taller/shared && npm run build -w @taller/api && npm run build -w @taller/web",
     "test": "npm run test -w @taller/shared",
+    "test:db": "npm run test -w @taller/api",
     "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "db:migrate": "npm run migrate -w @taller/api -- up",
+    "db:rollback": "npm run migrate -w @taller/api -- down"
   },
   "devDependencies": {
     "typescript": "^6.0.3"

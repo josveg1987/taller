@@ -1,6 +1,11 @@
-# Modelo de datos (borrador para Fase 2)
+# Modelo de datos
 
-Todas las tablas de negocio llevan `taller_id` y Row Level Security. Montos en CLP enteros.
+Implementado en `apps/api/migrations/1791562700525_modelo-inicial.sql` (Fase 2a). El SQL manda; este
+esquema es un resumen. Todas las tablas de negocio llevan `taller_id` (también las líneas y el
+historial) y Row Level Security. Las llaves foráneas incluyen `taller_id`, así un registro no puede
+apuntar a otro taller. Montos en CLP enteros. Diferencias con el borrador original: `usuarios.activo`,
+`presupuestos.condiciones`, `taller_id` en `presupuesto_lineas` e `historial_estados`, y anticipo del
+taller como `anticipo_tipo` + `anticipo_valor`.
 
 ```
 Taller ─┬─< Usuarios
@@ -46,7 +51,8 @@ historial_estados   id, presupuesto_id, estado, fecha, usuario_id
 3. Totales, costo de repuestos y monto de inicio se calculan en el servidor y se guardan,
    para que los reportes sean simples y rápidos.
 4. El historial de estados permite medir tasa de aceptación y tiempos de decisión.
-5. Usar Prisma o Drizzle con migraciones versionadas en el repo (decidir en Fase 2).
+5. **SQL puro** (decidido 2026-10-09, sin ORM). Migraciones en archivos `.sql` versionados en
+   `apps/api/migrations/`, ejecutadas con `node-pg-migrate`. Consultas con `pg` y parámetros.
 
 ## Reportes
 - MVP: R1 historial por cliente · R2 historial por vehículo · R3 resumen por período con tasa de
