@@ -117,8 +117,12 @@ Pendiente al retomar:
     (`datosLocales.ts`). Cuenta de prueba solo en la BD local: `admin@taller.local` (contraseña que mostró
     `crear-admin`; para otra, crear una nueva con ese comando).
   - 2e (después del dominio): passkeys (huella / Face ID). Ver `docs/plan-de-trabajo.md`.
-  - 2c: mantenedores del administrador de la APP (talleres con `max_usuarios` y `activo`, usuarios,
-    "entrar" a un taller para ver sus datos: `sesiones.taller_activo_id`).
+  - 2c hecha en local: mantenedores del administrador de la APP. API en `apps/api/src/admin/`
+    (`/admin/talleres`, `/admin/usuarios/:id`, `/admin/talleres/:id/entrar`, `/admin/salir-taller`; usa
+    `db.admin()` sin RLS a propósito, solo con `@SoloAdminApp()`); pantallas en `apps/web/src/admin/` con
+    navegación por hash (`ruta.ts`) y marco en `Aplicacion.tsx`. No hay borrado de talleres ni usuarios:
+    solo suspender / desactivar. El correo no puede repetirse entre `usuarios` y `administradores_app`
+    (validado en código, no en la BD). 54 tests en total.
   - 2d: administrador de taller: datos del taller (HU-20, 37, 29, 31, 34) y sus usuarios.
 - Respaldo diario con GitHub Actions (puede esperar a la Fase 2).
 - **Antes de publicar el login hace falta dominio propio** (p. ej. `app.<dominio>` y `api.<dominio>`):

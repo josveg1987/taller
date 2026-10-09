@@ -33,6 +33,9 @@ async function main() {
   const ssl = /localhost|127\.0\.0\.1/.test(url) ? undefined : { rejectUnauthorized: false };
   const pool = new Pool({ connectionString: url, ssl });
   try {
+    // El correo es el identificador de ingreso: no puede coincidir con el de un usuario de taller.
+    const enUso = await pool.query('SELECT 1 FROM usuarios WHERE lower(email) = lower($1)', [email]);
+    if (enUso.rowCount) throw new Error(`El correo ${email} ya lo usa un usuario de taller`);
     await pool.query('INSERT INTO administradores_app (nombre, email, password_hash) VALUES ($1, $2, $3)', [
       nombre,
       email,

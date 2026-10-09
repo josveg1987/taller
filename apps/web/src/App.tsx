@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { API_URL } from './api';
-import { Inicio } from './Inicio';
+import { Aplicacion } from './Aplicacion';
 import { Login } from './Login';
 import { ProveedorSesion, useSesion } from './sesion';
 
@@ -28,7 +28,7 @@ function Pantalla() {
       </main>
     );
   }
-  return estado.fase === 'activa' ? <Inicio perfil={estado.perfil} /> : <Login />;
+  return estado.fase === 'activa' ? <Aplicacion perfil={estado.perfil} /> : <Login />;
 }
 
 export function App() {

@@ -8,8 +8,8 @@ haya reglas de negocio, y commit al terminar cada paso.
 | 1. Esqueleto | Monorepo, API con `/health`, PWA, cálculo compartido con tests. **Hecha.** | — |
 | 1b. Publicar | Subir a GitHub; BD en Neon; API en Render (Docker); PWA en Cloudflare Pages. Validar desde el celular. **Hecha.** | — |
 | 2a. Base de datos | Modelo de datos + migraciones SQL + aislamiento por taller (RLS). **Hecha (local).** | — |
-| 2b. Login | API de autenticación (**hecha, local**) y pantalla de login en la web | — |
-| 2c. Admin de la APP | Mantenedores de talleres (límite de usuarios, activar/desactivar) y usuarios; entrar a un taller | — |
+| 2b. Login | API de autenticación y pantalla de login en la web. **Hecha (local).** | — |
+| 2c. Admin de la APP | Mantenedores de talleres (límite de usuarios, suspender) y usuarios; entrar a un taller. **Hecha (local).** | — |
 | 2d. Admin de taller | Datos del taller, configuración y sus usuarios | HU-20, 37, 29, 31, 34 |
 | 2e. Passkeys | Entrar con huella / Face ID (WebAuthn) además de la contraseña. **Después de tener el dominio propio** (la passkey queda atada al dominio). Evaluar `@simplewebauthn`. | — |
 | 3. Clientes | Clientes, vehículos y búsqueda por patente | HU-01 a 03 |

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { calcularPresupuesto, type LineaInput } from '@taller/shared';
 import { api } from './api';
-import { useSesion, type Perfil } from './sesion';
 
 type Estado = 'conectando' | 'conectado' | 'sin-conexion';
 interface Health {
@@ -18,8 +17,7 @@ const ejemplo: LineaInput[] = [
 
 const clp = (n: number) => n.toLocaleString('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
 
-export function Inicio({ perfil }: { perfil: Perfil }) {
-  const { salir } = useSesion();
+export function Inicio() {
   const [estado, setEstado] = useState<Estado>('conectando');
   const [health, setHealth] = useState<Health | null>(null);
 
@@ -35,17 +33,7 @@ export function Inicio({ perfil }: { perfil: Perfil }) {
   const total = calcularPresupuesto(ejemplo).total;
 
   return (
-    <main>
-      <header className="barra">
-        <div>
-          <strong>{perfil.nombre}</strong>
-          <div className="detalle">{perfil.taller ? perfil.taller.nombre : 'Administrador de la APP'}</div>
-        </div>
-        <button type="button" className="enlace" onClick={() => void salir()}>
-          Cerrar sesión
-        </button>
-      </header>
-
+    <section>
       <h1>Presupuestos</h1>
       <p className={`estado ${estado}`}>
         {estado === 'conectando' && 'Conectando con el servidor…'}
@@ -59,6 +47,6 @@ export function Inicio({ perfil }: { perfil: Perfil }) {
         </p>
       )}
       <p className="detalle">Cálculo compartido (ejemplo): {clp(total)}</p>
-    </main>
+    </section>
   );
 }

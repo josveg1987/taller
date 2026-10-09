@@ -21,6 +21,8 @@ interface Sesion {
   entrar(email: string, password: string): Promise<void>;
   salir(): Promise<void>;
   reintentar(): void;
+  /** Vuelve a pedir el perfil sin mostrar "cargando" (p. ej. tras entrar o salir de un taller). */
+  refrescar(): Promise<void>;
 }
 
 const Contexto = createContext<Sesion | null>(null);
@@ -44,6 +46,10 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     () => ({
       estado,
       reintentar: cargar,
+      async refrescar() {
+        const perfil = await api<Perfil>('/auth/me');
+        setEstado({ fase: 'activa', perfil });
+      },
       async entrar(email, password) {
         const perfil = await api<Perfil>('/auth/login', { method: 'POST', json: { email, password } });
         setEstado({ fase: 'activa', perfil });
