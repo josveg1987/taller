@@ -46,6 +46,15 @@ El dueño crea un presupuesto desde el celular en menos de 5 minutos y se lo env
    El servidor es la fuente de verdad. Al cerrar sesión se borran los datos locales.
 9. **Al abrir la PWA se llama a `/health`** para despertar a Render (plan gratis se duerme a los 15 min).
 10. Montos en **pesos chilenos enteros** (sin decimales). Sin IVA por ahora (el taller solo cotiza).
+11. **Usuarios y permisos** (decidido 2026-10-09): hay dos tipos de cuenta. El **administrador de la APP**
+    (`administradores_app`, sin taller) tiene control total: talleres, usuarios y los datos de cualquier
+    taller (entra a un taller con `sesiones.taller_activo_id`). Los usuarios de taller (`usuarios`) son
+    todos **administradores de su taller** (rol `admin_taller`): su taller, su configuración y sus usuarios,
+    hasta `talleres.max_usuarios` (por defecto 2; lo valida un trigger en la BD). Las rutas exigen sesión
+    por defecto (guard global); `@Publico()` la omite y `@SoloAdminApp()` restringe. Para consultar datos
+    de negocio: `@TallerActual() tallerId` + `db.conTaller(tallerId, ...)`. Las contraseñas usan `scrypt`;
+    la sesión es una cookie `httpOnly` con token opaco (en la BD solo su hash), así desactivar una cuenta
+    o un taller corta la sesión al instante. `taller_app` no puede leer `password_hash` ni `sesiones`.
 
 ## Comandos
 ```bash
@@ -61,6 +70,8 @@ npm run test:db          # tests de aislamiento entre talleres (necesita la BD l
 ```
 Migraciones: archivos `.sql` con `-- Up Migration` / `-- Down Migration` (`node-pg-migrate`). Crear una nueva:
 `npx node-pg-migrate create <nombre> -j sql -m migrations` dentro de `apps/api`. **SQL puro, sin ORM** (decidido).
+Primer administrador de la APP: `npm run crear-admin -w @taller/api -- --email <correo> --nombre <nombre>`
+(sin `--password` genera una y la muestra una vez; compila la API, no usarlo con `dev:api` corriendo).
 Para Neon usar la conexión **directa** (sin `-pooler`): `$env:DATABASE_URL='...'; npm run db:migrate`.
 Copia `.env.example` a `.env`. Si no hay `DATABASE_URL`, `/health` responde `db.configured=false`.
 Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/shared`) o usa
@@ -94,12 +105,22 @@ Pendiente al retomar:
   Reset password, y actualizar `DATABASE_URL` en Render.
 - Fase 2 en curso. **2a hecha en local** (2026-10-09): migración `1791562700525_modelo-inicial.sql`
   (8 tablas + RLS + rol `taller_app` + numeración por taller), `conTaller()` y 13 tests de aislamiento.
-  **Falta aplicar la migración en Neon** (conexión directa, sin `-pooler`).
-  Siguiente: 2b (login: usuarios, hash de contraseña, cookie `httpOnly`) y 2c (datos del taller:
-  HU-20, 37, 29, 31, 34, con API y pantalla).
+  **Se trabaja en local; no se hace push ni se migra Neon hasta que el dueño del proyecto lo decida**
+  (acordado 2026-10-09). Al publicar: push a `main` (redespliega Render y Cloudflare) y aplicar las
+  migraciones en Neon con la conexión directa, sin `-pooler`.
+  **2b-1 hecha en local** (API de autenticación): migración `1791563400978_usuarios-roles-sesiones.sql`,
+  módulo `apps/api/src/auth/` (scrypt, sesiones en BD, guard global, `/auth/login|logout|me`),
+  comando `crear-admin` y 38 tests (`npm run test:db`). Sin commit aún al escribir esto.
+  Pendiente de la Fase 2, en este orden:
+  - 2b-2: pantalla de login en la web (`/auth/me` al abrir; cerrar sesión borra datos locales).
+  - 2c: mantenedores del administrador de la APP (talleres con `max_usuarios` y `activo`, usuarios,
+    "entrar" a un taller para ver sus datos: `sesiones.taller_activo_id`).
+  - 2d: administrador de taller: datos del taller (HU-20, 37, 29, 31, 34) y sus usuarios.
 - Respaldo diario con GitHub Actions (puede esperar a la Fase 2).
-- Antes del piloto: dominio propio para la API (p. ej. `api.<dominio>`). Brave Shields bloquea
-  `onrender.com` (`ERR_BLOCKED_BY_CLIENT`) y la web dice "Sin conexión" en ese navegador.
+- **Antes de publicar el login hace falta dominio propio** (p. ej. `app.<dominio>` y `api.<dominio>`):
+  la cookie de sesión no funciona entre `pages.dev` y `onrender.com` (cookies de terceros bloqueadas en
+  Brave/Safari/Chrome). Además Brave Shields bloquea `onrender.com` (`ERR_BLOCKED_BY_CLIENT`).
+  La cookie hoy es `SameSite=Lax`; con ambos subdominios bajo el mismo dominio sigue funcionando.
 
 Notas del entorno (Windows):
 - La API tarda ~13 s en arrancar. Para probarla desde PowerShell usar `127.0.0.1` en vez de `localhost`

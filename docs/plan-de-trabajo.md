@@ -7,7 +7,10 @@ haya reglas de negocio, y commit al terminar cada paso.
 |---|---|---|
 | 1. Esqueleto | Monorepo, API con `/health`, PWA, cálculo compartido con tests. **Hecha.** | — |
 | 1b. Publicar | Subir a GitHub; BD en Neon; API en Render (Docker); PWA en Cloudflare Pages. Validar desde el celular. **Hecha.** | — |
-| 2. Base | Modelo de datos completo + migraciones, login, datos del taller | HU-20, 37, 29, 31, 34 |
+| 2a. Base de datos | Modelo de datos + migraciones SQL + aislamiento por taller (RLS). **Hecha (local).** | — |
+| 2b. Login | API de autenticación (**hecha, local**) y pantalla de login en la web | — |
+| 2c. Admin de la APP | Mantenedores de talleres (límite de usuarios, activar/desactivar) y usuarios; entrar a un taller | — |
+| 2d. Admin de taller | Datos del taller, configuración y sus usuarios | HU-20, 37, 29, 31, 34 |
 | 3. Clientes | Clientes, vehículos y búsqueda por patente | HU-01 a 03 |
 | 4. Catálogo | Piezas, posiciones, combos y montos rápidos | HU-16, 33, 38 |
 | 5. Presupuesto | Flujo de 3 pantallas + cálculo con tests + borradores locales | HU-05 a 10, 13, 28, 30, 32, 35, 43 |
