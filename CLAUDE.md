@@ -123,7 +123,14 @@ Pendiente al retomar:
     navegación por hash (`ruta.ts`) y marco en `Aplicacion.tsx`. No hay borrado de talleres ni usuarios:
     solo suspender / desactivar. El correo no puede repetirse entre `usuarios` y `administradores_app`
     (validado en código, no en la BD). 54 tests en total.
-  - 2d: administrador de taller: datos del taller (HU-20, 37, 29, 31, 34) y sus usuarios.
+  - 2d hecha en local: administrador de taller. API `apps/api/src/taller/` (`GET|PATCH /taller`,
+    `/taller/usuarios`; todo por `conTaller()`, también sirve al admin de la APP una vez "dentro" de un taller)
+    y pantallas `apps/web/src/taller/` ("Datos del taller" y "Usuarios", con `usuarios/GestionUsuarios.tsx`
+    compartido con el panel de admin). Migración `…permisos-columnas-talleres`: `taller_app` NO puede cambiar
+    `max_usuarios` ni `activo` (solo el admin de la APP). Cambiar la propia contraseña pide la actual; un
+    usuario no puede desactivarse a sí mismo. Fuera de 2d: logo (necesita R2), `tarifa_pintura`, montos de
+    desabollado y combos (Fase 4), numeración. 72 tests. Cuentas de prueba solo en la BD local:
+    `dueno@taller.local` / `demo-taller-2026` (Taller Demo).
 - Respaldo diario con GitHub Actions (puede esperar a la Fase 2).
 - **Antes de publicar el login hace falta dominio propio** (p. ej. `app.<dominio>` y `api.<dominio>`):
   la cookie de sesión no funciona entre `pages.dev` y `onrender.com` (cookies de terceros bloqueadas en
@@ -133,4 +140,6 @@ Pendiente al retomar:
 Notas del entorno (Windows):
 - La API tarda ~13 s en arrancar. Para probarla desde PowerShell usar `127.0.0.1` en vez de `localhost`
   (`Invoke-RestMethod` a `localhost` puede fallar por IPv6 aunque la API esté bien).
+- **No editar archivos con tildes usando `Get-Content`/`Set-Content` de PowerShell 5.1**: lee en ANSI y
+  escribe con BOM, y deja el texto como "mÃ¡ximo". Usar siempre la herramienta de edición.
 - En desarrollo solo la BD va en Docker; API y web corren directo con `npm run dev:api` / `dev:web`.

@@ -66,7 +66,31 @@ input {
   border: 1px solid #9ca3af;
   border-radius: 8px;
 }
+textarea,
+select {
+  font: inherit;
+  font-weight: 400;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #9ca3af;
+  border-radius: 8px;
+  background: #fff;
+}
+select {
+  min-height: 44px;
+}
+textarea {
+  resize: vertical;
+}
+.ayuda {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: #6b7280;
+}
 input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
 .boton:focus-visible,
 .enlace:focus-visible {
   outline: 3px solid #93c5fd;
@@ -117,6 +141,7 @@ h2 {
 }
 .menu {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   margin: -12px 0 16px;
 }

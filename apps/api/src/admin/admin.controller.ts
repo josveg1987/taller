@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post } from '@ne
 import { Contexto } from '../auth/contexto';
 import { SesionActual, SoloAdminApp } from '../auth/decoradores';
 import { AdminService } from './admin.service';
-import { booleano, cuerpo, email, entero, idValido, password, texto } from './validacion';
+import { booleano, cuerpo, email, entero, idValido, password, texto } from '../validacion';
 
 const MAX_USUARIOS = 50;
 

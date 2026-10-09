@@ -1,7 +1,8 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { hashPassword } from '../auth/password';
 import { DatabaseService } from '../database/database.service';
-import { traducirErrorBD } from './validacion';
+import { asegurarCorreoLibre } from '../auth/cuentas';
+import { traducirErrorBD } from '../validacion';
 
 export interface TallerResumen {
   id: string;
@@ -120,23 +121,12 @@ export class AdminService {
     return taller;
   }
 
-  /** El correo es el identificador de ingreso: no puede repetirse entre usuarios ni administradores. */
-  private async asegurarCorreoLibre(correo: string, excluirUsuarioId?: string): Promise<void> {
-    const { rows } = await this.db.admin(
-      `SELECT 1 FROM usuarios WHERE lower(email) = lower($1) AND ($2::uuid IS NULL OR id <> $2)
-       UNION ALL
-       SELECT 1 FROM administradores_app WHERE lower(email) = lower($1)`,
-      [correo, excluirUsuarioId ?? null],
-    );
-    if (rows.length) throw new ConflictException('Ya existe una cuenta con ese correo');
-  }
-
   async crearUsuario(
     tallerId: string,
     datos: { nombre: string; email: string; password: string },
   ): Promise<UsuarioResumen> {
     if (!(await this.obtenerResumen(tallerId))) throw new NotFoundException('El taller no existe');
-    await this.asegurarCorreoLibre(datos.email);
+    await asegurarCorreoLibre(this.db, datos.email);
     try {
       const { rows } = await this.db.admin<{ id: string; creado_en: Date }>(
         `INSERT INTO usuarios (taller_id, nombre, email, password_hash)
@@ -159,7 +149,7 @@ export class AdminService {
     id: string,
     cambios: { nombre?: string; email?: string; activo?: boolean },
   ): Promise<UsuarioResumen> {
-    if (cambios.email !== undefined) await this.asegurarCorreoLibre(cambios.email, id);
+    if (cambios.email !== undefined) await asegurarCorreoLibre(this.db, cambios.email, id);
     const sets: string[] = [];
     const valores: unknown[] = [];
     const agregar = (columna: string, valor: unknown) => {

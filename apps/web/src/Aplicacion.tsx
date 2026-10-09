@@ -6,6 +6,8 @@ import { useSesion, type Perfil } from './sesion';
 import { TallerDetalle } from './admin/TallerDetalle';
 import { TallerNuevo } from './admin/TallerNuevo';
 import { Talleres } from './admin/Talleres';
+import { MiTaller } from './taller/MiTaller';
+import { UsuariosTaller } from './taller/UsuariosTaller';
 
 /** Marco de la app con la sesion iniciada: cabecera, menu y la pantalla segun la ruta. */
 export function Aplicacion({ perfil }: { perfil: Perfil }) {
@@ -14,6 +16,8 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
   const esAdmin = perfil.tipo === 'admin_app';
   const dentro = esAdmin && perfil.taller !== null;
   const enAdmin = esAdmin && ruta.startsWith('/talleres');
+  // Hay un taller sobre el cual trabajar: el propio, o aquel al que entro el administrador de la app.
+  const hayTaller = !esAdmin || dentro;
 
   // El administrador de la app que no esta dentro de un taller parte en la lista de talleres.
   useEffect(() => {
@@ -32,6 +36,20 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
     if (segundo === 'nuevo') pantalla = <TallerNuevo />;
     else if (segundo) pantalla = <TallerDetalle key={segundo} id={segundo} />;
     else pantalla = <Talleres />;
+  } else if (hayTaller && ruta === '/mi-taller') {
+    pantalla = <MiTaller />;
+  } else if (hayTaller && ruta === '/usuarios') {
+    pantalla = <UsuariosTaller />;
+  }
+
+  const items: { ruta: string; texto: string; actual: boolean }[] = [];
+  if (esAdmin) items.push({ ruta: '/talleres', texto: 'Talleres', actual: enAdmin });
+  if (hayTaller) {
+    items.push(
+      { ruta: '/', texto: 'Inicio', actual: !enAdmin && ruta !== '/mi-taller' && ruta !== '/usuarios' },
+      { ruta: '/mi-taller', texto: 'Datos del taller', actual: ruta === '/mi-taller' },
+      { ruta: '/usuarios', texto: 'Usuarios', actual: ruta === '/usuarios' },
+    );
   }
 
   return (
@@ -46,18 +64,13 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
         </button>
       </header>
 
-      {esAdmin && (
-        <nav className="menu">
-          <button type="button" className={`enlace ${enAdmin ? 'actual' : ''}`} onClick={() => irA('/talleres')}>
-            Talleres
+      <nav className="menu">
+        {items.map((i) => (
+          <button key={i.ruta} type="button" className={`enlace ${i.actual ? 'actual' : ''}`} onClick={() => irA(i.ruta)}>
+            {i.texto}
           </button>
-          {dentro && (
-            <button type="button" className={`enlace ${!enAdmin ? 'actual' : ''}`} onClick={() => irA('/')}>
-              Inicio del taller
-            </button>
-          )}
-        </nav>
-      )}
+        ))}
+      </nav>
 
       {dentro && (
         <div className="banner">

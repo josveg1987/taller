@@ -5,6 +5,7 @@ import { limpiarDatosLocales } from './datosLocales';
 /** Debe coincidir con `Perfil` de apps/api/src/auth/auth.service.ts. */
 export interface Perfil {
   tipo: 'admin_app' | 'taller';
+  id: string;
   nombre: string;
   email: string;
   taller: { id: string; nombre: string } | null;

@@ -10,6 +10,8 @@ const sha256 = (t: string) => createHash('sha256').update(t).digest('hex');
 
 export interface Perfil {
   tipo: 'admin_app' | 'taller';
+  /** Id del usuario (o del administrador de la app). */
+  id: string;
   nombre: string;
   email: string;
   taller: { id: string; nombre: string } | null;
@@ -127,7 +129,7 @@ export class AuthService {
         );
         taller = t.rows[0] ?? null;
       }
-      return { tipo: 'admin_app', nombre: rows[0].nombre, email: rows[0].email, taller };
+      return { tipo: 'admin_app', id: c.adminId, nombre: rows[0].nombre, email: rows[0].email, taller };
     }
     const { rows } = await this.db.admin<{
       nombre: string;
@@ -142,6 +144,7 @@ export class AuthService {
     const r = rows[0];
     return {
       tipo: 'taller',
+      id: c.usuarioId,
       nombre: r.nombre,
       email: r.email,
       taller: { id: r.taller_id, nombre: r.taller_nombre },

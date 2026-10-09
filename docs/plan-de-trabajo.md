@@ -10,7 +10,7 @@ haya reglas de negocio, y commit al terminar cada paso.
 | 2a. Base de datos | Modelo de datos + migraciones SQL + aislamiento por taller (RLS). **Hecha (local).** | — |
 | 2b. Login | API de autenticación y pantalla de login en la web. **Hecha (local).** | — |
 | 2c. Admin de la APP | Mantenedores de talleres (límite de usuarios, suspender) y usuarios; entrar a un taller. **Hecha (local).** | — |
-| 2d. Admin de taller | Datos del taller, configuración y sus usuarios | HU-20, 37, 29, 31, 34 |
+| 2d. Admin de taller | Datos del taller, configuración y sus usuarios (sin logo, que necesita R2). **Hecha (local).** | HU-20, 37, 29, 31, 34 |
 | 2e. Passkeys | Entrar con huella / Face ID (WebAuthn) además de la contraseña. **Después de tener el dominio propio** (la passkey queda atada al dominio). Evaluar `@simplewebauthn`. | — |
 | 3. Clientes | Clientes, vehículos y búsqueda por patente | HU-01 a 03 |
 | 4. Catálogo | Piezas, posiciones, combos y montos rápidos | HU-16, 33, 38 |

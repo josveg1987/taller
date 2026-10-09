@@ -1,5 +1,5 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { PASSWORD_MIN, passwordValida } from '../auth/password';
+import { PASSWORD_MIN, passwordValida } from './auth/password';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -44,6 +44,29 @@ export function entero(v: unknown, campo: string, min: number, max: number): num
 export function booleano(v: unknown, campo: string): boolean {
   if (typeof v !== 'boolean') throw new BadRequestException(`${campo} debe ser verdadero o falso`);
   return v;
+}
+
+/** Texto opcional: vacio o null borra el valor (devuelve null). */
+export function textoOpcional(v: unknown, campo: string, max: number): string | null {
+  if (v === null || (typeof v === 'string' && !v.trim())) return null;
+  if (typeof v !== 'string') throw new BadRequestException(`${campo} debe ser texto`);
+  if (v.trim().length > max) throw new BadRequestException(`${campo} es demasiado largo (máximo ${max})`);
+  return v.trim();
+}
+
+/** Numero con hasta 2 decimales dentro de un rango. */
+export function decimal(v: unknown, campo: string, min: number, max: number): number {
+  if (typeof v !== 'number' || !Number.isFinite(v) || v < min || v > max || Math.round(v * 100) / 100 !== v) {
+    throw new BadRequestException(`${campo} debe ser un número entre ${min} y ${max} (hasta 2 decimales)`);
+  }
+  return v;
+}
+
+export function opcion<T extends string>(v: unknown, campo: string, validas: readonly T[]): T {
+  if (typeof v !== 'string' || !(validas as readonly string[]).includes(v)) {
+    throw new BadRequestException(`${campo} no es válido`);
+  }
+  return v as T;
 }
 
 /** Traduce errores conocidos de PostgreSQL a respuestas HTTP entendibles. */
