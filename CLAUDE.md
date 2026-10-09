@@ -66,7 +66,7 @@ compila todo, `/health` responde con `db.ok=true` y la PWA muestra "Conectado". 
 ya está instalado en el equipo de desarrollo y la BD corre con `npm run db:up` (`db:down` conserva los datos).
 
 Pendiente al retomar:
-- El repositorio **aún no tiene ningún commit**: hacer el primer commit con la Fase 1.
+- Código subido a GitHub (2026-10-09): https://github.com/josveg1987/taller (rama `main`, commit "Fase 1").
 - Elegir el orden: Fase 2 (modelo de datos + login + datos del taller) directo, o antes la Fase 1b
   (publicar en GitHub, Neon, Render, Cloudflare). Ver `docs/plan-de-trabajo.md`.
 - El `apps/api/Dockerfile` nunca se ha construido ni probado; probarlo antes de desplegar en Render
