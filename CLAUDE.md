@@ -152,12 +152,18 @@ Fase 1b completa (2026-10-09): publicado y validado desde el celular y el comput
 Render y Cloudflare publican la versión nueva, **pero producción NO funciona para iniciar sesión**: (1) las
 migraciones **no se han aplicado en Neon** (no existen usuarios, sesiones, clientes, catálogos ni
 administradores allá), (2) no hay ningún administrador de la APP en Neon, y (3) la cookie de sesión no se
-envía entre `pages.dev` y `onrender.com` (hace falta dominio propio). La web pública hoy muestra el login
+envía entre `pages.dev` y `onrender.com` (falta configurar la función de reenvío, paso 1, o comprar dominio). La web pública hoy muestra el login
 y no deja entrar. Es aceptable porque aún no hay usuarios reales. La app completa se prueba en local.
 
 Para dejar producción funcionando, en este orden:
-1. Comprar dominio y configurar `app.<dominio>` (Cloudflare Pages) y `api.<dominio>` (Render); actualizar
-   `CORS_ORIGIN` (Render) y `VITE_API_URL` (Cloudflare) y volver a desplegar la web.
+1. **Sin dominio propio, gratis (decidido 2026-10-10):** el código ya trae una Cloudflare Pages Function
+   (`functions/api/[[ruta]].ts` + `functions/_reenviar.ts`, con tests en `apps/api/test/reenviar.test.ts`) que
+   reenvía `/api/*` a Render. Así el navegador habla con UN solo sitio (`taller-6hb.pages.dev`), la cookie de sesión
+   funciona y Brave no bloquea nada. Falta configurarlo en Cloudflare (proyecto `taller` → Settings → Variables and
+   secrets, Production): agregar `API_URL=https://taller-api-5n9i.onrender.com` y cambiar `VITE_API_URL` a `/api`;
+   volver a desplegar. `CORS_ORIGIN` de Render deja de importar (mismo origen). La función solo corre en Cloudflare:
+   no se pudo probar ahí aún, solo con tests y compilándola con esbuild. Un dominio propio queda como mejora
+   opcional (las passkeys quedan atadas a la dirección: si se cambia, se vuelven a registrar).
 2. Aplicar migraciones en Neon con la conexión directa (sin `-pooler`):
    `$env:DATABASE_URL='<directa>'; npm run db:migrate` (esto también carga el catálogo de vehículos).
 3. Crear el administrador de la APP en Neon (`crear-admin` con la misma `DATABASE_URL`; ver nota de nombres
@@ -254,10 +260,11 @@ Pendiente al retomar:
     editable (la tarifa de pintura, los montos de desabollado y los combos se hicieron en la Fase 4). 72 tests. Cuentas de prueba solo en la BD local:
     `dueno@taller.local` / `demo-taller-2026` (Taller Demo).
 - Respaldo diario con GitHub Actions (puede esperar a la Fase 2).
-- **Antes de publicar el login hace falta dominio propio** (p. ej. `app.<dominio>` y `api.<dominio>`):
-  la cookie de sesión no funciona entre `pages.dev` y `onrender.com` (cookies de terceros bloqueadas en
-  Brave/Safari/Chrome). Además Brave Shields bloquea `onrender.com` (`ERR_BLOCKED_BY_CLIENT`).
-  La cookie hoy es `SameSite=Lax`; con ambos subdominios bajo el mismo dominio sigue funcionando.
+- **Para que el login funcione en producción la web y la API deben verse como un solo sitio:** la cookie de sesión
+  no funciona entre `pages.dev` y `onrender.com` (cookies de terceros bloqueadas en Brave/Safari/Chrome) y Brave
+  Shields bloquea `onrender.com` (`ERR_BLOCKED_BY_CLIENT`). Se resuelve con la función de reenvío de Cloudflare
+  (ver el paso 1 de arriba) o, si se compra un dominio, con `app.` y `api.` bajo el mismo dominio. La cookie es
+  `SameSite=Lax`.
 
 Notas del entorno (Windows):
 - La API tarda ~13 s en arrancar. Para probarla desde PowerShell usar `127.0.0.1` en vez de `localhost`

@@ -7,6 +7,8 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Las llamadas a la API (/api/...) nunca se responden con la pantalla de la app.
+      workbox: { navigateFallbackDenylist: [/^\/api\//] },
       manifest: {
         name: 'Taller - Presupuestos',
         short_name: 'Presupuestos',
