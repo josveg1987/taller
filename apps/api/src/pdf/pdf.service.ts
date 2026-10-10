@@ -27,12 +27,17 @@ export class PdfService {
   async presupuesto(tallerId: string, id: string): Promise<{ numero: number; pdf: Buffer }> {
     const p = await this.presupuestos.obtener(tallerId, id);
     const { rows } = await this.db.conTaller(tallerId, (c) =>
-      c.query<{ nombre: string; direccion: string | null; telefono: string | null; datos_transferencia: string | null }>(
-        'SELECT nombre, direccion, telefono, datos_transferencia FROM talleres',
+      c.query<{
+        nombre: string;
+        direccion: string | null;
+        telefono: string | null;
+        datos_transferencia: string | null;
+        logo_claro_svg: string | null;
+      }>('SELECT nombre, direccion, telefono, datos_transferencia, logo_claro_svg FROM talleres',
       ),
     );
     const t = rows[0];
-    const taller: TallerParaPdf = { nombre: t.nombre, direccion: t.direccion, telefono: t.telefono, datosTransferencia: t.datos_transferencia };
+    const taller: TallerParaPdf = { nombre: t.nombre, direccion: t.direccion, telefono: t.telefono, datosTransferencia: t.datos_transferencia, logoSvg: t.logo_claro_svg };
     const pdf = await pdfmake.createPdf(construirDocumento(taller, p)).getBuffer();
     return { numero: p.numero, pdf: Buffer.from(pdf) };
   }

@@ -9,6 +9,8 @@ export interface Perfil {
   nombre: string;
   email: string;
   taller: { id: string; nombre: string } | null;
+  /** true si entro con una contrasena temporal: debe cambiarla antes de usar la app. */
+  debeCambiarPassword: boolean;
 }
 
 export type EstadoSesion =

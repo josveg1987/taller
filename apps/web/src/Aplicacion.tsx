@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from './api';
+import { FormularioPassword } from './cuenta/CambiarPassword';
 import { AbrirCuenta } from './Encabezado';
 import { Hoja } from './Hoja';
 import { Icono, type NombreIcono } from './Iconos';
@@ -10,6 +11,7 @@ import { ClienteNuevo } from './clientes/ClienteNuevo';
 import { Clientes } from './clientes/Clientes';
 import { VehiculoDetalle } from './clientes/VehiculoDetalle';
 import { TallerDetalle } from './admin/TallerDetalle';
+import { Administradores } from './admin/Administradores';
 import { TallerNuevo } from './admin/TallerNuevo';
 import { Talleres } from './admin/Talleres';
 import { Combos } from './piezas/Combos';
@@ -34,11 +36,13 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
   const { salir, refrescar } = useSesion();
   const ruta = useRuta();
   const [cuenta, setCuenta] = useState(false);
+  const [cambiandoClave, setCambiandoClave] = useState(false);
+  const [claveCambiada, setClaveCambiada] = useState(false);
   const contenido = useRef<HTMLElement>(null);
 
   const esAdmin = perfil.tipo === 'admin_app';
   const dentro = esAdmin && perfil.taller !== null;
-  const enAdmin = esAdmin && ruta.startsWith('/talleres');
+  const enAdmin = esAdmin && (ruta.startsWith('/talleres') || ruta.startsWith('/administradores'));
   // Hay un taller sobre el cual trabajar: el propio, o aquel al que entro el administrador de la app.
   const hayTaller = !esAdmin || dentro;
 
@@ -62,8 +66,9 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
   // Dentro del asistente la barra inferior se oculta: la accion principal va abajo, fija.
   let enAsistente = false;
   if (enAdmin) {
-    const [, segundo] = ruta.split('/').filter(Boolean);
-    if (segundo === 'nuevo') pantalla = <TallerNuevo />;
+    const [primerAdmin, segundo] = ruta.split('/').filter(Boolean);
+    if (primerAdmin === 'administradores') pantalla = <Administradores />;
+    else if (segundo === 'nuevo') pantalla = <TallerNuevo />;
     else if (segundo) pantalla = <TallerDetalle key={segundo} id={segundo} />;
     else pantalla = <Talleres />;
   } else if (hayTaller) {
@@ -170,7 +175,35 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
             <span className="item-texto detalle">{esAdmin ? 'Administrador de la APP' : `Administrador de ${perfil.taller?.nombre}`}</span>
           </div>
         </div>
+        {claveCambiada && (
+          <p className="ok" role="status">
+            Contraseña cambiada. Las demás sesiones abiertas se cerraron.
+          </p>
+        )}
         <div className="pila">
+          <button
+            type="button"
+            className="boton secundario"
+            onClick={() => {
+              setClaveCambiada(false);
+              setCuenta(false);
+              setCambiandoClave(true);
+            }}
+          >
+            Cambiar contraseña
+          </button>
+          {esAdmin && (
+            <button
+              type="button"
+              className="boton secundario"
+              onClick={() => {
+                setCuenta(false);
+                irA('/administradores');
+              }}
+            >
+              Administradores de la APP
+            </button>
+          )}
           <button
             type="button"
             className="boton secundario"
@@ -182,6 +215,18 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
             Cerrar sesión
           </button>
         </div>
+      </Hoja>
+
+      <Hoja abierta={cambiandoClave} titulo="Cambiar contraseña" onCerrar={() => setCambiandoClave(false)}>
+        {cambiandoClave && (
+          <FormularioPassword
+            onListo={() => {
+              setCambiandoClave(false);
+              setClaveCambiada(true);
+              setCuenta(true);
+            }}
+          />
+        )}
       </Hoja>
     </div>
     </AbrirCuenta.Provider>

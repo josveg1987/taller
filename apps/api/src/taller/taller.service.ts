@@ -139,8 +139,8 @@ export class TallerService {
     try {
       const { rows } = await this.db.conTaller(tallerId, (c) =>
         c.query<FilaUsuario>(
-          `INSERT INTO usuarios (taller_id, nombre, email, password_hash)
-           VALUES ($1, $2, $3, $4) RETURNING id, nombre, email, activo, creado_en`,
+          `INSERT INTO usuarios (taller_id, nombre, email, password_hash, debe_cambiar_password)
+           VALUES ($1, $2, $3, $4, true) RETURNING id, nombre, email, activo, creado_en`,
           [tallerId, datos.nombre, datos.email, hash],
         ),
       );
@@ -211,7 +211,11 @@ export class TallerService {
     }
 
     const hash = await hashPassword(nueva);
-    await this.db.conTaller(tallerId, (c) => c.query('UPDATE usuarios SET password_hash = $1 WHERE id = $2', [hash, id]));
+    // Si la cambia otra persona (administrador), queda como temporal: el usuario debe cambiarla al entrar.
+    const propia = quien.tipo === 'taller' && quien.usuarioId === id;
+    await this.db.conTaller(tallerId, (c) =>
+      c.query('UPDATE usuarios SET password_hash = $1, debe_cambiar_password = $3 WHERE id = $2', [hash, id, !propia]),
+    );
     // La sesion desde la que se hace el cambio se conserva; las demas de ese usuario se cierran.
     await this.db.admin('DELETE FROM sesiones WHERE usuario_id = $1 AND id <> $2', [id, quien.sesionId]);
   }

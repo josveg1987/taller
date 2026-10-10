@@ -18,4 +18,6 @@ export interface UsuarioResumen {
 
 export interface TallerDetalle extends TallerResumen {
   usuarios: UsuarioResumen[];
+  /** Logo SVG para fondo claro (el del PDF); null si no tiene. */
+  logoClaroSvg: string | null;
 }

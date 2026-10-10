@@ -134,12 +134,26 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
 - **Hecho, probado y subido a GitHub:** Fases 1, 1b, 2 (2a a 2d: BD, login, administrador de la APP, administrador
   de taller), 3 (clientes y vehículos), catálogo de vehículos (SII) con sugerencias propias del taller, y 4 (piezas,
   combos, montos rápidos y desabollado sugerido).
-- **Hecho en local (sin push): Fase 5, el presupuesto** (ver detalle abajo). 273 tests de la API (`npm run test:db`)
+- **Hecho en local (sin push): Fase 5, el presupuesto** (ver detalle abajo). 298 tests de la API (`npm run test:db`)
   + 10 de `shared` (`npm test`).
 - **Hecho en local (sin push): Fase 6, PDF + vista previa + enviar por WhatsApp + estados** (ver detalle abajo).
 - **Hecho en local (sin push): rediseño de la interfaz** según `prototipoUI/` (etapas 1 a 4 del plan: tokens y tema de
   Vega, componentes base y `<Encabezado>`, todas las pantallas migradas, íconos/manifest/`theme-color` `#11223D`). Falta la
   etapa 5 y la revisión final (360/390/1280 px con capturas, hecha en 390 y 1280).
+- **Hecho en local (sin push): preparación para publicar** (2026-10-10). (1) **Contraseña temporal:** columnas
+  `usuarios.debe_cambiar_password` y `administradores_app.debe_cambiar_password`; se activan cuando un administrador crea
+  una cuenta o le pone clave a otra persona (y en `crear-admin` si la clave la genera el comando) y se apagan cuando la
+  persona cambia la suya con `POST /auth/password` (pide la actual, cierra las demás sesiones, con freno de intentos). El
+  perfil (`/auth/me`) trae `debeCambiarPassword` y la web muestra `CambiarPasswordObligatorio` antes de la app (el bloqueo
+  es solo de la interfaz). La hoja "Cuenta" tiene "Cambiar contraseña". (2) **Administradores de la APP:** `/admin/administradores`
+  (listar, crear con clave temporal, activar/desactivar, clave temporal a otro; no a sí mismo), pantalla `/administradores`
+  desde la hoja Cuenta (reutiliza `GestionUsuarios`). (3) **Logo en el PDF:** `talleres.logo_claro_svg` (SVG para fondo
+  claro), `PUT /admin/talleres/:id/logo` solo para el administrador de la APP (el rol `taller_app` no puede escribir esa
+  columna), saneado en `src/marca/svg.ts` (sin scripts, imágenes, enlaces externos ni eventos; máx. 100 KB; con viewBox); el
+  PDF lo dibuja (`pdfmake` renderiza bien el logo de Vega) y, sin logo, escribe el nombre; la tarjeta "Logo del PDF" está en
+  el detalle del taller. (4) **Taller nuevo:** `ConfiguracionPendiente` en el inicio (tarifa, margen, condiciones,
+  transferencia, dirección y teléfono; se puede ocultar) y aviso en el paso 3 si la tarifa de pintura está en $0. El ingreso
+  ya tenía freno de intentos (5 fallos por 15 min por IP+correo, en memoria).
 - **Siguiente (etapa 5, por taller):** rubro (pintura o mecánica: otra interfaz), logo en SVG (se guardaría como texto en
   la BD, sin R2; sanear el SVG; dos versiones o recolor automático desde los grupos `icono/nombre/eslogan/linea`) y la
   paleta de 2 colores por taller, todo editado solo por el administrador de la APP (ver `docs/marca-por-taller.md`);
@@ -148,9 +162,8 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
 - **Pendiente para después (decidido 2026-10-10):** "Olvidé mi contraseña" por correo (servicio transaccional por API HTTP,
   p. ej. Resend o Brevo, porque el plan gratis de Render bloquea SMTP; necesita dominio propio verificado; enlace de un solo
   uso que vence en 1 h, guardado con hash, sin revelar si el correo existe, con límite de intentos). Mientras tanto el
-  administrador (de la APP o del taller) pone una contraseña temporal y se la pasa por WhatsApp. Lo que sí falta antes del
-  piloto: que el usuario cambie la temporal al entrar, que el administrador de la APP cambie la suya desde la app y pueda
-  crear un segundo administrador de la APP (hoy solo existe el comando `crear-admin`).
+  administrador (de la APP o del taller) pone una contraseña temporal y se la pasa por WhatsApp. Eso (que el usuario cambie la
+  temporal al entrar, y que el administrador de la APP cambie la suya y cree otros) ya está hecho.
 - **Cómo se aplican las migraciones:** a mano (`npm run db:migrate`; en Neon con la conexión directa). Render no las corre
   al desplegar: migrar primero y subir el código después. Una migración nueva de la plantilla de piezas solo llega a los
   talleres que se creen después (a los existentes, con "Agregar las piezas estándar que falten").

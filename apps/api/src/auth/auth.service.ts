@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { createHash, randomBytes } from 'node:crypto';
 import { DatabaseService } from '../database/database.service';
 import { Contexto } from './contexto';
@@ -15,6 +15,8 @@ export interface Perfil {
   nombre: string;
   email: string;
   taller: { id: string; nombre: string } | null;
+  /** true si la cuenta tiene una contrasena temporal: debe cambiarla antes de usar la app. */
+  debeCambiarPassword: boolean;
 }
 
 @Injectable()
@@ -117,8 +119,8 @@ export class AuthService {
 
   async perfil(c: Contexto): Promise<Perfil> {
     if (c.tipo === 'admin_app') {
-      const { rows } = await this.db.admin<{ nombre: string; email: string }>(
-        'SELECT nombre, email FROM administradores_app WHERE id = $1',
+      const { rows } = await this.db.admin<{ nombre: string; email: string; debe_cambiar_password: boolean }>(
+        'SELECT nombre, email, debe_cambiar_password FROM administradores_app WHERE id = $1',
         [c.adminId],
       );
       let taller: Perfil['taller'] = null;
@@ -129,15 +131,23 @@ export class AuthService {
         );
         taller = t.rows[0] ?? null;
       }
-      return { tipo: 'admin_app', id: c.adminId, nombre: rows[0].nombre, email: rows[0].email, taller };
+      return {
+        tipo: 'admin_app',
+        id: c.adminId,
+        nombre: rows[0].nombre,
+        email: rows[0].email,
+        taller,
+        debeCambiarPassword: rows[0].debe_cambiar_password,
+      };
     }
     const { rows } = await this.db.admin<{
       nombre: string;
       email: string;
       taller_id: string;
       taller_nombre: string;
+      debe_cambiar_password: boolean;
     }>(
-      `SELECT u.nombre, u.email, t.id AS taller_id, t.nombre AS taller_nombre
+      `SELECT u.nombre, u.email, u.debe_cambiar_password, t.id AS taller_id, t.nombre AS taller_nombre
          FROM usuarios u JOIN talleres t ON t.id = u.taller_id WHERE u.id = $1`,
       [c.usuarioId],
     );
@@ -148,6 +158,27 @@ export class AuthService {
       nombre: r.nombre,
       email: r.email,
       taller: { id: r.taller_id, nombre: r.taller_nombre },
+      debeCambiarPassword: r.debe_cambiar_password,
     };
+  }
+
+  /**
+   * Cambia la contrasena de la propia cuenta (pide la actual), apaga el aviso de contrasena temporal y
+   * cierra las demas sesiones de esa cuenta; la sesion desde la que se cambia se conserva.
+   */
+  async cambiarPasswordPropia(c: Contexto, actual: string, nueva: string): Promise<void> {
+    const esAdmin = c.tipo === 'admin_app';
+    const id = esAdmin ? c.adminId : c.usuarioId;
+    const tabla = esAdmin ? 'administradores_app' : 'usuarios';
+    const { rows } = await this.db.admin<{ password_hash: string }>(`SELECT password_hash FROM ${tabla} WHERE id = $1`, [id]);
+    if (!rows[0] || !(await verifyPassword(actual, rows[0].password_hash))) {
+      throw new BadRequestException('La contraseña actual no es correcta');
+    }
+    if (actual === nueva) throw new BadRequestException('La contraseña nueva debe ser distinta de la actual');
+    await this.db.admin(`UPDATE ${tabla} SET password_hash = $1, debe_cambiar_password = false WHERE id = $2`, [
+      await hashPassword(nueva),
+      id,
+    ]);
+    await this.db.admin(`DELETE FROM sesiones WHERE ${esAdmin ? 'admin_id' : 'usuario_id'} = $1 AND id <> $2`, [id, c.sesionId]);
   }
 }

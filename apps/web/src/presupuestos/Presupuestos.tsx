@@ -8,6 +8,7 @@ import { Icono } from '../Iconos';
 import { InsigniaAuto } from '../marca/insignias';
 import { irA } from '../ruta';
 import { useTallerActual } from '../sesion';
+import { ConfiguracionPendiente } from './ConfiguracionPendiente';
 import { borrarBorrador, listarBorradores } from './local';
 import { ESTADOS, type Borrador, type PresupuestoResumen } from './tipos';
 
@@ -41,6 +42,7 @@ export function Presupuestos() {
       </div>
 
       <div className="cuerpo">
+      <ConfiguracionPendiente />
       {borradores.length > 0 && (
         <>
           <h2>Sin guardar en este teléfono</h2>

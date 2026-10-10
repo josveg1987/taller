@@ -36,10 +36,12 @@ async function main() {
     // El correo es el identificador de ingreso: no puede coincidir con el de un usuario de taller.
     const enUso = await pool.query('SELECT 1 FROM usuarios WHERE lower(email) = lower($1)', [email]);
     if (enUso.rowCount) throw new Error(`El correo ${email} ya lo usa un usuario de taller`);
-    await pool.query('INSERT INTO administradores_app (nombre, email, password_hash) VALUES ($1, $2, $3)', [
+    // Si la clave la genera el comando, debe cambiarla al entrar (la vio quien ejecuto el comando).
+    await pool.query('INSERT INTO administradores_app (nombre, email, password_hash, debe_cambiar_password) VALUES ($1, $2, $3, $4)', [
       nombre,
       email,
       await hashPassword(clave),
+      password === undefined,
     ]);
     console.log(`Administrador creado: ${email}`);
     if (password === undefined) console.log(`Contraseña (guárdala, no se vuelve a mostrar): ${clave}`);

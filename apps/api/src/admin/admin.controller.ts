@@ -1,6 +1,7 @@
-import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Inject, Param, Patch, Post, Put } from '@nestjs/common';
 import { Contexto } from '../auth/contexto';
 import { SesionActual, SoloAdminApp } from '../auth/decoradores';
+import { sanearSvg } from '../marca/svg';
 import { AdminService } from './admin.service';
 import { booleano, cuerpo, email, entero, idValido, password, texto } from '../validacion';
 
@@ -40,6 +41,38 @@ export class AdminController {
         b.maxUsuarios === undefined ? undefined : entero(b.maxUsuarios, 'El máximo de usuarios', 1, MAX_USUARIOS),
       activo: b.activo === undefined ? undefined : booleano(b.activo, 'Activo'),
     });
+  }
+
+  /** Logo SVG del taller (el del PDF). svg: null lo quita. Se valida y limpia antes de guardarlo. */
+  @Put('talleres/:id/logo')
+  @HttpCode(204)
+  async cambiarLogo(@Param('id') id: string, @Body() body: unknown): Promise<void> {
+    const b = cuerpo(body);
+    await this.admin.cambiarLogo(idValido(id), b.svg === null ? null : sanearSvg(b.svg));
+  }
+
+  @Get('administradores')
+  listarAdministradores() {
+    return this.admin.listarAdministradores();
+  }
+
+  @Post('administradores')
+  crearAdministrador(@Body() body: unknown) {
+    const b = cuerpo(body);
+    return this.admin.crearAdministrador({ nombre: texto(b.nombre, 'El nombre'), email: email(b.email), password: password(b.password) });
+  }
+
+  @Patch('administradores/:id')
+  cambiarEstadoAdministrador(@Param('id') id: string, @Body() body: unknown, @SesionActual() c: Contexto) {
+    const quien = c.tipo === 'admin_app' ? c.adminId : '';
+    return this.admin.cambiarEstadoAdministrador(idValido(id), booleano(cuerpo(body).activo, 'Activo'), quien);
+  }
+
+  @Post('administradores/:id/password')
+  @HttpCode(204)
+  async cambiarPasswordAdministrador(@Param('id') id: string, @Body() body: unknown, @SesionActual() c: Contexto): Promise<void> {
+    const quien = c.tipo === 'admin_app' ? c.adminId : '';
+    await this.admin.cambiarPasswordAdministrador(idValido(id), password(cuerpo(body).password), quien);
   }
 
   @Post('talleres/:id/usuarios')

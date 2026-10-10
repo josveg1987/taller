@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CampoDinero } from '../CampoDinero';
 import { clp } from '../dinero';
+import { irA } from '../ruta';
 import type { Actualizar } from './Asistente';
 import type { Totales } from './calculo';
 import type { DatosPresupuesto } from './datos';
@@ -15,6 +16,8 @@ interface Props {
 
 export function PasoAjustes({ b, actualizar, datos, totales }: Props) {
   const [vistaInterna, setVistaInterna] = useState(false);
+  // Tarifa sin definir: las piezas parten con pintura en $0 (el taller nuevo aun no la configura).
+  const sinTarifa = datos.config.tarifaPintura === 0 && b.lineas.some((l) => l.operacion !== 'libre' && l.pintura === 0);
 
   const cambiarLinea = (clave: string, cambio: Partial<LineaBorrador>) =>
     actualizar((x) => ({ lineas: x.lineas.map((l) => (l.clave === clave ? { ...l, ...cambio } : l)) }));
@@ -22,6 +25,14 @@ export function PasoAjustes({ b, actualizar, datos, totales }: Props) {
 
   return (
     <div className="cuerpo sobre-encabezado">
+      {sinTarifa && (
+        <div className="aviso aviso-tarifa" role="status">
+          <p>Tu tarifa de pintura está en $0, por eso la pintura parte en cero. Defínela en Mi taller (este presupuesto queda guardado en tu teléfono).</p>
+          <button type="button" className="enlace" onClick={() => irA('/mi-taller')}>
+            Ir a Mi taller
+          </button>
+        </div>
+      )}
       {b.lineas.length === 0 && <p className="vacio">No hay piezas. Vuelve al paso anterior para agregarlas.</p>}
 
       {b.lineas.map((l, i) => (

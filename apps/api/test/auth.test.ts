@@ -81,7 +81,9 @@ describe('inicio de sesion', () => {
     expect(r.setCookie).toMatch(/SameSite=Lax/i);
     const perfil = await r.res.json();
     expect(perfil).toMatchObject({ tipo: 'taller', nombre: 'Ana', taller: { id: tallerId } });
-    expect(JSON.stringify(perfil)).not.toMatch(/hash|password/i);
+    // El perfil nunca trae el hash ni una contraseña (solo el aviso de que la actual es temporal).
+    expect(JSON.stringify(perfil)).not.toMatch(/hash|"password"/i);
+    expect(perfil.debeCambiarPassword).toBe(false);
   });
 
   it('el email no distingue mayusculas', async () => {

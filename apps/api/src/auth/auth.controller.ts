@@ -16,6 +16,7 @@ import { COOKIE_SESION, leerCookie } from './auth.guard';
 import { Contexto, Respuesta, Solicitud } from './contexto';
 import { Publico, SesionActual } from './decoradores';
 import { Limitador } from './limitador';
+import { cuerpo, password } from '../validacion';
 
 const opcionesCookie = () => ({
   httpOnly: true,
@@ -27,6 +28,8 @@ const opcionesCookie = () => ({
 @Controller('auth')
 export class AuthController {
   private readonly limitador = new Limitador();
+  /** Freno para adivinar la contrasena actual desde una sesion ya abierta. */
+  private readonly limitadorCambio = new Limitador();
 
   constructor(@Inject(AuthService) private readonly auth: AuthService) {}
 
@@ -67,6 +70,25 @@ export class AuthController {
     const token = leerCookie(req.headers.cookie, COOKIE_SESION);
     if (token) await this.auth.cerrarSesion(token);
     res.clearCookie(COOKIE_SESION, opcionesCookie());
+  }
+
+  /** Cambia la contrasena de la propia cuenta. Pide la actual. */
+  @Post('password')
+  @HttpCode(204)
+  async cambiarPassword(@SesionActual() contexto: Contexto, @Body() body: unknown): Promise<void> {
+    const b = cuerpo(body);
+    if (typeof b.actual !== 'string' || !b.actual) throw new BadRequestException('Escribe tu contraseña actual');
+    const nueva = password(b.nueva);
+    if (this.limitadorCambio.bloqueado(contexto.sesionId)) {
+      throw new HttpException('Demasiados intentos. Espera unos minutos.', 429);
+    }
+    try {
+      await this.auth.cambiarPasswordPropia(contexto, b.actual, nueva);
+    } catch (e) {
+      if (e instanceof BadRequestException) this.limitadorCambio.fallo(contexto.sesionId);
+      throw e;
+    }
+    this.limitadorCambio.exito(contexto.sesionId);
   }
 
   @Get('me')

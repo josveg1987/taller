@@ -6,6 +6,8 @@ export interface TallerParaPdf {
   direccion: string | null;
   telefono: string | null;
   datosTransferencia: string | null;
+  /** Logo SVG para fondo claro (ya validado al guardarlo). Si falta, se escribe el nombre. */
+  logoSvg: string | null;
 }
 
 /** Subconjunto del presupuesto que se imprime. Nunca incluye la vista interna (costos y ganancia). */
@@ -104,7 +106,7 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
           {
             width: '*',
             stack: [
-              { text: taller.nombre, fontSize: 20, bold: true },
+              taller.logoSvg ? { svg: taller.logoSvg, width: 170 } : { text: taller.nombre, fontSize: 20, bold: true },
               ...(contacto.length ? [{ text: contacto.join('\n'), color: COLOR_SUAVE, fontSize: 9.5, margin: [0, 3, 0, 0] as [number, number, number, number] }] : []),
             ],
           },

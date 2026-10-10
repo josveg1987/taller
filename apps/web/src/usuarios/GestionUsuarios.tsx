@@ -16,6 +16,8 @@ export interface RutasUsuarios {
   crear: string;
   usuario(id: string): string;
   password(id: string): string;
+  /** Si existe, la propia contrasena se cambia aqui (con la actual) en vez de en password(id). */
+  passwordPropia?: string;
 }
 
 interface Props {
@@ -25,6 +27,10 @@ interface Props {
   rutas: RutasUsuarios;
   /** Id del usuario que esta usando la pantalla (si es un usuario de taller), para proteger su cuenta. */
   miId?: string;
+  /** Titulo de la lista (por defecto, "Usuarios (x de y)"). */
+  titulo?: string;
+  /** Texto del boton y de la hoja para agregar (por defecto, "Agregar usuario"). */
+  textoAgregar?: string;
   /** "Agregar usuario" es la accion principal de la pantalla (si no, se ve como secundaria). */
   principal?: boolean;
   ejecutar: Ejecutar;
@@ -34,7 +40,7 @@ interface Props {
 }
 
 /** Lista de usuarios como tarjetas agrupadas; el detalle y el alta se abren en hojas. */
-export function GestionUsuarios({ usuarios, usuariosActivos, maxUsuarios, rutas, miId, principal, ejecutar, error, limpiarError }: Props) {
+export function GestionUsuarios({ titulo, textoAgregar = 'Agregar usuario', usuarios, usuariosActivos, maxUsuarios, rutas, miId, principal, ejecutar, error, limpiarError }: Props) {
   // El id se conserva al cerrar para que la hoja mantenga su contenido durante la animacion de salida.
   const [idHoja, setIdHoja] = useState<string | null>(null);
   const [verUsuario, setVerUsuario] = useState(false);
@@ -49,11 +55,9 @@ export function GestionUsuarios({ usuarios, usuariosActivos, maxUsuarios, rutas,
 
   return (
     <>
-      <h2>
-        Usuarios ({usuariosActivos} de {maxUsuarios})
-      </h2>
+      <h2>{titulo ?? `Usuarios (${usuariosActivos} de ${maxUsuarios})`}</h2>
       {usuarios.length === 0 ? (
-        <p className="vacio">Este taller aún no tiene usuarios.</p>
+        <p className="vacio">Aún no hay cuentas.</p>
       ) : (
         <ul className="grupo">
           {usuarios.map((u) => (
@@ -93,7 +97,7 @@ export function GestionUsuarios({ usuarios, usuariosActivos, maxUsuarios, rutas,
           }}
         >
           <Icono nombre="mas" />
-          Agregar usuario
+          {textoAgregar}
         </button>
         {lleno && <p className="detalle">Se alcanzó el límite de usuarios del taller. Desactiva a alguien o pide ampliarlo.</p>}
       </div>
@@ -111,7 +115,7 @@ export function GestionUsuarios({ usuarios, usuariosActivos, maxUsuarios, rutas,
         )}
       </Hoja>
 
-      <Hoja abierta={agregando} titulo="Agregar usuario" onCerrar={cerrar(setAgregando)}>
+      <Hoja abierta={agregando} titulo={textoAgregar} onCerrar={cerrar(setAgregando)}>
         <FormularioNuevo rutas={rutas} ejecutar={ejecutar} error={error} alTerminar={() => setAgregando(false)} />
       </Hoja>
     </>
@@ -149,10 +153,12 @@ function DetalleUsuario({
     e.preventDefault();
     void ejecutar(
       () =>
-        api(rutas.password(usuario.id), {
-          method: 'POST',
-          json: esYo ? { password: clave, actual } : { password: clave },
-        }),
+        esYo && rutas.passwordPropia
+          ? api(rutas.passwordPropia, { method: 'POST', json: { actual, nueva: clave } })
+          : api(rutas.password(usuario.id), {
+              method: 'POST',
+              json: esYo ? { password: clave, actual } : { password: clave },
+            }),
       esYo
         ? 'Tu contraseña fue cambiada. Las demás sesiones abiertas se cerraron.'
         : `Contraseña de ${usuario.nombre} cambiada. Sus sesiones abiertas se cerraron.`,
@@ -177,7 +183,8 @@ function DetalleUsuario({
             </label>
           )}
           <label className="campo">
-            Nueva contraseña (mínimo 8 caracteres)
+            {esYo ? 'Nueva contraseña' : 'Contraseña temporal'} (mínimo 8 caracteres)
+            {!esYo && <span className="ayuda">La persona deberá cambiarla al entrar. Pásasela por WhatsApp.</span>}
             <input
               type={esYo ? 'password' : 'text'}
               autoComplete={esYo ? 'new-password' : 'off'}
@@ -199,7 +206,7 @@ function DetalleUsuario({
         <div className="pila">
           <Mensaje error={error} />
           <button type="button" className="boton secundario" onClick={() => setCambiando(true)}>
-            Cambiar contraseña
+            {esYo ? 'Cambiar contraseña' : 'Poner contraseña temporal'}
           </button>
           {!esYo && (
             <button
@@ -253,12 +260,13 @@ function FormularioNuevo({
         <input type="email" required autoCapitalize="none" autoComplete="off" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} />
       </label>
       <label className="campo">
-        Contraseña inicial (mínimo 8 caracteres)
+        Contraseña temporal (mínimo 8 caracteres)
+        <span className="ayuda">La persona deberá cambiarla al entrar. Pásasela por WhatsApp.</span>
         <input type="text" autoComplete="off" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
       </label>
       <Mensaje error={error} />
       <button type="submit" className="boton">
-        Crear usuario
+        Crear cuenta
       </button>
     </form>
   );

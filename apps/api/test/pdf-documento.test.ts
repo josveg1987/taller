@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { construirDocumento, fechaCl, pesos, type PresupuestoParaPdf, type TallerParaPdf } from '../src/pdf/pdf.documento';
 
-const taller: TallerParaPdf = { nombre: 'Taller Sur', direccion: 'Av. Pajaritos 1234, Maipú', telefono: '+56 9 1111 2222', datosTransferencia: 'Banco X · Cta 123' };
+const taller: TallerParaPdf = { nombre: 'Taller Sur', direccion: 'Av. Pajaritos 1234, Maipú', telefono: '+56 9 1111 2222', datosTransferencia: 'Banco X · Cta 123', logoSvg: null };
 
 const base: PresupuestoParaPdf = {
   numero: 12,
@@ -55,6 +55,14 @@ describe('documento del presupuesto', () => {
     for (const ausente of ['Descuento', 'Para iniciar el trabajo', 'Plazo estimado', 'Observaciones', 'Condiciones', 'transferencia']) {
       expect(t).not.toContain(ausente);
     }
+  });
+
+  it('con logo lo dibuja en vez del nombre en texto grande', () => {
+    const logo = '<svg viewBox="0 0 10 10"><path d="M0 0h10v10z"/></svg>';
+    const con = construirDocumento({ ...taller, logoSvg: logo }, base);
+    expect(JSON.stringify(con)).toContain('"svg"');
+    expect(JSON.stringify(con)).not.toContain('"text":"Taller Sur","fontSize":20');
+    expect(JSON.stringify(construirDocumento(taller, base))).not.toContain('"svg"');
   });
 
   it('un dia de plazo va en singular', () => {

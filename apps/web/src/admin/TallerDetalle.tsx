@@ -3,6 +3,7 @@ import { api } from '../api';
 import { mensajeDe, useAcciones, type Ejecutar } from '../acciones';
 import { Cargando } from '../Cargando';
 import { Encabezado } from '../Encabezado';
+import { LogoTaller } from './LogoTaller';
 import { HojaConfirmar } from '../Hoja';
 import { irA } from '../ruta';
 import { useSesion } from '../sesion';
@@ -66,6 +67,8 @@ export function TallerDetalle({ id }: { id: string }) {
       )}
 
       <DatosTaller taller={taller} ejecutar={ejecutar} />
+
+      <LogoTaller tallerId={taller.id} svg={taller.logoClaroSvg} ejecutar={ejecutar} />
 
       <GestionUsuarios
         usuarios={taller.usuarios}

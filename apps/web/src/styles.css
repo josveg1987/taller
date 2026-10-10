@@ -1304,3 +1304,117 @@ canvas.pdf-pagina {
   color: var(--color-texto-suave);
   background: var(--color-neutro-fondo);
 }
+
+/* Archivo oculto: el boton visible es la etiqueta que lo contiene. */
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.selector-archivo {
+  cursor: pointer;
+}
+
+.selector-archivo:focus-within {
+  outline: 3px solid var(--color-foco);
+  outline-offset: 2px;
+}
+
+.vista-logo {
+  display: flex;
+  justify-content: center;
+  padding: var(--esp-4);
+  border-radius: var(--radio-m);
+  background: var(--color-superficie);
+  box-shadow: inset 0 0 0 1px var(--color-linea);
+}
+
+.vista-logo img {
+  max-width: 100%;
+  max-height: 80px;
+}
+
+/* Texto solo para lectores de pantalla. */
+.sr-solo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Lista de lo que falta configurar. */
+.lista-pendientes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-2);
+  margin: var(--esp-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-pendientes li {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-3);
+  font-weight: 600;
+}
+
+.marca-pendiente {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-borde-campo);
+  border-radius: 50%;
+}
+
+.lista-pendientes .hecho {
+  color: var(--color-texto-suave);
+  font-weight: 400;
+}
+
+.lista-pendientes .hecho .marca-pendiente {
+  border-color: var(--color-ok-texto);
+  color: var(--color-sobre-acento);
+  background: var(--color-ok-texto);
+}
+
+.lista-pendientes .marca-pendiente .icono {
+  width: 16px;
+  height: 16px;
+  stroke-width: 3;
+}
+
+.item-acciones {
+  justify-content: flex-end;
+  min-height: var(--toque);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.aviso-tarifa {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--esp-1);
+  margin-top: 0;
+}
+
+.aviso-tarifa .enlace {
+  padding-left: 0;
+}
+
+.grupo .boton.secundario {
+  background: var(--color-suave);
+  box-shadow: none;
+}

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { API_URL } from './api';
 import { Aplicacion } from './Aplicacion';
+import { CambiarPasswordObligatorio } from './cuenta/CambiarPassword';
 import { Login } from './Login';
 import { Portada } from './Portada';
 import { ProveedorSesion, useSesion } from './sesion';
@@ -29,7 +30,11 @@ function Pantalla() {
       </Portada>
     );
   }
-  return estado.fase === 'activa' ? <Aplicacion perfil={estado.perfil} /> : <Login />;
+  if (estado.fase === 'activa') {
+    // Una contrasena temporal (dada por un administrador) se cambia antes de usar la app.
+    return estado.perfil.debeCambiarPassword ? <CambiarPasswordObligatorio /> : <Aplicacion perfil={estado.perfil} />;
+  }
+  return <Login />;
 }
 
 export function App() {
