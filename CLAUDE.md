@@ -155,6 +155,12 @@ administradores allá), (2) no hay ningún administrador de la APP en Neon, y (3
 envía entre `pages.dev` y `onrender.com` (falta configurar la función de reenvío, paso 1, o comprar dominio). La web pública hoy muestra el login
 y no deja entrar. Es aceptable porque aún no hay usuarios reales. La app completa se prueba en local.
 
+**Cuándo hacerlo:** estos pasos son SOLO para el día de publicar (una sola vez, ~30 minutos, se hacen junto al dueño del
+proyecto porque usan sus claves). En desarrollo local no cambian nada (la función de reenvío no se usa en local). Es la
+fecha límite antes del piloto; conviene adelantarlo si se quiere probar la app en un celular real (en local solo corre
+en el computador), por ejemplo al terminar la Fase 5. Hasta entonces la web pública seguirá mostrando el login sin dejar
+entrar, y está bien: no hay usuarios reales.
+
 Para dejar producción funcionando, en este orden:
 1. **Sin dominio propio, gratis (decidido 2026-10-10):** el código ya trae una Cloudflare Pages Function
    (`functions/api/[[ruta]].ts` + `functions/_reenviar.ts`, con tests en `apps/api/test/reenviar.test.ts`) que

@@ -7,6 +7,7 @@ import { ClientesModule } from './clientes/clientes.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
 import { PiezasModule } from './piezas/piezas.module';
+import { PresupuestosModule } from './presupuestos/presupuestos.module';
 import { TallerModule } from './taller/taller.module';
 import { VehiculosModule } from './vehiculos/vehiculos.module';
 
@@ -21,6 +22,7 @@ import { VehiculosModule } from './vehiculos/vehiculos.module';
     VehiculosModule,
     CatalogoModule,
     PiezasModule,
+    PresupuestosModule,
   ],
   controllers: [HealthController],
 })

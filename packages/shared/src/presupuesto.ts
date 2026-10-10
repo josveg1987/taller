@@ -1,11 +1,12 @@
 // Reglas de calculo del presupuesto. Los montos son pesos chilenos enteros.
 // Esta misma funcion se usa en la PWA (total en vivo) y en la API (valor oficial).
 
-export type Operacion = 'reparar' | 'reemplazar';
+/** reparar = pintura + desabollado; reemplazar = pintura + repuesto con margen; libre = precio directo (HU-09). */
+export type Operacion = 'reparar' | 'reemplazar' | 'libre';
 
 export interface LineaInput {
   operacion: Operacion;
-  /** Tarifa de pintura de la pieza (por defecto la del taller, editable). */
+  /** Tarifa de pintura de la pieza (por defecto la del taller, editable). No aplica a un item libre. */
   pintura: number;
   /** Solo aplica al reparar. */
   desabollado?: number;
@@ -13,6 +14,8 @@ export interface LineaInput {
   repuestoCosto?: number;
   /** Margen del taller sobre el repuesto, en porcentaje. */
   margenPct: number;
+  /** Solo aplica a un item libre: su precio. */
+  precio?: number;
 }
 
 export interface LineaCalculada {
@@ -24,6 +27,9 @@ export interface LineaCalculada {
 }
 
 export function calcularLinea(l: LineaInput): LineaCalculada {
+  if (l.operacion === 'libre') {
+    return { pintura: 0, desabollado: 0, repuestoCosto: 0, repuestoPrecio: 0, precioTotal: l.precio ?? 0 };
+  }
   const reemplaza = l.operacion === 'reemplazar';
   const repuestoCosto = reemplaza ? (l.repuestoCosto ?? 0) : 0;
   const repuestoPrecio = Math.round(repuestoCosto * (1 + l.margenPct / 100));

@@ -31,6 +31,21 @@ describe('calcularPresupuesto', () => {
     expect(calcularPresupuesto(ejemplo, 9999999).total).toBe(0);
   });
 
+  it('un item libre vale su precio y no suma pintura, desabollado ni repuesto', () => {
+    const r = calcularPresupuesto([
+      ...ejemplo,
+      { operacion: 'libre', pintura: 80000, desabollado: 5000, repuestoCosto: 9000, margenPct: 25, precio: 25000 },
+    ]);
+    expect(r.lineas[3]).toEqual({ pintura: 0, desabollado: 0, repuestoCosto: 0, repuestoPrecio: 0, precioTotal: 25000 });
+    expect(r.total).toBe(725000);
+    expect(r.costoRepuestos).toBe(320000); // el item libre no cuenta como repuesto
+    expect(calcularPresupuesto([{ operacion: 'libre', pintura: 0, margenPct: 0 }]).total).toBe(0);
+  });
+
+  it('sin lineas el total es cero', () => {
+    expect(calcularPresupuesto([]).total).toBe(0);
+  });
+
   it('redondea a pesos enteros', () => {
     const r = calcularPresupuesto([
       { operacion: 'reemplazar', pintura: 0, repuestoCosto: 10001, margenPct: 25 },
