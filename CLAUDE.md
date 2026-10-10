@@ -113,6 +113,26 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
   módulo de mecánica hasta que se pida (ver "Fuera del MVP").
 
 ## Estado actual
+
+**RESUMEN PARA RETOMAR (cierre de sesión 2026-10-10):**
+- **Hecho, probado y subido a GitHub:** Fases 1, 1b, 2 (2a a 2d: BD, login, administrador de la APP, administrador
+  de taller), 3 (clientes y vehículos), catálogo de vehículos (SII) con sugerencias propias del taller, y 4 (piezas,
+  combos, montos rápidos y desabollado sugerido). 224 tests de la API (`npm run test:db`) + 8 de `shared` (`npm test`).
+- **Siguiente: Fase 5, el presupuesto** (HU-05 a 10, 13, 28, 30, 32, 35, 43): flujo de 3 pantallas (patente → piezas →
+  ajustar), lado elegido una vez, combos, reparar/reemplazar por pieza, desabollado pre-llenado con el sugerido de la
+  pieza, total en vivo con `@taller/shared`, el servidor recalcula, numeración, vista interna, borradores locales.
+  Luego Fase 6 (PDF + compartir por WhatsApp + logo con R2). Supuestos a confirmar con el taller piloto: pintura igual
+  por pieza y editable; anticipo de repuestos con el precio con margen.
+- **Retomar en local:** abrir Docker Desktop → `npm run db:up` → `npm run dev:api` y `npm run dev:web`
+  (http://localhost:5173). Cuentas de prueba SOLO en la BD local: administrador de la APP `admin@taller.local` (la
+  contraseña la mostró `crear-admin`; si se perdió, crear otra) y taller demo `dueno@taller.local` / `demo-taller-2026`
+  (Taller Demo, con clientes, piezas y combos de prueba).
+- **Cómo trabajar con el dueño del proyecto:** es nuevo en DevOps, explicarle en lenguaje simple; **antes de cambios
+  nuevos, proponer y esperar su autorización** (lo pidió explícitamente); no hacer push ni migrar Neon sin que lo pida;
+  comandos simples, uno por llamada (menos avisos de permiso).
+- **Pendiente fuera del código** (lo hace el dueño): definir en Mi taller la tarifa de pintura, el margen de repuestos,
+  los datos de transferencia y las condiciones; y dominio propio + Neon para que producción funcione (ver abajo).
+
 Fase 1 completa y verificada en local (2026-10-08): tests de `shared` pasan (8/8), `npm run build`
 compila todo, `/health` responde con `db.ok=true` y la PWA muestra "Conectado". Docker Desktop (WSL 2)
 ya está instalado en el equipo de desarrollo y la BD corre con `npm run db:up` (`db:down` conserva los datos).
@@ -128,9 +148,9 @@ Fase 1b completa (2026-10-09): publicado y validado desde el celular y el comput
   Variables: `VITE_API_URL` (URL de Render, sin barra final) y `NODE_VERSION=24`.
 - Render y Cloudflare redespliegan solos con cada push a `main`.
 
-**ESTADO DE PRODUCCIÓN (2026-10-09, al cerrar la sesión):** el código de la Fase 2 completa + diseño móvil se
-subió a `main`, así que Render y Cloudflare publican la versión nueva, **pero producción NO funciona para
-iniciar sesión**: (1) las 3 migraciones **no se han aplicado en Neon** (no existen usuarios, sesiones ni
+**ESTADO DE PRODUCCIÓN (2026-10-10, al cerrar la sesión):** todo el código hasta la Fase 4 está en `main`, así que
+Render y Cloudflare publican la versión nueva, **pero producción NO funciona para iniciar sesión**: (1) las
+migraciones **no se han aplicado en Neon** (no existen usuarios, sesiones, clientes, catálogos ni
 administradores allá), (2) no hay ningún administrador de la APP en Neon, y (3) la cookie de sesión no se
 envía entre `pages.dev` y `onrender.com` (hace falta dominio propio). La web pública hoy muestra el login
 y no deja entrar. Es aceptable porque aún no hay usuarios reales. La app completa se prueba en local.
@@ -154,7 +174,7 @@ presupuesto), `GET|PATCH /vehiculos/:id` (incluye cambiar de dueño dentro del t
 verificador (se guarda `12345678-5`). Migración `…busqueda-sin-tildes` (extensión estándar `unaccent`;
 en Neon se crea sola al migrar). Web `apps/web/src/clientes/` con pestaña **Clientes** (la barra inferior
 queda en Inicio · Clientes · Mi taller; "Usuarios" ahora cuelga de Mi taller). 95 tests. Sin borrado de
-clientes ni vehículos todavía. Siguiente: Fase 4 (catálogo) o saltar al presupuesto (Fase 5).
+clientes ni vehículos todavía; falta la pantalla para cambiar el dueño de un vehículo (la API ya lo permite).
 
 **Catálogo de vehículos (2026-10-10)**: marca > modelo > años para sugerir al escribir (en cualquier orden:
 marca→año→modelo o marca→modelo→año). Fuente: tasación fiscal de livianos del SII
@@ -203,15 +223,14 @@ sin preguntar. Usar comandos simples, uno por llamada (los compuestos con `;`/pi
 Pendiente al retomar:
 - **Cambiar la contraseña de la BD en Neon** (quedó visible en una captura del chat): Neon > Connect >
   Reset password, y actualizar `DATABASE_URL` en Render.
-- Fase 2 en curso. **2a hecha en local** (2026-10-09): migración `1791562700525_modelo-inicial.sql`
+- Fase 2 completa (detalle de 2a a 2d). **2a** (2026-10-09): migración `1791562700525_modelo-inicial.sql`
   (8 tablas + RLS + rol `taller_app` + numeración por taller), `conTaller()` y 13 tests de aislamiento.
   Regla de trabajo: no hacer push ni migrar Neon sin que el dueño del proyecto lo pida (el push a `main`
   redespliega Render y Cloudflare). El push del 2026-10-09 lo pidió él al cerrar la Fase 2.
   **2b-1 hecha en local** (API de autenticación): migración `1791563400978_usuarios-roles-sesiones.sql`,
   módulo `apps/api/src/auth/` (scrypt, sesiones en BD, guard global, `/auth/login|logout|me`),
-  comando `crear-admin` y 38 tests (`npm run test:db`). Sin commit aún al escribir esto.
-  Pendiente de la Fase 2, en este orden:
-  - 2b-2 hecha en local: pantalla de login en la web (`apps/web/src/`: `api.ts`, `sesion.tsx`, `Login.tsx`,
+  comando `crear-admin` y 38 tests (`npm run test:db`).
+  - 2b-2: pantalla de login en la web (`apps/web/src/`: `api.ts`, `sesion.tsx`, `Login.tsx`,
     `Inicio.tsx`). Al abrir llama a `/health` y `/auth/me`; cerrar sesión borra datos locales
     (`datosLocales.ts`). Cuenta de prueba solo en la BD local: `admin@taller.local` (contraseña que mostró
     `crear-admin`; para otra, crear una nueva con ese comando).
@@ -220,19 +239,19 @@ Pendiente al retomar:
     `Hoja.tsx` (hojas, confirmación, selector) e `Iconos.tsx`; marco con barra inferior en `Aplicacion.tsx`.
     Revisado con capturas en 390 y 1280 px: ningún elemento tocable < 48 px, ningún campo < 16 px, sin
     desborde horizontal.
-  - 2c hecha en local: mantenedores del administrador de la APP. API en `apps/api/src/admin/`
+  - 2c: mantenedores del administrador de la APP. API en `apps/api/src/admin/`
     (`/admin/talleres`, `/admin/usuarios/:id`, `/admin/talleres/:id/entrar`, `/admin/salir-taller`; usa
     `db.admin()` sin RLS a propósito, solo con `@SoloAdminApp()`); pantallas en `apps/web/src/admin/` con
     navegación por hash (`ruta.ts`) y marco en `Aplicacion.tsx`. No hay borrado de talleres ni usuarios:
     solo suspender / desactivar. El correo no puede repetirse entre `usuarios` y `administradores_app`
     (validado en código, no en la BD). 54 tests en total.
-  - 2d hecha en local: administrador de taller. API `apps/api/src/taller/` (`GET|PATCH /taller`,
+  - 2d: administrador de taller. API `apps/api/src/taller/` (`GET|PATCH /taller`,
     `/taller/usuarios`; todo por `conTaller()`, también sirve al admin de la APP una vez "dentro" de un taller)
     y pantallas `apps/web/src/taller/` ("Datos del taller" y "Usuarios", con `usuarios/GestionUsuarios.tsx`
     compartido con el panel de admin). Migración `…permisos-columnas-talleres`: `taller_app` NO puede cambiar
     `max_usuarios` ni `activo` (solo el admin de la APP). Cambiar la propia contraseña pide la actual; un
-    usuario no puede desactivarse a sí mismo. Fuera de 2d: logo (necesita R2), `tarifa_pintura`, montos de
-    desabollado y combos (Fase 4), numeración. 72 tests. Cuentas de prueba solo en la BD local:
+    usuario no puede desactivarse a sí mismo. Fuera de 2d: el logo (necesita R2; va con el PDF) y la numeración
+    editable (la tarifa de pintura, los montos de desabollado y los combos se hicieron en la Fase 4). 72 tests. Cuentas de prueba solo en la BD local:
     `dueno@taller.local` / `demo-taller-2026` (Taller Demo).
 - Respaldo diario con GitHub Actions (puede esperar a la Fase 2).
 - **Antes de publicar el login hace falta dominio propio** (p. ej. `app.<dominio>` y `api.<dominio>`):
