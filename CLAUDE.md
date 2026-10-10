@@ -145,6 +145,15 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
   paleta de 2 colores por taller, todo editado solo por el administrador de la APP (ver `docs/marca-por-taller.md`);
   el PDF usaría el logo (`TallerParaPdf` en `pdf.documento.ts`; probar antes que `pdfmake` dibuje bien ese SVG). Después, el
   ícono de instalación por taller (manifest por taller o ícono único del producto: decidir con el dominio).
+- **Pendiente para después (decidido 2026-10-10):** "Olvidé mi contraseña" por correo (servicio transaccional por API HTTP,
+  p. ej. Resend o Brevo, porque el plan gratis de Render bloquea SMTP; necesita dominio propio verificado; enlace de un solo
+  uso que vence en 1 h, guardado con hash, sin revelar si el correo existe, con límite de intentos). Mientras tanto el
+  administrador (de la APP o del taller) pone una contraseña temporal y se la pasa por WhatsApp. Lo que sí falta antes del
+  piloto: que el usuario cambie la temporal al entrar, que el administrador de la APP cambie la suya desde la app y pueda
+  crear un segundo administrador de la APP (hoy solo existe el comando `crear-admin`).
+- **Cómo se aplican las migraciones:** a mano (`npm run db:migrate`; en Neon con la conexión directa). Render no las corre
+  al desplegar: migrar primero y subir el código después. Una migración nueva de la plantilla de piezas solo llega a los
+  talleres que se creen después (a los existentes, con "Agregar las piezas estándar que falten").
   Supuestos a confirmar con el taller piloto: pintura igual por pieza y editable; anticipo de repuestos con el precio
   con margen. Importar el cliente desde la libreta de contactos quedó para después (solo funciona en Android Chrome).
 - **Retomar en local:** abrir Docker Desktop → `npm run db:up` → `npm run dev:api` y `npm run dev:web`
