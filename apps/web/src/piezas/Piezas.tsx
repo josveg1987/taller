@@ -3,8 +3,9 @@ import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
 import { clp } from '../dinero';
 import { Hoja } from '../Hoja';
+import { Cargando } from '../Cargando';
+import { Encabezado } from '../Encabezado';
 import { Icono } from '../Iconos';
-import { irA } from '../ruta';
 import type { Pieza } from './tipos';
 
 interface DatosPieza {
@@ -34,15 +35,7 @@ export function Piezas() {
   useEffect(cargar, [cargar]);
   const { error, aviso, ejecutar, limpiarError } = useAcciones(cargar);
 
-  if (!piezas) {
-    return errorCarga ? (
-      <p className="error" role="alert">
-        {errorCarga}
-      </p>
-    ) : (
-      <p className="vacio">Cargando…</p>
-    );
-  }
+  if (!piezas) return <Cargando titulo="Piezas" atras={{ texto: "Mi taller", ruta: "/mi-taller" }} error={errorCarga} />;
 
   const elegida = piezas.find((p) => p.id === idHoja);
   const indice = elegida ? piezas.indexOf(elegida) : -1;
@@ -53,18 +46,17 @@ export function Piezas() {
 
   return (
     <section>
-      <button type="button" className="enlace volver" onClick={() => irA('/mi-taller')}>
-        <Icono nombre="atras" />
-        Mi taller
-      </button>
-      <h1>Piezas</h1>
-      <p className="subtitulo">
-        {tarifaTaller > 0
-          ? `Las piezas que cotizas. La tarifa de pintura por defecto es ${clp(tarifaTaller)}; cada pieza puede tener la suya.`
-          : 'Las piezas que cotizas. Define la tarifa de pintura por defecto en Mi taller, en Presupuestos.'}
-      </p>
+      <Encabezado
+        titulo="Piezas"
+        atras={{ texto: "Mi taller", ruta: "/mi-taller" }}
+        sub={
+          tarifaTaller > 0
+            ? `Las piezas que cotizas. La tarifa de pintura por defecto es ${clp(tarifaTaller)}; cada pieza puede tener la suya.`
+            : "Las piezas que cotizas. Define la tarifa de pintura por defecto en Mi taller, en Presupuestos."
+        }
+      />
 
-      <div className="pila">
+      <div className="flotante">
         <button
           type="button"
           className="boton"
@@ -78,6 +70,7 @@ export function Piezas() {
         </button>
       </div>
 
+      <div className="cuerpo">
       {error && (
         <p className="error" role="alert">
           {error}
@@ -127,6 +120,8 @@ export function Piezas() {
         >
           Agregar las piezas estándar que falten
         </button>
+      </div>
+
       </div>
 
       <Hoja abierta={creando} titulo="Nueva pieza" onCerrar={cerrar(setCreando)}>

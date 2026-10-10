@@ -4,6 +4,8 @@ import { mensajeDe } from '../acciones';
 import { descripcionVehiculo } from '../clientes/tipos';
 import { clp } from '../dinero';
 import { fechaCorta } from '../fechas';
+import { Cargando } from '../Cargando';
+import { Encabezado } from '../Encabezado';
 import { Hoja } from '../Hoja';
 import { Icono } from '../Iconos';
 import { irA } from '../ruta';
@@ -34,41 +36,31 @@ export function PresupuestoDetalle({ id }: { id: string }) {
       .catch((e: unknown) => setError(mensajeDe(e, 'No se pudo cargar el presupuesto')));
   }, [id]);
 
-  if (!p) {
-    return error ? (
-      <p className="error" role="alert">
-        {error}
-      </p>
-    ) : (
-      <p className="vacio">Cargando…</p>
-    );
-  }
+  if (!p) return <Cargando titulo="Presupuesto" atras={{ texto: "Presupuestos", ruta: "/" }} error={error} />;
 
   return (
     <section>
-      <button type="button" className="enlace volver" onClick={() => irA('/')}>
-        <Icono nombre="atras" />
-        Presupuestos
-      </button>
-      <div className="titulo-fila">
-        <h1>N° {p.numero}</h1>
-        <span className={`chip estado-${p.estado}`}>{ESTADOS[p.estado]}</span>
-      </div>
-      <p className="subtitulo">
-        {fechaCorta(p.fecha)} · válido hasta el {fechaCorta(p.validoHasta)}
-      </p>
-      {p.plazoDias && (
-        <p className="subtitulo">
-          Plazo estimado: {p.plazoDias} {p.plazoDias === 1 ? 'día hábil' : 'días hábiles'}
-        </p>
-      )}
+      <Encabezado
+        titulo={`N° ${p.numero}`}
+        atras={{ texto: "Presupuestos", ruta: "/" }}
+        sub={
+          <>
+            {fechaCorta(p.fecha)} · válido hasta el {fechaCorta(p.validoHasta)}
+            {p.plazoDias ? <> · Plazo: {p.plazoDias} {p.plazoDias === 1 ? "día hábil" : "días hábiles"}</> : null}
+          </>
+        }
+      />
 
-      <div className="pila">
+      <div className="flotante">
+        <div className="fila-estado">
+          <span className="detalle">Estado</span>
+          <span className={`chip estado-${p.estado}`}>{ESTADOS[p.estado]}</span>
+        </div>
         <button type="button" className="boton" onClick={() => irA(`/presupuestos/${p.id}/pdf`)}>
           <Icono nombre="documento" />
-          {p.estado === 'borrador' ? 'Ver PDF y enviar' : 'Ver PDF'}
+          {p.estado === "borrador" ? "Ver PDF y enviar" : "Ver PDF"}
         </button>
-        {p.estado === 'borrador' ? (
+        {p.estado === "borrador" ? (
           <button type="button" className="boton secundario" onClick={() => irA(`/presupuestos/${p.id}/editar`)}>
             Editar presupuesto
           </button>
@@ -80,16 +72,17 @@ export function PresupuestoDetalle({ id }: { id: string }) {
             <button type="button" className="boton secundario" onClick={() => irA(`/presupuestos/${p.id}/duplicar`)}>
               Duplicar como borrador
             </button>
+            <p className="ayuda centro-texto">Ya salió hacia el cliente, por eso no se edita. Para hacer cambios, duplícalo.</p>
           </>
         )}
+        {errorEstado && (
+          <p className="error" role="alert">
+            {errorEstado}
+          </p>
+        )}
       </div>
-      {p.estado !== 'borrador' && <p className="ayuda centro-texto">Ya salió hacia el cliente, por eso no se edita. Para hacer cambios, duplícalo.</p>}
-      {errorEstado && (
-        <p className="error" role="alert">
-          {errorEstado}
-        </p>
-      )}
 
+      <div className="cuerpo">
       <h2>Cliente y vehículo</h2>
       <div className="grupo">
         <button type="button" className="item" onClick={() => irA(`/clientes/${p.cliente.id}`)}>
@@ -177,6 +170,7 @@ export function PresupuestoDetalle({ id }: { id: string }) {
           ))}
         </div>
       </Hoja>
+      </div>
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import { clp } from '../dinero';
+import { Encabezado } from '../Encabezado';
 import { fechaCorta, haceCuanto } from '../fechas';
 import { HojaConfirmar } from '../Hoja';
 import { Icono } from '../Iconos';
@@ -30,16 +31,15 @@ export function Presupuestos() {
 
   return (
     <section>
-      <h1>Presupuestos</h1>
-      <p className="subtitulo">Arma uno en 3 pasos: vehículo, piezas y ajustes.</p>
-
-      <div className="pila">
+      <Encabezado titulo="Presupuestos" sub="Arma uno en 3 pasos: vehículo, piezas y ajustes." />
+      <div className="flotante">
         <button type="button" className="boton" onClick={() => irA('/presupuestos/nuevo')}>
           <Icono nombre="mas" />
           Nuevo presupuesto
         </button>
       </div>
 
+      <div className="cuerpo">
       {borradores.length > 0 && (
         <>
           <h2>Sin guardar en este teléfono</h2>
@@ -113,6 +113,7 @@ export function Presupuestos() {
           if (x) void borrarBorrador(x.id).then(cargarBorradores);
         }}
       />
+      </div>
     </section>
   );
 }

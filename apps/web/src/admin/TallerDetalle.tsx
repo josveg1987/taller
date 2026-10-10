@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { mensajeDe, useAcciones, type Ejecutar } from '../acciones';
+import { Cargando } from '../Cargando';
+import { Encabezado } from '../Encabezado';
 import { HojaConfirmar } from '../Hoja';
-import { Icono } from '../Iconos';
 import { irA } from '../ruta';
 import { useSesion } from '../sesion';
 import { GestionUsuarios, type RutasUsuarios } from '../usuarios/GestionUsuarios';
@@ -36,33 +37,23 @@ export function TallerDetalle({ id }: { id: string }) {
     });
   }
 
-  if (!taller) {
-    return errorCarga ? (
-      <p className="error" role="alert">
-        {errorCarga}
-      </p>
-    ) : (
-      <p className="vacio">Cargando…</p>
-    );
-  }
+  if (!taller) return <Cargando titulo="Taller" atras={{ texto: "Talleres", ruta: "/talleres" }} error={errorCarga} />;
 
   return (
     <section>
-      <button type="button" className="enlace volver" onClick={() => irA('/talleres')}>
-        <Icono nombre="atras" />
-        Talleres
-      </button>
-      <div className="titulo-fila">
-        <h1>{taller.nombre}</h1>
-        <span className={`chip ${taller.activo ? 'activo' : 'suspendido'}`}>{taller.activo ? 'Activo' : 'Suspendido'}</span>
-      </div>
+      <Encabezado titulo={taller.nombre} atras={{ texto: "Talleres", ruta: "/talleres" }} />
 
-      <div className="pila">
+      <div className="flotante">
+        <div className="fila-estado">
+          <span className="detalle">Estado</span>
+          <span className={`chip ${taller.activo ? 'activo' : 'suspendido'}`}>{taller.activo ? 'Activo' : 'Suspendido'}</span>
+        </div>
         <button type="button" className="boton" onClick={() => void entrar()}>
           Entrar a este taller
         </button>
       </div>
 
+      <div className="cuerpo">
       {error && (
         <p className="error" role="alert">
           {error}
@@ -87,6 +78,7 @@ export function TallerDetalle({ id }: { id: string }) {
       />
 
       <SuspenderTaller taller={taller} ejecutar={ejecutar} />
+      </div>
     </section>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { API_URL } from './api';
 import { Aplicacion } from './Aplicacion';
 import { Login } from './Login';
+import { Portada } from './Portada';
 import { ProveedorSesion, useSesion } from './sesion';
 
 function Pantalla() {
@@ -9,27 +10,23 @@ function Pantalla() {
 
   if (estado.fase === 'cargando') {
     return (
-      <div className="app">
-        <main className="contenido centrado" aria-busy="true">
-          <h1>Presupuestos</h1>
-          <p className="chip conectando">Conectando con el servidor…</p>
-        </main>
-      </div>
+      <Portada ocupado>
+        <h1>Presupuestos</h1>
+        <p className="subtitulo">Conectando con el servidor…</p>
+      </Portada>
     );
   }
   if (estado.fase === 'sin-conexion') {
     return (
-      <div className="app">
-        <main className="contenido centrado">
-          <h1>Presupuestos</h1>
-          <p className="chip sin-conexion" role="alert">
-            Sin conexión con el servidor
-          </p>
-          <button type="button" className="boton" onClick={reintentar}>
-            Reintentar
-          </button>
-        </main>
-      </div>
+      <Portada>
+        <h1>Presupuestos</h1>
+        <p className="error" role="alert">
+          Sin conexión con el servidor
+        </p>
+        <button type="button" className="boton" onClick={reintentar}>
+          Reintentar
+        </button>
+      </Portada>
     );
   }
   return estado.fase === 'activa' ? <Aplicacion perfil={estado.perfil} /> : <Login />;

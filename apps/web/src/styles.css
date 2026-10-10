@@ -1,30 +1,55 @@
 /* ==========================================================================
    Tokens de diseno. Colores, espacios, formas y tiempos viven AQUI; los componentes no
    deben escribir valores sueltos. Reglas completas: seccion "Diseno movil" del CLAUDE.md.
+   Referencia visual: prototipoUI/index.html. La "marca" (azul y naranja de Vega) es el tema del
+   taller: mas adelante cada taller trae su paleta y solo cambian las variables --color-marca-* y
+   --color-acento-* / --color-tinte-*.
    ========================================================================== */
 :root {
   color-scheme: light;
 
-  /* Colores (contraste verificado sobre --color-superficie y --color-fondo) */
-  --color-fondo: #f2f3f5;
+  /* Marca del taller (tema) */
+  --color-marca-950: #0b1424;
+  --color-marca-900: #11223d;
+  --color-marca-700: #1e3556;
+  --color-acento: #c2410c; /* botones, pestana activa: 5,2:1 sobre blanco */
+  --color-acento-sobre-oscuro: #f0612e; /* pasos hechos, foco sobre fondos oscuros */
+  --color-tinte: #fbe3d9; /* chips y seleccion */
+  --color-tinte-texto: #8f2f06;
+
+  /* Neutros */
+  --color-pagina: #e4dfd8; /* fuera de la columna (escritorio) */
+  --color-fondo: #f7f3f0;
   --color-superficie: #ffffff;
-  --color-texto: #111827;
-  --color-texto-suave: #4b5563;
-  --color-borde: #cdd1d8; /* separadores decorativos */
-  --color-borde-campo: #6b7280; /* bordes de campos: >= 3:1 */
-  --color-primario: #1f2937;
-  --color-sobre-primario: #ffffff;
-  --color-secundario: #e5e7eb;
-  --color-acento: #1d4ed8;
-  --color-foco: #2563eb;
-  --color-ok-fondo: #dcfce7;
-  --color-ok-texto: #166534;
-  --color-error-fondo: #fee2e2;
-  --color-error-texto: #991b1b;
-  --color-aviso-fondo: #fef3c7;
-  --color-aviso-texto: #92400e;
-  --color-peligro: #b91c1c;
-  --color-velo: rgb(17 24 39 / 0.45);
+  --color-campo: #fbf9f7;
+  --color-suave: #efebe6; /* botones suaves */
+  --color-texto: var(--color-marca-900);
+  --color-texto-suave: #5b6472;
+  --color-linea: #eee9e0; /* divisores */
+  --color-borde: #d6d0c5; /* bordes decorativos */
+  --color-borde-campo: #928c82; /* bordes de campos: >= 3:1 */
+  --color-foco: var(--color-acento-sobre-oscuro);
+
+  /* Texto sobre la marca (encabezado, barra inferior) */
+  --color-sobre-marca: #ffffff;
+  --color-sobre-marca-suave: #e3e7ee;
+  --color-sobre-marca-tenue: #c9ced6;
+  --color-nav-inactivo: #c5cedc;
+  --color-sobre-acento: #ffffff;
+
+  /* Estados */
+  --color-peligro: #b42318;
+  --color-deshabilitado: #aeb4be;
+  --color-ok-fondo: #ddf3e4;
+  --color-ok-texto: #14532d;
+  --color-aviso-fondo: #fdf0d5;
+  --color-aviso-texto: #7a4300;
+  --color-error-fondo: #fde7e4;
+  --color-error-texto: #9a1b12;
+  --color-neutro-fondo: #e8ecf2;
+  --color-neutro-texto: #364152;
+  --color-interruptor-apagado: #8a8f98;
+  --color-velo: rgb(11 20 36 / 0.62);
 
   /* Espacios */
   --esp-1: 4px;
@@ -33,37 +58,58 @@
   --esp-4: 16px;
   --esp-5: 24px;
   --esp-6: 32px;
+  --esp-lateral: 20px;
 
-  /* Formas y tamanos */
-  --radio-s: 10px;
-  --radio-m: 14px;
+  /* Formas */
+  --radio-xs: 7px;
+  --radio-s: 12px;
+  --radio-m: 16px;
   --radio-l: 22px;
+  --radio-xl: 24px;
+  --radio-hoja: 28px;
+  --radio-hero: 36px;
   --radio-pildora: 999px;
+
+  /* Sombras y degradados */
+  --sombra-tarjeta: 0 6px 20px rgb(17 34 61 / 0.08);
+  --sombra-flotante: 0 10px 28px rgb(17 34 61 / 0.14);
+  --sombra-nav: 0 8px 20px rgb(17 34 61 / 0.25);
+  --sombra-barra: 0 -8px 24px rgb(17 34 61 / 0.12);
+  --sombra-pagina: 0 1px 6px rgb(17 24 39 / 0.18);
+  --degradado-encabezado: linear-gradient(135deg, var(--color-marca-950) 0%, var(--color-marca-900) 55%, var(--color-marca-700) 100%);
+  --degradado-portada: linear-gradient(180deg, var(--color-marca-950) 0%, var(--color-marca-900) 60%, var(--color-marca-700) 100%);
+
+  /* Tamanos */
   --toque: 48px; /* alto minimo de todo lo tocable */
-  --barra-inferior: 64px;
+  --toque-grande: 56px; /* botones principales, filas, buscador */
+  --campo-alto: 52px;
   --ancho-max: 640px;
   --icono: 24px;
-  --pestana-icono-ancho: 56px;
-  --pestana-icono-alto: 32px;
-  --asa-ancho: 40px;
-  --asa-alto: 4px;
+  --logo-ancho: 108px;
+  --logo-ancho-chico: 84px;
+  --logo-portada-ancho: 240px;
+  --portada-alto: 400px;
+  --solape: 44px; /* cuanto sube la tarjeta flotante sobre el encabezado */
+  --asa-ancho: 44px;
+  --asa-alto: 5px;
   --campo-corto: 7rem;
-  --hoja-alto-max: 88dvh;
+  --hoja-alto-max: 94dvh;
   --sugerencias-alto: 14rem;
   --interruptor-ancho: 52px;
   --interruptor-alto: 32px;
-  --interruptor-margen: 4px;
+  --interruptor-margen: 3px;
   --pieza-ancho-min: 9.5rem; /* rejilla de piezas: 2 columnas en un telefono de 360px */
   --pieza-alto-min: 64px;
-  --sombra-barra: 0 -4px 16px rgb(17 24 39 / 0.08);
-  --sombra-pagina: 0 1px 6px rgb(17 24 39 / 0.18);
 
   /* Tipografia (del sistema) */
   --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --texto-xs: 0.75rem;
+  --texto-detalle: 0.8125rem;
   --texto-s: 0.875rem;
   --texto-m: 1rem; /* 16px: evita el zoom de iOS en los campos */
-  --texto-xs: 0.75rem;
+  --texto-boton: 1.0625rem;
   --texto-l: 1.125rem;
+  --texto-xl: 1.5rem;
   --titulo: 2rem;
 
   /* Movimiento */
@@ -76,7 +122,7 @@
   --seguro-abajo: env(safe-area-inset-bottom, 0px);
   --seguro-izq: env(safe-area-inset-left, 0px);
   --seguro-der: env(safe-area-inset-right, 0px);
-  --margen-lateral: max(var(--esp-4), var(--seguro-izq), var(--seguro-der));
+  --margen-lateral: max(var(--esp-lateral), var(--seguro-izq), var(--seguro-der));
 }
 
 /* ==========================================================================
@@ -101,7 +147,8 @@ body {
   font-size: var(--texto-m);
   line-height: 1.45;
   color: var(--color-texto);
-  background: var(--color-fondo);
+  background: var(--color-pagina);
+  -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -142,7 +189,7 @@ button {
 }
 
 /* ==========================================================================
-   Marco de la app: barra superior, contenido con scroll propio, barra inferior
+   Marco de la app: contenido con scroll propio y barra inferior flotante
    ========================================================================== */
 .app {
   display: flex;
@@ -154,79 +201,39 @@ button {
   background: var(--color-fondo);
 }
 
-.barra-superior {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--esp-3);
-  min-height: calc(var(--toque) + var(--esp-2));
-  padding: calc(var(--esp-2) + var(--seguro-arriba)) var(--margen-lateral) 0;
-}
-
-.contexto {
-  min-width: 0;
-  overflow: hidden;
-  font-size: var(--texto-s);
-  font-weight: 600;
-  color: var(--color-texto-suave);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.avatar {
-  flex: none;
-  width: var(--toque);
-  height: var(--toque);
-  border: 0;
-  border-radius: var(--radio-pildora);
-  font-weight: 700;
-  color: var(--color-sobre-primario);
-  background: var(--color-primario);
-}
-
 .contenido {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 0 var(--margen-lateral) var(--esp-6);
-}
-
-.contenido.centrado {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: var(--esp-4);
-  padding-top: var(--seguro-arriba);
-  padding-bottom: var(--seguro-abajo);
-}
-
-.contenido.centrado > form,
-.contenido.centrado > .boton {
-  width: 100%;
 }
 
 .banner {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
   gap: var(--esp-3);
-  margin: var(--esp-2) var(--margen-lateral) 0;
-  padding: var(--esp-1) var(--esp-2) var(--esp-1) var(--esp-4);
-  border-radius: var(--radio-m);
+  padding: calc(var(--esp-1) + var(--seguro-arriba)) var(--margen-lateral) var(--esp-1);
   font-size: var(--texto-s);
   color: var(--color-aviso-texto);
   background: var(--color-aviso-fondo);
 }
 
+.banner ~ .contenido .encabezado {
+  padding-top: var(--esp-3);
+}
+
 .barra-inferior {
   display: flex;
   flex: none;
-  padding: 0 var(--seguro-izq) var(--seguro-abajo) var(--seguro-der);
-  background: var(--color-superficie);
-  border-top: 1px solid var(--color-borde);
+  gap: 2px;
+  margin: var(--esp-2) var(--esp-4) max(var(--esp-5), calc(var(--seguro-abajo) + var(--esp-2)));
+  padding: 6px;
+  border-radius: 30px;
+  background: var(--color-marca-900);
+  box-shadow: var(--sombra-nav);
 }
 
 .pestana {
@@ -235,77 +242,216 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--esp-1);
-  min-height: var(--barra-inferior);
-  padding: var(--esp-2) var(--esp-1);
+  gap: 2px;
+  min-height: var(--toque-grande);
+  padding: 0;
   border: 0;
-  font-size: var(--texto-xs);
+  border-radius: var(--radio-xl);
+  font-size: 11px;
   font-weight: 600;
-  color: var(--color-texto-suave);
-  background: none;
-  transition: color var(--t-rapida) var(--curva);
+  color: var(--color-nav-inactivo);
+  background: transparent;
+  transition: background-color var(--t-rapida) var(--curva);
 }
 
 .icono-pestana {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--pestana-icono-ancho);
-  height: var(--pestana-icono-alto);
-  border-radius: var(--radio-pildora);
-  transition: background-color var(--t-rapida) var(--curva);
 }
 
 .pestana[aria-current='page'] {
-  color: var(--color-primario);
-}
-
-.pestana[aria-current='page'] .icono-pestana {
-  background: var(--color-secundario);
+  font-weight: 700;
+  color: var(--color-sobre-acento);
+  background: var(--color-acento);
 }
 
 /* ==========================================================================
-   Pantallas: titulo grande, secciones, mensajes
+   Encabezado de cada pantalla: degradado con la marca, logo, avatar y titulo grande.
+   La tarjeta flotante (.flotante) sube sobre su parte inferior.
    ========================================================================== */
-h1 {
-  margin: var(--esp-4) 0 var(--esp-1);
-  font-size: var(--titulo);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.01em;
+.encabezado {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: calc(var(--esp-3) + var(--seguro-arriba)) var(--margen-lateral) 64px;
+  border-radius: 0 0 var(--radio-hero) var(--radio-hero);
+  color: var(--color-sobre-marca);
+  background: var(--degradado-encabezado);
 }
 
-.titulo-fila {
+.encabezado-fila {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--esp-3);
+  gap: var(--esp-2);
 }
 
-.titulo-fila h1 {
-  min-width: 0;
+.encabezado-logo {
+  display: block;
+  width: var(--logo-ancho);
+  height: auto;
+}
+
+.encabezado-logo.chico {
+  width: var(--logo-ancho-chico);
+}
+
+.encabezado-contexto {
+  font-size: var(--texto-detalle);
+  letter-spacing: 0.4px;
+  color: var(--color-sobre-marca-tenue);
+}
+
+.encabezado h1 {
+  margin: 0;
+  font-size: var(--titulo);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.5px;
+  text-wrap: balance;
   overflow-wrap: anywhere;
 }
 
+.encabezado-sub {
+  margin-top: 6px;
+  font-size: var(--texto-s);
+  line-height: 1.35;
+  color: var(--color-sobre-marca-suave);
+}
+
+.avatar {
+  flex: none;
+  width: var(--toque);
+  height: var(--toque);
+  border: 2px solid rgb(255 255 255 / 0.6);
+  border-radius: 50%;
+  font-size: var(--texto-l);
+  font-weight: 700;
+  color: var(--color-sobre-marca);
+  background: rgb(255 255 255 / 0.14);
+}
+
+.atras {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+  min-height: var(--toque);
+  padding: 0 var(--esp-4) 0 var(--esp-2);
+  border: 0;
+  border-radius: var(--radio-xl);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-sobre-marca);
+  background: rgb(255 255 255 / 0.14);
+}
+
+.pasos-etiqueta {
+  margin-bottom: 6px;
+  font-size: var(--texto-detalle);
+  color: var(--color-sobre-marca-tenue);
+}
+
+.pasos-barra {
+  display: flex;
+  gap: 6px;
+}
+
+.paso-seg {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.25);
+}
+
+.paso-seg.hecho {
+  background: var(--color-acento-sobre-oscuro);
+}
+
+/* Tarjeta blanca que se superpone al encabezado. */
+.flotante {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-3);
+  margin: calc(var(--solape) * -1) var(--margen-lateral) 0;
+  padding: var(--esp-4);
+  border-radius: var(--radio-xl);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-flotante);
+}
+
+.flotante.sin-relleno {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+/* Contenido bajo el encabezado cuando no hay tarjeta flotante: tambien sube un poco. */
+.cuerpo {
+  padding: var(--esp-4) var(--margen-lateral) var(--esp-6);
+}
+
+.cuerpo.sobre-encabezado {
+  position: relative;
+  margin-top: calc(var(--solape) * -1);
+  padding-top: 0;
+}
+
+/* ==========================================================================
+   Portada: ingreso y pantallas de estado antes de entrar
+   ========================================================================== */
+.portada {
+  display: flex;
+  justify-content: center;
+  height: var(--portada-alto);
+  padding-top: calc(84px + var(--seguro-arriba));
+  border-radius: 0 0 40px 40px;
+  background: var(--degradado-portada);
+}
+
+.portada img {
+  align-self: flex-start;
+  width: var(--logo-portada-ancho);
+  height: auto;
+}
+
+.flotante.acceso {
+  margin-top: -96px;
+  padding: var(--esp-5) 22px 22px;
+  gap: var(--esp-4);
+}
+
+.acceso h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+
+/* ==========================================================================
+   Pantallas: secciones y mensajes
+   ========================================================================== */
 .subtitulo {
   color: var(--color-texto-suave);
 }
 
 h2,
 .seccion {
-  margin: var(--esp-5) 0 var(--esp-2) var(--esp-2);
+  margin: var(--esp-5) 0 var(--esp-2) var(--esp-1);
   font-size: var(--texto-m);
   font-weight: 700;
 }
 
 .detalle {
-  font-size: var(--texto-s);
+  font-size: var(--texto-detalle);
+  line-height: 1.35;
   color: var(--color-texto-suave);
 }
 
 .ayuda {
-  font-size: var(--texto-s);
+  font-size: var(--texto-detalle);
   font-weight: 400;
+  line-height: 1.35;
   color: var(--color-texto-suave);
 }
 
@@ -317,10 +463,12 @@ h2,
 }
 
 .error,
-.ok {
+.ok,
+.aviso {
   margin: var(--esp-3) 0 0;
   padding: var(--esp-3) var(--esp-4);
   border-radius: var(--radio-m);
+  font-weight: 600;
 }
 
 .error {
@@ -333,32 +481,29 @@ h2,
   background: var(--color-ok-fondo);
 }
 
+.aviso {
+  color: var(--color-aviso-texto);
+  background: var(--color-aviso-fondo);
+}
+
+/* Etiqueta de estado (pildora pequena). */
 .chip {
   display: inline-block;
   flex: none;
-  padding: 2px var(--esp-3);
+  padding: 2px 10px;
   border-radius: var(--radio-pildora);
-  font-size: var(--texto-s);
-  font-weight: 600;
+  font-size: var(--texto-xs);
+  font-weight: 700;
   white-space: nowrap;
+  color: var(--color-neutro-texto);
+  background: var(--color-neutro-fondo);
 }
 
 .chip.activo,
-.chip.conectado {
+.chip.conectado,
+.chip.estado-aceptado {
   color: var(--color-ok-texto);
   background: var(--color-ok-fondo);
-}
-
-.chip.suspendido,
-.chip.sin-conexion {
-  color: var(--color-error-texto);
-  background: var(--color-error-fondo);
-}
-
-.chip.conectando,
-.chip.estado-borrador {
-  color: var(--color-texto-suave);
-  background: var(--color-secundario);
 }
 
 .chip.estado-enviado {
@@ -366,23 +511,12 @@ h2,
   background: var(--color-aviso-fondo);
 }
 
-.chip.estado-aceptado {
-  color: var(--color-ok-texto);
-  background: var(--color-ok-fondo);
-}
-
+.chip.suspendido,
+.chip.sin-conexion,
 .chip.estado-rechazado,
 .chip.estado-vencido {
   color: var(--color-error-texto);
   background: var(--color-error-fondo);
-}
-
-.aviso {
-  margin: var(--esp-3) 0 0;
-  padding: var(--esp-3) var(--esp-4);
-  border-radius: var(--radio-m);
-  color: var(--color-aviso-texto);
-  background: var(--color-aviso-fondo);
 }
 
 /* ==========================================================================
@@ -393,8 +527,9 @@ h2,
   padding: 0;
   overflow: hidden;
   list-style: none;
-  border-radius: var(--radio-m);
+  border-radius: var(--radio-l);
   background: var(--color-superficie);
+  box-shadow: var(--sombra-tarjeta);
 }
 
 h2 + .grupo,
@@ -403,7 +538,7 @@ h2 + .grupo,
 }
 
 .grupo > * + * {
-  border-top: 1px solid var(--color-borde);
+  border-top: 1px solid var(--color-linea);
 }
 
 .item {
@@ -411,8 +546,8 @@ h2 + .grupo,
   align-items: center;
   gap: var(--esp-3);
   width: 100%;
-  min-height: var(--toque);
-  padding: var(--esp-3) var(--esp-4);
+  min-height: var(--toque-grande);
+  padding: 14px var(--esp-4);
   border: 0;
   text-align: left;
   background: none;
@@ -425,7 +560,7 @@ h2 + .grupo,
 
 .item-titulo {
   display: block;
-  font-weight: 600;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -435,6 +570,10 @@ button.item {
 
 button.item:active {
   background: var(--color-fondo);
+}
+
+button.item:disabled {
+  opacity: 0.6;
 }
 
 .item .icono {
@@ -456,15 +595,18 @@ a.item {
 
 /* Patente: se muestra como una placa. */
 .placa {
-  display: inline-block;
-  padding: 1px var(--esp-2);
-  border-radius: var(--radio-s);
-  font-size: var(--texto-s);
-  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 7px;
+  border: 2px solid var(--color-texto);
+  border-radius: var(--radio-xs);
+  font-size: var(--texto-detalle);
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-texto);
-  background: var(--color-secundario);
+  background: transparent;
 }
 
 .placa.grande {
@@ -478,17 +620,24 @@ a.item {
   margin-top: var(--esp-4);
 }
 
+.flotante > .busqueda {
+  margin-top: 0;
+}
+
 .busqueda .icono {
   position: absolute;
   top: 50%;
-  left: var(--esp-3);
+  left: var(--esp-4);
   transform: translateY(-50%);
   color: var(--color-texto-suave);
   pointer-events: none;
 }
 
 .busqueda input {
-  padding-left: calc(var(--esp-3) + var(--icono) + var(--esp-2));
+  min-height: var(--toque-grande);
+  padding-left: calc(var(--esp-4) + var(--icono) + var(--esp-2));
+  border-radius: var(--radio-m);
+  background: var(--color-superficie);
 }
 
 .vacio {
@@ -517,7 +666,7 @@ a.item {
 .campo {
   display: flex;
   flex-direction: column;
-  gap: var(--esp-1);
+  gap: 6px;
   font-size: var(--texto-s);
   font-weight: 600;
 }
@@ -525,19 +674,33 @@ a.item {
 input,
 textarea {
   width: 100%;
-  min-height: var(--toque);
-  padding: var(--esp-3);
+  min-height: var(--campo-alto);
+  padding: 0 var(--esp-4);
   border: 1px solid var(--color-borde-campo);
-  border-radius: var(--radio-s);
+  border-radius: 14px;
   font: inherit;
   font-size: var(--texto-m); /* >= 16px: iOS no hace zoom */
   font-weight: 400;
   color: var(--color-texto);
-  background: var(--color-superficie);
+  background: var(--color-campo);
+  outline: 0;
 }
 
 textarea {
+  padding: var(--esp-3) var(--esp-4);
+  min-height: 96px;
   resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  padding-left: calc(var(--esp-4) - 1px);
+  border: 2px solid var(--color-acento);
+  background: var(--color-superficie);
+}
+
+.busqueda input:focus {
+  padding-left: calc(var(--esp-4) + var(--icono) + var(--esp-2) - 1px);
 }
 
 /* Campo de patente: siempre en mayusculas y con la letra espaciada. */
@@ -553,9 +716,17 @@ input.campo-placa {
 }
 
 input.corto {
-  width: var(--campo-corto);
   flex: none;
+  width: var(--campo-corto);
+  min-height: var(--toque);
+  padding: 0 var(--esp-3);
+  border-radius: var(--radio-s);
   text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+input.corto:focus {
+  padding: 0 calc(var(--esp-3) - 1px);
 }
 
 /* Interruptor (si / no) para una fila de lista. */
@@ -569,9 +740,15 @@ input.interruptor {
   border: 0;
   border-radius: var(--radio-pildora);
   appearance: none;
-  background: var(--color-borde-campo);
+  background: var(--color-interruptor-apagado);
   cursor: pointer;
   transition: background-color var(--t-rapida) var(--curva);
+}
+
+input.interruptor:focus {
+  padding: 0;
+  border: 0;
+  background: var(--color-interruptor-apagado);
 }
 
 input.interruptor::before {
@@ -586,15 +763,16 @@ input.interruptor::before {
   transition: transform var(--t-rapida) var(--curva);
 }
 
-input.interruptor:checked {
-  background: var(--color-primario);
+input.interruptor:checked,
+input.interruptor:checked:focus {
+  background: var(--color-acento);
 }
 
 input.interruptor:checked::before {
   transform: translateX(calc(var(--interruptor-ancho) - var(--interruptor-alto)));
 }
 
-/* Montos rapidos: cada uno es un boton que se quita al tocarlo. */
+/* Montos rapidos y combos: botones con el tinte de la marca. */
 .fila-montos {
   display: flex;
   flex-wrap: wrap;
@@ -603,17 +781,23 @@ input.interruptor:checked::before {
 }
 
 .chip-monto {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-2);
   min-height: var(--toque);
   padding: 0 var(--esp-4);
   border: 0;
-  border-radius: var(--radio-pildora);
-  font-weight: 600;
-  background: var(--color-secundario);
+  border-radius: var(--radio-xl);
+  font-size: var(--texto-s);
+  font-weight: 700;
+  color: var(--color-tinte-texto);
+  background: var(--color-tinte);
+  transition: background-color var(--t-rapida) var(--curva);
 }
 
 .chip-monto[aria-pressed='true'] {
-  color: var(--color-sobre-primario);
-  background: var(--color-primario);
+  color: var(--color-sobre-acento);
+  background: var(--color-acento);
 }
 
 .chip-monto .icono {
@@ -656,7 +840,7 @@ input.interruptor:checked::before {
 }
 
 .sugerencia + .sugerencia {
-  border-top: 1px solid var(--color-borde);
+  border-top: 1px solid var(--color-linea);
 }
 
 .sugerencia.anio {
@@ -683,15 +867,16 @@ input.interruptor:checked::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--esp-2);
+  gap: 10px;
   width: 100%;
-  min-height: var(--toque);
+  min-height: var(--toque-grande);
   padding: var(--esp-2) var(--esp-5);
   border: 0;
   border-radius: var(--radio-m);
-  font-weight: 600;
-  color: var(--color-sobre-primario);
-  background: var(--color-primario);
+  font-size: var(--texto-boton);
+  font-weight: 700;
+  color: var(--color-sobre-acento);
+  background: var(--color-acento);
   transition:
     transform var(--t-rapida) var(--curva),
     opacity var(--t-rapida) var(--curva);
@@ -702,17 +887,25 @@ input.interruptor:checked::before {
 }
 
 .boton:disabled {
-  opacity: 0.55;
+  color: var(--color-sobre-acento);
+  background: var(--color-deshabilitado);
   cursor: not-allowed;
 }
 
 .boton.secundario {
   color: var(--color-texto);
-  background: var(--color-secundario);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.boton.secundario:disabled {
+  color: var(--color-texto-suave);
+  background: var(--color-suave);
+  box-shadow: none;
 }
 
 .boton.peligro {
-  color: var(--color-sobre-primario);
+  color: var(--color-sobre-acento);
   background: var(--color-peligro);
 }
 
@@ -723,7 +916,8 @@ input.interruptor:checked::before {
   min-height: var(--toque);
   padding: 0 var(--esp-3);
   border: 0;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   color: var(--color-acento);
   white-space: nowrap;
   background: none;
@@ -731,10 +925,6 @@ input.interruptor:checked::before {
 
 .enlace.peligro {
   color: var(--color-peligro);
-}
-
-.volver {
-  margin-left: calc(var(--esp-3) * -1);
 }
 
 .centro {
@@ -766,8 +956,10 @@ li.item:has(> .item-interno) {
 }
 
 .monto-fuerte {
-  font-weight: 700;
+  font-size: 1.0625rem;
+  font-weight: 800;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .texto-largo {
@@ -782,7 +974,7 @@ li.item:has(> .item-interno) {
   gap: var(--esp-1);
   padding: var(--esp-1);
   border-radius: var(--radio-m);
-  background: var(--color-secundario);
+  background: var(--color-fondo);
 }
 
 .segmentos.ancho {
@@ -796,24 +988,26 @@ li.item:has(> .item-interno) {
   padding: 0 var(--esp-4);
   border: 0;
   border-radius: var(--radio-s);
+  font-size: 15px;
   font-weight: 600;
   color: var(--color-texto-suave);
-  background: none;
+  background: transparent;
   transition:
     background-color var(--t-rapida) var(--curva),
     color var(--t-rapida) var(--curva);
 }
 
 .segmento[aria-pressed='true'] {
-  color: var(--color-texto);
-  background: var(--color-superficie);
+  font-weight: 700;
+  color: var(--color-sobre-marca);
+  background: var(--color-marca-900);
 }
 
 /* Rejilla de piezas para tocar. */
 .rejilla-piezas {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--pieza-ancho-min), 1fr));
-  gap: var(--esp-2);
+  gap: 10px;
 }
 
 .pieza-boton {
@@ -823,22 +1017,25 @@ li.item:has(> .item-interno) {
   justify-content: space-between;
   gap: var(--esp-1);
   min-height: var(--pieza-alto-min);
-  padding: var(--esp-3);
-  border: 2px solid transparent;
+  padding: var(--esp-3) 14px;
+  border: 0;
   border-radius: var(--radio-m);
   text-align: left;
   background: var(--color-superficie);
-  transition:
-    border-color var(--t-rapida) var(--curva),
-    background-color var(--t-rapida) var(--curva);
+  box-shadow: var(--sombra-tarjeta);
+  transition: background-color var(--t-rapida) var(--curva);
 }
 
 .pieza-boton[aria-pressed='true'] {
-  border-color: var(--color-primario);
+  color: var(--color-tinte-texto);
+  background: var(--color-tinte);
+  box-shadow: inset 0 0 0 2px var(--color-acento);
 }
 
 .pieza-nombre {
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
@@ -852,8 +1049,8 @@ li.item:has(> .item-interno) {
   border-radius: var(--radio-pildora);
   font-size: var(--texto-xs);
   font-weight: 700;
-  color: var(--color-sobre-primario);
-  background: var(--color-primario);
+  color: var(--color-sobre-acento);
+  background: var(--color-acento);
 }
 
 .aviso-barra {
@@ -871,7 +1068,6 @@ li.item:has(> .item-interno) {
   display: flex;
   flex-direction: column;
   gap: var(--esp-3);
-  margin-top: var(--esp-4);
 }
 
 canvas.pdf-pagina {
@@ -888,10 +1084,6 @@ canvas.pdf-pagina {
 }
 
 /* Barra fija al pie del asistente: total en vivo y la accion principal. */
-.contenido:has(> .asistente) {
-  padding-bottom: 0; /* la barra fija llega hasta el borde */
-}
-
 .barra-accion {
   position: sticky;
   bottom: 0;
@@ -899,8 +1091,9 @@ canvas.pdf-pagina {
   display: flex;
   flex-direction: column;
   gap: var(--esp-2);
-  margin: var(--esp-5) calc(var(--margen-lateral) * -1) 0;
-  padding: var(--esp-3) var(--margen-lateral) calc(var(--esp-3) + var(--seguro-abajo));
+  margin-top: var(--esp-5);
+  padding: 14px var(--margen-lateral) calc(var(--esp-4) + var(--seguro-abajo));
+  border-radius: var(--radio-hoja) var(--radio-hoja) 0 0;
   background: var(--color-superficie);
   box-shadow: var(--sombra-barra);
 }
@@ -913,8 +1106,9 @@ canvas.pdf-pagina {
 }
 
 .total-vivo {
-  font-size: var(--texto-l);
-  font-weight: 700;
+  font-size: var(--texto-xl);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ==========================================================================
@@ -942,8 +1136,8 @@ canvas.pdf-pagina {
   max-height: var(--hoja-alto-max);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: var(--esp-2) var(--margen-lateral) calc(var(--esp-4) + var(--seguro-abajo));
-  border-radius: var(--radio-l) var(--radio-l) 0 0;
+  padding: 10px var(--margen-lateral) calc(var(--esp-5) + var(--seguro-abajo));
+  border-radius: var(--radio-hoja) var(--radio-hoja) 0 0;
   background: var(--color-superficie);
   transform: translateY(100%);
   transition: transform var(--t-media) var(--curva);
@@ -967,19 +1161,21 @@ canvas.pdf-pagina {
 
 .hoja-titulo {
   margin: 0 0 var(--esp-3);
-  font-size: var(--texto-l);
+  font-size: 1.25rem;
+  font-weight: 800;
 }
 
 .hoja .grupo {
   background: var(--color-fondo);
+  box-shadow: none;
 }
 
 .opcion[aria-checked='true'] {
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .opcion .icono {
-  color: var(--color-primario);
+  color: var(--color-acento);
 }
 
 .hoja .formulario {
@@ -988,6 +1184,11 @@ canvas.pdf-pagina {
 
 .hoja .boton + .boton {
   margin-top: var(--esp-2);
+}
+
+.hoja .boton.secundario {
+  background: var(--color-suave);
+  box-shadow: none;
 }
 
 /* ==========================================================================
@@ -1002,4 +1203,67 @@ canvas.pdf-pagina {
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+/* Dentro de una tarjeta flotante las listas van sobre fondo suave, sin sombra propia. */
+.flotante > h2 {
+  margin: 0;
+}
+
+.flotante .grupo {
+  margin-top: 0;
+  background: var(--color-fondo);
+  box-shadow: none;
+}
+
+.flotante.sin-relleno .grupo {
+  background: var(--color-superficie);
+}
+
+.flotante > .pila {
+  margin-top: 0;
+}
+
+.cuerpo.sobre-encabezado > :first-child {
+  margin-top: 0;
+}
+
+.fila-estado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--esp-3);
+}
+
+/* Mensaje de espera sobre la zona del encabezado (la vista previa sube sobre el). */
+.vacio-sobre-marca {
+  margin-top: var(--solape);
+}
+
+.flotante.sin-relleno > * + * {
+  border-top: 1px solid var(--color-linea);
+}
+
+/* Icono dentro de un circulo con el tinte de la marca (filas de menu). */
+.icono-circulo {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--toque);
+  height: var(--toque);
+  border-radius: 50%;
+  color: var(--color-acento);
+  background: var(--color-tinte);
+}
+
+.item .icono-circulo .icono {
+  color: var(--color-acento);
+}
+
+/* Boton secundario sobre superficies blancas (tarjeta flotante, barra de accion): fondo suave. */
+.flotante .boton.secundario,
+.barra-accion .boton.secundario {
+  background: var(--color-suave);
+  box-shadow: none;
 }

@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
 import { Hoja, HojaConfirmar } from '../Hoja';
+import { Cargando } from '../Cargando';
+import { Encabezado } from '../Encabezado';
 import { Icono } from '../Iconos';
-import { irA } from '../ruta';
 import type { Combo, Pieza } from './tipos';
 
 export function Combos() {
@@ -26,15 +27,7 @@ export function Combos() {
   useEffect(cargar, [cargar]);
   const { error, aviso, ejecutar, limpiarError } = useAcciones(cargar);
 
-  if (!combos) {
-    return errorCarga ? (
-      <p className="error" role="alert">
-        {errorCarga}
-      </p>
-    ) : (
-      <p className="vacio">Cargando…</p>
-    );
-  }
+  if (!combos) return <Cargando titulo="Combos" atras={{ texto: "Mi taller", ruta: "/mi-taller" }} error={errorCarga} />;
 
   const elegido = combos.find((c) => c.id === idHoja);
   const cerrar = (poner: (v: boolean) => void) => () => {
@@ -44,14 +37,13 @@ export function Combos() {
 
   return (
     <section>
-      <button type="button" className="enlace volver" onClick={() => irA('/mi-taller')}>
-        <Icono nombre="atras" />
-        Mi taller
-      </button>
-      <h1>Combos</h1>
-      <p className="subtitulo">Grupos de piezas que se agregan juntas a un presupuesto, como “Lateral completo”.</p>
+      <Encabezado
+        titulo="Combos"
+        sub="Grupos de piezas que se agregan juntas a un presupuesto, como “Lateral completo”."
+        atras={{ texto: "Mi taller", ruta: "/mi-taller" }}
+      />
 
-      <div className="pila">
+      <div className="flotante">
         <button
           type="button"
           className="boton"
@@ -65,6 +57,7 @@ export function Combos() {
         </button>
       </div>
 
+      <div className="cuerpo">
       {error && (
         <p className="error" role="alert">
           {error}
@@ -104,6 +97,8 @@ export function Combos() {
           ))}
         </ul>
       )}
+
+      </div>
 
       <Hoja abierta={creando} titulo="Nuevo combo" onCerrar={cerrar(setCreando)}>
         <FormularioCombo

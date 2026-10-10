@@ -47,7 +47,7 @@ export function PasoVehiculo({ b, actualizar }: { b: Borrador; actualizar: Actua
 function VehiculoElegido({ b, onCambiar }: { b: Borrador; onCambiar(): void }) {
   const v = b.vehiculo!;
   return (
-    <>
+    <div className="flotante">
       <h2>Vehículo elegido</h2>
       <div className="grupo">
         <div className="item">
@@ -64,12 +64,10 @@ function VehiculoElegido({ b, onCambiar }: { b: Borrador; onCambiar(): void }) {
           </span>
         </div>
       </div>
-      <div className="centro">
-        <button type="button" className="enlace" onClick={onCambiar}>
-          Elegir otro
-        </button>
-      </div>
-    </>
+      <button type="button" className="boton secundario" onClick={onCambiar}>
+        Elegir otro
+      </button>
+    </div>
   );
 }
 
@@ -123,7 +121,7 @@ function Buscador({ inicial, actualizar, onCrear }: { inicial: string; actualiza
   }
 
   return (
-    <>
+    <div className="flotante">
       <div className="busqueda">
         <Icono nombre="buscar" />
         <input
@@ -175,13 +173,11 @@ function Buscador({ inicial, actualizar, onCrear }: { inicial: string; actualiza
 
       {lista?.length === 0 && <p className="vacio">No hay coincidencias.</p>}
 
-      <div className="pila">
-        <button type="button" className={texto && lista?.length !== 0 ? 'boton secundario' : 'boton'} onClick={() => onCrear(texto)}>
-          <Icono nombre="mas" />
-          Crear cliente nuevo
-        </button>
-      </div>
-    </>
+      <button type="button" className={texto && lista?.length !== 0 ? 'boton secundario' : 'boton'} onClick={() => onCrear(texto)}>
+        <Icono nombre="mas" />
+        Crear cliente nuevo
+      </button>
+    </div>
   );
 }
 
@@ -222,6 +218,7 @@ function DatosNuevos({ b, actualizar, onVolver }: { b: Borrador; actualizar: Act
 
   return (
     <>
+      <div className="flotante">
       <h2>{b.clienteExistente ? 'Vehículo nuevo de' : 'Cliente nuevo'}</h2>
       {b.clienteExistente ? (
         <div className="grupo">
@@ -234,7 +231,7 @@ function DatosNuevos({ b, actualizar, onVolver }: { b: Borrador; actualizar: Act
           </div>
         </div>
       ) : (
-        <div className="grupo formulario">
+        <div className="formulario">
           <label className="campo">
             Nombre del cliente
             <input
@@ -259,7 +256,9 @@ function DatosNuevos({ b, actualizar, onVolver }: { b: Borrador; actualizar: Act
           </label>
         </div>
       )}
+      </div>
 
+      <div className="cuerpo">
       <h2>Vehículo</h2>
       <div className="grupo formulario">
         <label className="campo">
@@ -293,6 +292,7 @@ function DatosNuevos({ b, actualizar, onVolver }: { b: Borrador; actualizar: Act
         <button type="button" className="enlace" onClick={onVolver}>
           Volver a buscar
         </button>
+      </div>
       </div>
     </>
   );

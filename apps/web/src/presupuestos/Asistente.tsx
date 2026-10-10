@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, ApiError } from '../api';
 import { clp } from '../dinero';
-import { Icono } from '../Iconos';
+import { Encabezado } from '../Encabezado';
 import { irA, reemplazarRuta } from '../ruta';
 import { useTallerActual } from '../sesion';
 import { aEnvio, calcularTotales, normalizarPatente } from './calculo';
@@ -114,32 +114,32 @@ export function Asistente({ borradorId }: { borradorId: string }) {
 
   return (
     <section className="asistente">
-      <button type="button" className="enlace volver" onClick={() => (b.paso > 1 ? irAPaso((b.paso - 1) as Borrador['paso']) : irA('/'))}>
-        <Icono nombre="atras" />
-        {b.paso > 1 ? TITULOS[(b.paso - 1) as 1 | 2] : 'Presupuestos'}
-      </button>
-      <p className="detalle">
-        {b.numero ? `Presupuesto N° ${b.numero} · ` : ''}Paso {b.paso} de 3
-      </p>
-      <h1>{TITULOS[b.paso]}</h1>
-
-      {datos.desdeCopia && (
-        <p className="aviso" role="status">
-          Sin conexión: usando la última copia de tus piezas y tarifas. Puedes seguir; guardas cuando vuelva la señal.
-        </p>
-      )}
+      <Encabezado
+        paso={b.paso}
+        titulo={TITULOS[b.paso]}
+        sub={b.paso === 3 ? "Parten con los valores de tu taller; puedes cambiarlos en cada pieza." : b.numero ? `Presupuesto N° ${b.numero}` : undefined}
+        atras={
+          b.paso > 1
+            ? { texto: TITULOS[(b.paso - 1) as 1 | 2], onClick: () => irAPaso((b.paso - 1) as Borrador["paso"]) }
+            : { texto: "Presupuestos", ruta: "/" }
+        }
+      />
 
       {b.paso === 1 && <PasoVehiculo b={b} actualizar={actualizar} />}
       {b.paso === 2 && <PasoPiezas b={b} actualizar={actualizar} datos={datos} />}
       {b.paso === 3 && <PasoAjustes b={b} actualizar={actualizar} datos={datos} totales={totales} />}
 
-      {errorGuardar && (
-        <p className="error" role="alert">
-          {errorGuardar}
-        </p>
-      )}
-
       <div className="barra-accion">
+        {datos.desdeCopia && (
+          <p className="aviso aviso-barra" role="status">
+            Sin conexión: usando la última copia de tus piezas y tarifas. Puedes seguir; guardas cuando vuelva la señal.
+          </p>
+        )}
+        {errorGuardar && (
+          <p className="error aviso-barra" role="alert">
+            {errorGuardar}
+          </p>
+        )}
         <div className="fila-total">
           <span className="detalle">
             {cantidad === 0 ? 'Sin piezas' : `${cantidad} ${cantidad === 1 ? 'pieza' : 'piezas'}`}

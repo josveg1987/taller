@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../api';
+import { Encabezado } from '../Encabezado';
 import { Icono } from '../Iconos';
 import { irA } from '../ruta';
 import type { ClienteLista } from './tipos';
@@ -33,9 +34,9 @@ export function Clientes() {
 
   return (
     <section>
-      <h1>Clientes</h1>
-      <p className="subtitulo">Busca por patente, nombre o teléfono.</p>
+      <Encabezado titulo="Clientes" sub="Busca por patente, nombre o teléfono." />
 
+      <div className="flotante">
       <div className="busqueda">
         <Icono nombre="buscar" />
         <input
@@ -50,13 +51,13 @@ export function Clientes() {
         />
       </div>
 
-      <div className="pila">
-        <button type="button" className="boton" onClick={() => irA('/clientes/nuevo')}>
-          <Icono nombre="mas" />
-          Nuevo cliente
-        </button>
+      <button type="button" className="boton" onClick={() => irA('/clientes/nuevo')}>
+        <Icono nombre="mas" />
+        Nuevo cliente
+      </button>
       </div>
 
+      <div className="cuerpo">
       {error && (
         <p className="error" role="alert">
           {error}
@@ -94,6 +95,7 @@ export function Clientes() {
           </ul>
         </>
       )}
+      </div>
     </section>
   );
 }

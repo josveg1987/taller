@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
+import { Cargando } from '../Cargando';
+import { Encabezado } from '../Encabezado';
 import { Hoja } from '../Hoja';
 import { Icono } from '../Iconos';
 import { irA } from '../ruta';
@@ -22,15 +24,7 @@ export function ClienteDetalle({ id }: { id: string }) {
   useEffect(cargar, [cargar]);
   const { error, aviso, ejecutar, limpiarError } = useAcciones(cargar);
 
-  if (!cliente) {
-    return errorCarga ? (
-      <p className="error" role="alert">
-        {errorCarga}
-      </p>
-    ) : (
-      <p className="vacio">Cargando…</p>
-    );
-  }
+  if (!cliente) return <Cargando titulo="Cliente" atras={{ texto: "Clientes", ruta: "/clientes" }} error={errorCarga} />;
 
   const datos = [
     { etiqueta: 'RUT', valor: cliente.rut },
@@ -46,14 +40,9 @@ export function ClienteDetalle({ id }: { id: string }) {
 
   return (
     <section>
-      <button type="button" className="enlace volver" onClick={() => irA('/clientes')}>
-        <Icono nombre="atras" />
-        Clientes
-      </button>
-      <h1>{cliente.nombre}</h1>
-      <p className="subtitulo">{cliente.telefono}</p>
+      <Encabezado titulo={cliente.nombre} sub={cliente.telefono} atras={{ texto: "Clientes", ruta: "/clientes" }} />
 
-      <div className="grupo">
+      <div className="flotante sin-relleno">
         <a className="item" href={enlaceLlamada(cliente.telefono)}>
           <Icono nombre="telefono" />
           <span className="item-texto">Llamar</span>
@@ -66,6 +55,7 @@ export function ClienteDetalle({ id }: { id: string }) {
         </a>
       </div>
 
+      <div className="cuerpo">
       {datos.length > 0 && (
         <div className="grupo">
           {datos.map((d) => (
@@ -128,6 +118,8 @@ export function ClienteDetalle({ id }: { id: string }) {
         >
           Editar cliente
         </button>
+      </div>
+
       </div>
 
       <Hoja

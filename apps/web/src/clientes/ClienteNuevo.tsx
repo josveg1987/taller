@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api';
-import { Icono } from '../Iconos';
+import { Encabezado } from '../Encabezado';
 import { irA } from '../ruta';
 import { CamposVehiculo } from './CamposVehiculo';
 import type { ClienteDetalle } from './tipos';
@@ -45,15 +45,10 @@ export function ClienteNuevo() {
 
   return (
     <section>
-      <button type="button" className="enlace volver" onClick={() => irA('/clientes')}>
-        <Icono nombre="atras" />
-        Clientes
-      </button>
-      <h1>Nuevo cliente</h1>
-      <p className="subtitulo">Solo el nombre y el teléfono son obligatorios.</p>
+      <Encabezado titulo="Nuevo cliente" sub="Solo el nombre y el teléfono son obligatorios." atras={{ texto: "Clientes", ruta: "/clientes" }} />
 
-      <form onSubmit={guardar} className="formulario pila">
-        <div className="grupo formulario">
+      <form onSubmit={guardar} className="formulario">
+        <div className="flotante">
           <label className="campo">
             Nombre
             <input required maxLength={120} autoComplete="off" value={nombre} onChange={(e) => setNombre(e.target.value)} />
@@ -73,6 +68,7 @@ export function ClienteNuevo() {
           </label>
         </div>
 
+        <div className="cuerpo">
         <h2>Vehículo (opcional)</h2>
         <div className="grupo formulario">
           <label className="campo">
@@ -133,6 +129,7 @@ export function ClienteNuevo() {
         <button type="submit" className="boton" disabled={enviando}>
           {enviando ? 'Guardando…' : 'Guardar cliente'}
         </button>
+        </div>
       </form>
     </section>
   );

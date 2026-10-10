@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
-import { Icono } from '../Iconos';
-import { irA } from '../ruta';
+import { Cargando } from '../Cargando';
+import { Encabezado } from '../Encabezado';
 import { useSesion } from '../sesion';
 import { GestionUsuarios, type RutasUsuarios, type UsuarioFila } from '../usuarios/GestionUsuarios';
 
@@ -37,24 +37,16 @@ export function UsuariosTaller() {
   useEffect(cargar, [cargar]);
   const { error, aviso, ejecutar, limpiarError } = useAcciones(cargar);
 
-  if (!usuarios || !limites) {
-    return errorCarga ? (
-      <p className="error" role="alert">
-        {errorCarga}
-      </p>
-    ) : (
-      <p className="vacio">Cargando…</p>
-    );
-  }
+  if (!usuarios || !limites) return <Cargando titulo="Usuarios" atras={{ texto: "Mi taller", ruta: "/mi-taller" }} error={errorCarga} />;
 
   return (
     <section>
-      <button type="button" className="enlace volver" onClick={() => irA('/mi-taller')}>
-        <Icono nombre="atras" />
-        Mi taller
-      </button>
-      <h1>Usuarios</h1>
-      <p className="subtitulo">Quienes pueden entrar a la app de este taller. Todos tienen los mismos permisos.</p>
+      <Encabezado
+        titulo="Usuarios"
+        sub="Quienes pueden entrar a la app de este taller. Todos tienen los mismos permisos."
+        atras={{ texto: "Mi taller", ruta: "/mi-taller" }}
+      />
+      <div className="cuerpo">
       {error && (
         <p className="error" role="alert">
           {error}
@@ -76,6 +68,7 @@ export function UsuariosTaller() {
         error={error}
         limpiarError={limpiarError}
       />
+      </div>
     </section>
   );
 }

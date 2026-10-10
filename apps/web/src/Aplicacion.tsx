@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from './api';
+import { AbrirCuenta } from './Encabezado';
 import { Hoja } from './Hoja';
 import { Icono, type NombreIcono } from './Iconos';
 import { irA, useRuta } from './ruta';
@@ -120,14 +121,8 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
   }
 
   return (
+    <AbrirCuenta.Provider value={() => setCuenta(true)}>
     <div className="app">
-      <header className="barra-superior">
-        <span className="contexto">{esAdmin ? 'Administrador de la APP' : perfil.taller?.nombre}</span>
-        <button type="button" className="avatar" aria-label={`Cuenta de ${perfil.nombre}`} onClick={() => setCuenta(true)}>
-          {(perfil.nombre.match(/\p{L}/u)?.[0] ?? '?').toUpperCase()}
-        </button>
-      </header>
-
       {dentro && (
         <div className="banner">
           <span>
@@ -189,5 +184,6 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
         </div>
       </Hoja>
     </div>
+    </AbrirCuenta.Provider>
   );
 }

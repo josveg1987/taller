@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
+import { Encabezado } from '../Encabezado';
 import { Icono } from '../Iconos';
 import { irA } from '../ruta';
 import type { TallerResumen } from './tipos';
@@ -16,16 +17,16 @@ export function Talleres() {
 
   return (
     <section>
-      <h1>Talleres</h1>
-      <p className="subtitulo">Los talleres que usan la app.</p>
+      <Encabezado titulo="Talleres" sub="Los talleres que usan la app." />
 
-      <div className="pila">
+      <div className="flotante">
         <button type="button" className="boton" onClick={() => irA('/talleres/nuevo')}>
           <Icono nombre="mas" />
           Nuevo taller
         </button>
       </div>
 
+      <div className="cuerpo">
       {error && (
         <p className="error" role="alert">
           {error}
@@ -52,6 +53,7 @@ export function Talleres() {
           ))}
         </ul>
       )}
+      </div>
     </section>
   );
 }

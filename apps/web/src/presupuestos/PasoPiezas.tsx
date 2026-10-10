@@ -57,8 +57,9 @@ export function PasoPiezas({ b, actualizar, datos }: { b: Borrador; actualizar: 
 
   return (
     <>
+      <div className="flotante">
       <h2>Lado</h2>
-      <div className="segmentos" role="group" aria-label="Lado del vehículo">
+      <div className="segmentos ancho" role="group" aria-label="Lado del vehículo">
         {(['izquierda', 'derecha'] as const).map((lado) => (
           <button key={lado} type="button" className="segmento" aria-pressed={b.lado === lado} onClick={() => actualizar({ lado })}>
             {lado === 'izquierda' ? 'Izquierdo' : 'Derecho'}
@@ -66,6 +67,9 @@ export function PasoPiezas({ b, actualizar, datos }: { b: Borrador; actualizar: 
         ))}
       </div>
       <p className="ayuda">Las piezas que van por lado se agregan del lado elegido. Para el otro lado, cámbialo y vuelve a tocarlas.</p>
+      </div>
+
+      <div className="cuerpo">
 
       {datos.combos.length > 0 && (
         <>
@@ -128,6 +132,8 @@ export function PasoPiezas({ b, actualizar, datos }: { b: Borrador; actualizar: 
           <Icono nombre="mas" />
           Agregar ítem libre
         </button>
+      </div>
+
       </div>
 
       <Hoja abierta={agregandoLibre} titulo="Ítem libre" onCerrar={() => setAgregandoLibre(false)}>

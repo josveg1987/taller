@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
+import { Cargando } from '../Cargando';
+import { Encabezado } from '../Encabezado';
 import { Hoja } from '../Hoja';
 import { Icono } from '../Iconos';
 import { irA } from '../ruta';
@@ -20,15 +22,7 @@ export function VehiculoDetalle({ id }: { id: string }) {
   useEffect(cargar, [cargar]);
   const { error, aviso, ejecutar, limpiarError } = useAcciones(cargar);
 
-  if (!vehiculo) {
-    return errorCarga ? (
-      <p className="error" role="alert">
-        {errorCarga}
-      </p>
-    ) : (
-      <p className="vacio">Cargando…</p>
-    );
-  }
+  if (!vehiculo) return <Cargando titulo="Vehículo" atras={{ texto: "Clientes", ruta: "/clientes" }} error={errorCarga} />;
 
   const datos = [
     { etiqueta: 'Marca', valor: vehiculo.marca },
@@ -43,28 +37,25 @@ export function VehiculoDetalle({ id }: { id: string }) {
 
   return (
     <section>
-      <button type="button" className="enlace volver" onClick={() => irA(`/clientes/${vehiculo.cliente.id}`)}>
-        <Icono nombre="atras" />
-        {vehiculo.cliente.nombre}
-      </button>
-      <h1>
-        <span className="placa grande">{vehiculo.patente}</span>
-      </h1>
-      {descripcionVehiculo(vehiculo) && <p className="subtitulo">{descripcionVehiculo(vehiculo)}</p>}
+      <Encabezado
+        titulo={vehiculo.patente}
+        sub={descripcionVehiculo(vehiculo) || undefined}
+        atras={{ texto: vehiculo.cliente.nombre, ruta: `/clientes/${vehiculo.cliente.id}` }}
+      />
 
-      {aviso && (
-        <p className="ok" role="status">
-          {aviso}
-        </p>
-      )}
-
-      <div className="pila">
+      <div className="flotante">
         <button type="button" className="boton" onClick={() => irA(`/presupuestos/nuevo/vehiculo/${vehiculo.id}`)}>
           <Icono nombre="mas" />
           Nuevo presupuesto
         </button>
+        {aviso && (
+          <p className="ok" role="status">
+            {aviso}
+          </p>
+        )}
       </div>
 
+      <div className="cuerpo">
       <h2>Dueño</h2>
       <div className="grupo">
         <button type="button" className="item" onClick={() => irA(`/clientes/${vehiculo.cliente.id}`)}>
@@ -101,6 +92,8 @@ export function VehiculoDetalle({ id }: { id: string }) {
         >
           Editar vehículo
         </button>
+      </div>
+
       </div>
 
       <Hoja

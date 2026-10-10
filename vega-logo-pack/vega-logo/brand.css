@@ -1,0 +1,18 @@
+/* Paleta de marca — Desabolladura y pintura Vega
+   Colores tomados del logo oficial. Úsalos como variables en toda la app. */
+:root {
+  --marca-azul: #11223D;          /* auto (mitad izquierda), "VEGA" */
+  --marca-naranja: #DE4B20;       /* auto (mitad derecha), línea — para gráficos y títulos grandes */
+  --marca-naranja-boton: #C2410C; /* naranja más oscuro: botones y texto sobre blanco (contraste 5,2:1) */
+  --marca-gris-texto: #4D5159;    /* eslogan */
+  --marca-blanco: #FFFFFF;
+
+  /* modo oscuro */
+  --marca-fondo-oscuro: #111827;
+  --marca-naranja-sobre-oscuro: #F0612E;
+  --marca-texto-sobre-oscuro: #C9CED6;
+
+  /* monocromo (PDF, impresión en blanco y negro) */
+  --marca-gris-oscuro: #2A2E35;
+  --marca-gris-medio: #8A8F98;
+}

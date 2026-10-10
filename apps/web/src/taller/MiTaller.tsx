@@ -3,6 +3,8 @@ import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
 import { clp } from '../dinero';
 import { HojaSelector } from '../Hoja';
+import { Cargando } from '../Cargando';
+import { Encabezado } from '../Encabezado';
 import { Icono } from '../Iconos';
 import { irA } from '../ruta';
 
@@ -40,15 +42,7 @@ export function MiTaller() {
   }, []);
   useEffect(cargar, [cargar]);
 
-  if (!config) {
-    return errorCarga ? (
-      <p className="error" role="alert">
-        {errorCarga}
-      </p>
-    ) : (
-      <p className="vacio">Cargando…</p>
-    );
-  }
+  if (!config) return <Cargando titulo="Mi taller" error={errorCarga} />;
   return <Formulario config={config} alGuardar={setConfig} />;
 }
 
@@ -116,12 +110,13 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
 
   return (
     <section>
-      <h1>Mi taller</h1>
-      <p className="subtitulo">Estos datos aparecen en tus presupuestos.</p>
+      <Encabezado titulo="Mi taller" sub="Estos datos aparecen en tus presupuestos." />
 
-      <div className="grupo">
+      <div className="flotante sin-relleno">
         <button type="button" className="item" onClick={() => irA('/usuarios')}>
-          <Icono nombre="usuarios" />
+          <span className="icono-circulo">
+            <Icono nombre="usuarios" />
+          </span>
           <span className="item-texto">
             <span className="item-titulo">Usuarios</span>
             <span className="detalle">Quiénes pueden entrar a la app</span>
@@ -129,7 +124,9 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
           <Icono nombre="chevron" />
         </button>
         <button type="button" className="item" onClick={() => irA('/piezas')}>
-          <Icono nombre="ajustes" />
+          <span className="icono-circulo">
+            <Icono nombre="ajustes" />
+          </span>
           <span className="item-texto">
             <span className="item-titulo">Piezas</span>
             <span className="detalle">Qué cotizas y a qué tarifa</span>
@@ -137,7 +134,9 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
           <Icono nombre="chevron" />
         </button>
         <button type="button" className="item" onClick={() => irA('/combos')}>
-          <Icono nombre="mas" />
+          <span className="icono-circulo">
+            <Icono nombre="mas" />
+          </span>
           <span className="item-texto">
             <span className="item-titulo">Combos</span>
             <span className="detalle">Grupos de piezas, como “Lateral completo”</span>
@@ -146,7 +145,7 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
         </button>
       </div>
 
-      <form onSubmit={guardar} className="formulario">
+      <form onSubmit={guardar} className="formulario cuerpo">
         <h2>Datos</h2>
         <div className="grupo formulario">
           <label className="campo">

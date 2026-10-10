@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api';
-import { Icono } from '../Iconos';
+import { Encabezado } from '../Encabezado';
 import { irA } from '../ruta';
 import type { TallerResumen } from './tipos';
 
@@ -28,15 +28,10 @@ export function TallerNuevo() {
 
   return (
     <section>
-      <button type="button" className="enlace volver" onClick={() => irA('/talleres')}>
-        <Icono nombre="atras" />
-        Talleres
-      </button>
-      <h1>Nuevo taller</h1>
-      <p className="subtitulo">Después de crearlo podrás agregar a sus usuarios.</p>
+      <Encabezado titulo="Nuevo taller" sub="Después de crearlo podrás agregar a sus usuarios." atras={{ texto: "Talleres", ruta: "/talleres" }} />
 
-      <form onSubmit={crear} className="formulario pila">
-        <div className="grupo formulario">
+      <form onSubmit={crear} className="formulario">
+        <div className="flotante">
           <label className="campo">
             Nombre del taller
             <input required maxLength={120} value={nombre} onChange={(e) => setNombre(e.target.value)} />
@@ -54,6 +49,7 @@ export function TallerNuevo() {
             />
           </label>
         </div>
+        <div className="cuerpo">
         {error && (
           <p className="error" role="alert">
             {error}
@@ -62,6 +58,7 @@ export function TallerNuevo() {
         <button type="submit" className="boton" disabled={enviando}>
           {enviando ? 'Creando…' : 'Crear taller'}
         </button>
+        </div>
       </form>
     </section>
   );

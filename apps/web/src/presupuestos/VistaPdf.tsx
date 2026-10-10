@@ -4,6 +4,7 @@ import { mensajeDe } from '../acciones';
 import { descripcionVehiculo } from '../clientes/tipos';
 import { enlaceWhatsApp } from '../clientes/telefono';
 import { clp } from '../dinero';
+import { Encabezado } from '../Encabezado';
 import { HojaConfirmar } from '../Hoja';
 import { Icono } from '../Iconos';
 import { irA } from '../ruta';
@@ -118,20 +119,21 @@ export function VistaPdf({ id }: { id: string }) {
 
   return (
     <section className="asistente vista-pdf">
-      <button type="button" className="enlace volver" onClick={() => irA(`/presupuestos/${id}`)}>
-        <Icono nombre="atras" />
-        {p ? `Presupuesto N° ${p.numero}` : 'Presupuesto'}
-      </button>
-      <h1>Vista previa</h1>
-      <p className="subtitulo">Así lo verá tu cliente. Revísalo antes de enviarlo.</p>
+      <Encabezado
+        titulo="Vista previa"
+        sub="Así lo verá tu cliente. Revísalo antes de enviarlo."
+        atras={{ texto: p ? `N° ${p.numero}` : "Presupuesto", ruta: `/presupuestos/${id}` }}
+      />
 
-      {carga.fase === 'cargando' && <p className="vacio">Preparando el PDF…</p>}
-      {carga.fase === 'error' && (
-        <p className="error" role="alert">
-          {carga.mensaje}
-        </p>
-      )}
-      <div className="pdf-paginas" ref={paginas} />
+      <div className="cuerpo sobre-encabezado">
+        {carga.fase === "cargando" && <p className="vacio vacio-sobre-marca">Preparando el PDF…</p>}
+        {carga.fase === "error" && (
+          <p className="error" role="alert">
+            {carga.mensaje}
+          </p>
+        )}
+        <div className="pdf-paginas" ref={paginas} />
+      </div>
 
       <div className="barra-accion">
         {aviso && (

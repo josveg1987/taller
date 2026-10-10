@@ -1,0 +1,48 @@
+PAQUETE DE LOGO — DESABOLLADURA Y PINTURA VEGA
+================================================
+
+logos/svg/  Vectores (escalan sin perder calidad). Úsalos para imprimir, PDF y pantalla.
+logos/png/  Los mismos logos en PNG con fondo transparente.
+app/        Íconos para la PWA y favicon.
+brand.css   Colores de marca como variables CSS.
+
+QUÉ USAR DÓNDE
+--------------
+Encabezado de la app (fondo claro) ....... horizontal-color-naranja.svg
+Encabezado de la app (modo oscuro) ....... horizontal-fondo-oscuro-naranja.svg
+Pantalla de carga / login ................ vertical-color-naranja.svg
+PDF de presupuestos (blanco y negro) ..... horizontal-grises.svg  (o horizontal-negro.svg)
+Tarjetas, sellos, ropa, vidrios .......... horizontal-negro.svg / horizontal-blanco.svg (una sola tinta)
+Variantes de color (si quieres probar) ... horizontal-azul-rojo, horizontal-grafito-azul, horizontal-negro-naranja
+
+ÍCONOS DE LA APP (carpeta app/)
+-------------------------------
+icon-192.png, icon-512.png ........ ícono normal (monograma V), esquinas redondeadas
+icon-maskable-512.png ............. ícono "maskable" para Android (cuadrado completo, margen de seguridad)
+apple-touch-icon-180.png .......... iPhone/iPad "agregar a pantalla de inicio"
+favicon.svg, favicon-32.png, favicon-48.png
+alt-icon-auto-*.png ............... alternativa con el auto en vez de la V (se lee peor en tamaños chicos)
+(Los .svg de la carpeta app/ son las fuentes editables.)
+
+Fragmento para manifest.json
+----------------------------
+"icons": [
+  { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+  { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+  { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+],
+"theme_color": "#11223D",
+"background_color": "#FFFFFF"
+
+En <head>:
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png">
+<meta name="theme-color" content="#11223D">
+
+NOTAS
+-----
+- Los textos ("DESABOLLADURA Y PINTURA" y "VEGA") vienen como curvas, no como texto editable,
+  porque así venía el SVG original. Se ven igual en cualquier equipo.
+- La línea bajo "VEGA" se rehízo como línea pareja (el calcado original la dejaba afilada en las puntas).
+- Naranja #DE4B20 sobre blanco tiene contraste 4,1:1: bien para el logo y títulos grandes.
+  Para botones y texto pequeño usa --marca-naranja-boton (#C2410C).

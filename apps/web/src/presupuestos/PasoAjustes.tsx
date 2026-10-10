@@ -21,9 +21,8 @@ export function PasoAjustes({ b, actualizar, datos, totales }: Props) {
   const quitar = (clave: string) => actualizar((x) => ({ lineas: x.lineas.filter((l) => l.clave !== clave) }));
 
   return (
-    <>
+    <div className="cuerpo sobre-encabezado">
       {b.lineas.length === 0 && <p className="vacio">No hay piezas. Vuelve al paso anterior para agregarlas.</p>}
-      {b.lineas.length > 0 && <p className="ayuda">Parten con los valores de tu taller; puedes cambiarlos en cada pieza.</p>}
 
       {b.lineas.map((l, i) => (
         <Linea
@@ -88,7 +87,7 @@ export function PasoAjustes({ b, actualizar, datos, totales }: Props) {
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }
 

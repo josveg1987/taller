@@ -62,8 +62,12 @@ La app debe sentirse como una app móvil (PWA), no como un sitio web. Reglas par
   (columna de `--ancho-max`), sin cambiar la estructura.
 - **Navegación en una barra inferior** de 3 a 4 secciones, alcanzable con el pulgar. Lo secundario
   (cuenta, cerrar sesión) va en una hoja, no en la barra.
-- **Título grande** al inicio de cada pantalla y **una sola acción principal**, ancha (`.boton`). Las demás
-  acciones son secundarias (`.boton.secundario`) o enlaces (`.enlace`); la acción destructiva, `.boton.peligro`.
+- **Encabezado con la marca y título grande** al inicio de cada pantalla (`<Encabezado titulo sub atras paso />`:
+  degradado azul, logo, avatar de la cuenta, botón volver y, en el asistente, "Paso N de 3"), y **una sola acción
+  principal**, ancha (`.boton`), en la **tarjeta flotante** `.flotante` que sube 44 px sobre el encabezado; el resto
+  del contenido va en `.cuerpo`. Las demás acciones son secundarias (`.boton.secundario`) o enlaces (`.enlace`);
+  la acción destructiva, `.boton.peligro`. Mientras carga una pantalla se usa `<Cargando>` (conserva el encabezado).
+  El diseño sale de `prototipoUI/index.html` (referencia visual; no se copia su código).
 - **Listas como tarjetas agrupadas** con esquinas redondeadas (`.grupo` > `.item`), no tablas.
 - **Selecciones** (pieza, monto, estado, tipo de anticipo) y confirmaciones **en hojas que suben desde
   abajo** (`<Hoja>`), no en `<select>` ni en `window.confirm`.
@@ -80,8 +84,14 @@ La app debe sentirse como una app móvil (PWA), no como un sitio web. Reglas par
   `role="dialog"` y cierre con Escape.
 - **Colores, espacios y tamaños siempre como variables CSS** de `:root` en `apps/web/src/styles.css`
   (`--color-*`, `--esp-*`, `--radio-*`, `--toque`, `--t-*`). No escribir valores sueltos en los componentes.
-  Pantalla nueva = reutilizar `.grupo`, `.item`, `.campo`, `.boton`, `.chip`, `<Hoja>` y la barra inferior de
-  `Aplicacion.tsx`.
+  Pantalla nueva = reutilizar `<Encabezado>`, `.flotante`, `.cuerpo`, `.grupo`, `.item`, `.campo`, `.boton`,
+  `.chip` (estado), `.chip-monto` (botón con tinte), `.segmentos`, `<Hoja>` y la barra inferior flotante de
+  `Aplicacion.tsx`. Con el asistente (y la vista del PDF) la barra inferior se oculta y aparece `.barra-accion`.
+- **La marca es el tema del taller**: solo estas variables cambian por taller (`--color-marca-950/900/700`,
+  `--color-acento`, `--color-acento-sobre-oscuro`, `--color-tinte`, `--color-tinte-texto`) y el logo sale de
+  `useMarca()` (`src/marca.ts`, hoy siempre Vega: logos en `src/marca/vega/`, íconos de la PWA en `public/icons/`).
+  Qué pide cada taller nuevo: `docs/marca-por-taller.md`. El botón principal usa el acento (contraste ≥ 4,5:1).
+  Bordes de campos `#928C82` (≥ 3:1), algo más oscuros que en el prototipo, por accesibilidad.
 
 ## Comandos
 ```bash
@@ -121,9 +131,14 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
 - **Hecho en local (sin push): Fase 5, el presupuesto** (ver detalle abajo). 273 tests de la API (`npm run test:db`)
   + 10 de `shared` (`npm test`).
 - **Hecho en local (sin push): Fase 6, PDF + vista previa + enviar por WhatsApp + estados** (ver detalle abajo).
-- **Siguiente:** revisar el prototipo de interfaz que diseña el dueño del proyecto y, de ahí, definir por taller el
-  rubro (pintura o mecánica: otra interfaz), el logo en SVG (se guardaría como texto en la BD, sin R2; sanear el SVG) y la
-  paleta de colores (variables CSS por taller). El PDF ya tiene el lugar del logo (`TallerParaPdf` en `pdf.documento.ts`).
+- **Hecho en local (sin push): rediseño de la interfaz** según `prototipoUI/` (etapas 1 a 4 del plan: tokens y tema de
+  Vega, componentes base y `<Encabezado>`, todas las pantallas migradas, íconos/manifest/`theme-color` `#11223D`). Falta la
+  etapa 5 y la revisión final (360/390/1280 px con capturas, hecha en 390 y 1280).
+- **Siguiente (etapa 5, por taller):** rubro (pintura o mecánica: otra interfaz), logo en SVG (se guardaría como texto en
+  la BD, sin R2; sanear el SVG; dos versiones o recolor automático desde los grupos `icono/nombre/eslogan/linea`) y la
+  paleta de 2 colores por taller, todo editado solo por el administrador de la APP (ver `docs/marca-por-taller.md`);
+  el PDF usaría el logo (`TallerParaPdf` en `pdf.documento.ts`; probar antes que `pdfmake` dibuje bien ese SVG). Después, el
+  ícono de instalación por taller (manifest por taller o ícono único del producto: decidir con el dominio).
   Supuestos a confirmar con el taller piloto: pintura igual por pieza y editable; anticipo de repuestos con el precio
   con margen. Importar el cliente desde la libreta de contactos quedó para después (solo funciona en Android Chrome).
 - **Retomar en local:** abrir Docker Desktop → `npm run db:up` → `npm run dev:api` y `npm run dev:web`
