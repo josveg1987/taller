@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
+import { CatalogoModule } from './catalogo/catalogo.module';
 import { ClientesModule } from './clientes/clientes.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
@@ -17,6 +18,7 @@ import { VehiculosModule } from './vehiculos/vehiculos.module';
     TallerModule,
     ClientesModule,
     VehiculosModule,
+    CatalogoModule,
   ],
   controllers: [HealthController],
 })

@@ -13,6 +13,7 @@ haya reglas de negocio, y commit al terminar cada paso.
 | 2d. Admin de taller | Datos del taller, configuración y sus usuarios (sin logo, que necesita R2). **Hecha (local).** | HU-20, 37, 29, 31, 34 |
 | 2e. Passkeys | Entrar con huella / Face ID (WebAuthn) además de la contraseña. **Después de tener el dominio propio** (la passkey queda atada al dominio). Evaluar `@simplewebauthn`. | — |
 | 3. Clientes | Clientes, vehículos y búsqueda por patente, nombre o teléfono. **Hecha (local).** | HU-01 a 03 |
+| 3b. Catálogo de vehículos | Marca, modelo y año con sugerencias al escribir, desde el listado del SII; carga automática con las migraciones. **Hecha (local).** | HU-02 |
 | 4. Catálogo | Piezas, posiciones, combos y montos rápidos | HU-16, 33, 38 |
 | 5. Presupuesto | Flujo de 3 pantallas + cálculo con tests + borradores locales | HU-05 a 10, 13, 28, 30, 32, 35, 43 |
 | 6. PDF | Generación y compartir por WhatsApp | HU-21, 22 |

@@ -93,6 +93,7 @@ npm run build            # compila shared, api y web (en ese orden)
 npm run db:up            # PostgreSQL local con Docker (requiere Docker Desktop)
 npm run db:migrate       # aplica las migraciones SQL pendientes (apps/api/migrations/)
 npm run db:rollback      # deshace la última migración
+npm run catalogo:generar -- --anio 2027   # regenera el catálogo de vehículos desde el Excel del SII
 npm run test:db          # tests de aislamiento entre talleres (necesita la BD local; se niega a correr contra otra)
 ```
 Migraciones: archivos `.sql` con `-- Up Migration` / `-- Down Migration` (`node-pg-migrate`). Crear una nueva:
@@ -138,7 +139,7 @@ Para dejar producción funcionando, en este orden:
 1. Comprar dominio y configurar `app.<dominio>` (Cloudflare Pages) y `api.<dominio>` (Render); actualizar
    `CORS_ORIGIN` (Render) y `VITE_API_URL` (Cloudflare) y volver a desplegar la web.
 2. Aplicar migraciones en Neon con la conexión directa (sin `-pooler`):
-   `$env:DATABASE_URL='<directa>'; npm run db:migrate`.
+   `$env:DATABASE_URL='<directa>'; npm run db:migrate` (esto también carga el catálogo de vehículos).
 3. Crear el administrador de la APP en Neon (`crear-admin` con la misma `DATABASE_URL`; ver nota de nombres
    con espacios en Windows) y crear el primer taller y su usuario desde el panel.
 4. Cambiar la contraseña de la BD de Neon y actualizar `DATABASE_URL` en Render.
@@ -154,6 +155,26 @@ verificador (se guarda `12345678-5`). Migración `…busqueda-sin-tildes` (exten
 en Neon se crea sola al migrar). Web `apps/web/src/clientes/` con pestaña **Clientes** (la barra inferior
 queda en Inicio · Clientes · Mi taller; "Usuarios" ahora cuelga de Mi taller). 95 tests. Sin borrado de
 clientes ni vehículos todavía. Siguiente: Fase 4 (catálogo) o saltar al presupuesto (Fase 5).
+
+**Catálogo de vehículos (2026-10-10)**: marca > modelo > años para sugerir al escribir (en cualquier orden:
+marca→año→modelo o marca→modelo→año). Fuente: tasación fiscal de livianos del SII
+(https://www.sii.cl/servicios_online/1049-2612.html, `liv<año>.xlsx`; sin motos): 147 marcas, 2.305 modelos,
+17.576 combinaciones. Tablas **globales de solo lectura** (`catalogo_marcas`, `catalogo_modelos`,
+`catalogo_modelo_anios`, `catalogo_cargas`; sin `taller_id` ni RLS; `taller_app` solo tiene SELECT). Los
+vehículos NO apuntan a ellas: guardan marca/modelo/año como texto, así un auto fuera del catálogo se escribe a
+mano y cambiar el catálogo no altera lo guardado. API `apps/api/src/catalogo/` (`GET /catalogo/marcas|modelos|anios`,
+solo requiere sesión). Web: `clientes/CamposVehiculo.tsx` + `catalogo.ts` (caché en memoria).
+**Carga automática en producción:** los datos van en una migración (`…catalogo-vehiculos-sii-2026.cjs`, lee
+`apps/api/datos/catalogo-vehiculos-sii-2026.tsv`), así que `npm run db:migrate` contra Neon crea las tablas Y carga
+el catálogo, sin ningún paso aparte (idempotente: solo agrega). Actualizar cada enero:
+`npm run catalogo:generar -- --anio 2027` (descarga el Excel del SII y genera el TSV; revisar el informe de
+siglas) y crear una migración nueva igual a la de 2026 apuntando al TSV nuevo. Los nombres se limpian en
+`apps/api/datos/formato.cjs` ("KIA MOTORS"→"Kia", "MERCEDES BENZ"→"Mercedes-Benz"); si algún modelo queda mal
+escrito (una sigla como palabra), agregarlo a `SIGLAS_MODELO`. Los modelos del año en curso pueden no estar
+hasta la lista siguiente del SII. 152 tests.
+
+Permisos de Claude Code: `.claude/settings.json` lista los comandos de solo lectura, build y tests permitidos
+sin preguntar. Usar comandos simples, uno por llamada (los compuestos con `;`/pipes/`foreach` piden permiso).
 
 Pendiente al retomar:
 - **Cambiar la contraseña de la BD en Neon** (quedó visible en una captura del chat): Neon > Connect >

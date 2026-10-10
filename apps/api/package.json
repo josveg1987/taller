@@ -6,8 +6,9 @@
     "build": "nest build",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
-    "migrate": "node-pg-migrate -m migrations --envPath ../../.env",
+    "migrate": "node-pg-migrate -m migrations --envPath ../../.env --verbose false",
     "crear-admin": "nest build && node dist/cli/crear-admin.js",
+    "catalogo:generar": "node scripts/catalogo-desde-sii.cjs",
     "test": "vitest run"
   },
   "dependencies": {

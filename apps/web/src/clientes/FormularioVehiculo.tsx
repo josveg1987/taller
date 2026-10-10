@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { CamposVehiculo } from './CamposVehiculo';
 import type { Vehiculo } from './tipos';
 
 export interface PayloadVehiculo {
@@ -44,18 +45,14 @@ export function FormularioVehiculo({ inicial, textoBoton, error, onGuardar }: Pr
           onChange={(e) => setPatente(e.target.value)}
         />
       </label>
-      <label className="campo">
-        Marca
-        <input maxLength={60} autoComplete="off" value={marca} onChange={(e) => setMarca(e.target.value)} />
-      </label>
-      <label className="campo">
-        Modelo
-        <input maxLength={60} autoComplete="off" value={modelo} onChange={(e) => setModelo(e.target.value)} />
-      </label>
-      <label className="campo">
-        Año
-        <input type="number" inputMode="numeric" min={1900} max={2100} value={anio} onChange={(e) => setAnio(e.target.value)} />
-      </label>
+      <CamposVehiculo
+        valor={{ marca, modelo, anio }}
+        onCambio={(v) => {
+          setMarca(v.marca);
+          setModelo(v.modelo);
+          setAnio(v.anio);
+        }}
+      />
       <label className="campo">
         Color
         <input maxLength={40} autoComplete="off" value={color} onChange={(e) => setColor(e.target.value)} />

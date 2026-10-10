@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { api, ApiError } from '../api';
 import { Icono } from '../Iconos';
 import { irA } from '../ruta';
+import { CamposVehiculo } from './CamposVehiculo';
 import type { ClienteDetalle } from './tipos';
 
 export function ClienteNuevo() {
@@ -10,6 +11,7 @@ export function ClienteNuevo() {
   const [patente, setPatente] = useState('');
   const [marca, setMarca] = useState('');
   const [modelo, setModelo] = useState('');
+  const [anio, setAnio] = useState('');
   const [masDatos, setMasDatos] = useState(false);
   const [rut, setRut] = useState('');
   const [email, setEmail] = useState('');
@@ -31,7 +33,7 @@ export function ClienteNuevo() {
           email,
           direccion,
           // El vehiculo es opcional: solo se envia si se escribio la patente.
-          ...(patente.trim() ? { vehiculo: { patente, marca, modelo } } : {}),
+          ...(patente.trim() ? { vehiculo: { patente, marca, modelo, anio: anio.trim() ? Number(anio) : null } } : {}),
         },
       });
       irA(`/clientes/${c.id}`);
@@ -86,16 +88,14 @@ export function ClienteNuevo() {
             />
           </label>
           {patente.trim() && (
-            <>
-              <label className="campo">
-                Marca
-                <input maxLength={60} autoComplete="off" value={marca} onChange={(e) => setMarca(e.target.value)} />
-              </label>
-              <label className="campo">
-                Modelo
-                <input maxLength={60} autoComplete="off" value={modelo} onChange={(e) => setModelo(e.target.value)} />
-              </label>
-            </>
+            <CamposVehiculo
+              valor={{ marca, modelo, anio }}
+              onCambio={(v) => {
+                setMarca(v.marca);
+                setModelo(v.modelo);
+                setAnio(v.anio);
+              }}
+            />
           )}
         </div>
 

@@ -14,7 +14,8 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:migrate": "npm run migrate -w @taller/api -- up",
-    "db:rollback": "npm run migrate -w @taller/api -- down"
+    "db:rollback": "npm run migrate -w @taller/api -- down",
+    "catalogo:generar": "npm run catalogo:generar -w @taller/api --"
   },
   "devDependencies": {
     "typescript": "^6.0.3"

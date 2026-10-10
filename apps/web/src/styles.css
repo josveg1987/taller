@@ -49,6 +49,7 @@
   --asa-alto: 4px;
   --campo-corto: 7rem;
   --hoja-alto-max: 88dvh;
+  --sugerencias-alto: 14rem;
 
   /* Tipografia (del sistema) */
   --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
@@ -523,6 +524,47 @@ input.corto {
   width: var(--campo-corto);
   flex: none;
   text-align: right;
+}
+
+/* Sugerencias del catalogo bajo un campo: en linea (no flotantes) para que funcionen dentro de las hojas. */
+.sugerencias {
+  display: flex;
+  flex-direction: column;
+  max-height: var(--sugerencias-alto);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: var(--radio-s);
+  background: var(--color-fondo);
+}
+
+.sugerencias.anios {
+  flex-flow: row wrap;
+  gap: var(--esp-2);
+  padding: var(--esp-2);
+}
+
+.sugerencia {
+  min-height: var(--toque);
+  padding: 0 var(--esp-4);
+  border: 0;
+  text-align: left;
+  font-weight: 600;
+  background: none;
+}
+
+.sugerencia + .sugerencia {
+  border-top: 1px solid var(--color-borde);
+}
+
+.sugerencia.anio {
+  border: 0;
+  border-radius: var(--radio-pildora);
+  text-align: center;
+  background: var(--color-superficie);
+}
+
+.sugerencias.anios .sugerencia + .sugerencia {
+  border-top: 0;
 }
 
 .campo-clave {
