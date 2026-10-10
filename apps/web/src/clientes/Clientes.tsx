@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from '../api';
 import { Encabezado } from '../Encabezado';
 import { Icono } from '../Iconos';
+import { InsigniaAuto, InsigniaCliente } from '../marca/insignias';
 import { irA } from '../ruta';
 import type { ClienteLista } from './tipos';
 
@@ -75,6 +76,7 @@ export function Clientes() {
             {clientes.map((c) => (
               <li key={c.id}>
                 <button type="button" className="item" onClick={() => irA(`/clientes/${c.id}`)}>
+                  {c.vehiculos.length > 0 ? <InsigniaAuto marca={c.vehiculos[0].marca} /> : <InsigniaCliente nombre={c.nombre} />}
                   <span className="item-texto">
                     <span className="item-titulo">{c.nombre}</span>
                     <span className="detalle">{c.telefono}</span>

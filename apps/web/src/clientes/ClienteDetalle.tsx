@@ -5,6 +5,7 @@ import { Cargando } from '../Cargando';
 import { Encabezado } from '../Encabezado';
 import { Hoja } from '../Hoja';
 import { Icono } from '../Iconos';
+import { InsigniaAuto } from '../marca/insignias';
 import { irA } from '../ruta';
 import { FormularioVehiculo, type PayloadVehiculo } from './FormularioVehiculo';
 import { enlaceLlamada, enlaceWhatsApp } from './telefono';
@@ -81,6 +82,7 @@ export function ClienteDetalle({ id }: { id: string }) {
           {cliente.vehiculos.map((v) => (
             <li key={v.id}>
               <button type="button" className="item" onClick={() => irA(`/vehiculos/${v.id}`)}>
+                <InsigniaAuto marca={v.marca} />
                 <span className="item-texto">
                   <span className="placa">{v.patente}</span>
                   {descripcionVehiculo(v) && <span className="detalle"> {descripcionVehiculo(v)}</span>}

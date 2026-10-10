@@ -5,6 +5,7 @@ import { Encabezado } from '../Encabezado';
 import { fechaCorta, haceCuanto } from '../fechas';
 import { HojaConfirmar } from '../Hoja';
 import { Icono } from '../Iconos';
+import { InsigniaAuto } from '../marca/insignias';
 import { irA } from '../ruta';
 import { useTallerActual } from '../sesion';
 import { borrarBorrador, listarBorradores } from './local';
@@ -81,6 +82,7 @@ export function Presupuestos() {
             {presupuestos.map((p) => (
               <li key={p.id}>
                 <button type="button" className="item" onClick={() => irA(`/presupuestos/${p.id}`)}>
+                  <InsigniaAuto marca={p.vehiculo.marca} />
                   <span className="item-texto">
                     <span className="item-titulo">
                       N° {p.numero} · <span className="placa">{p.vehiculo.patente}</span>

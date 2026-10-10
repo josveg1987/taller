@@ -87,6 +87,12 @@ La app debe sentirse como una app móvil (PWA), no como un sitio web. Reglas par
   Pantalla nueva = reutilizar `<Encabezado>`, `.flotante`, `.cuerpo`, `.grupo`, `.item`, `.campo`, `.boton`,
   `.chip` (estado), `.chip-monto` (botón con tinte), `.segmentos`, `<Hoja>` y la barra inferior flotante de
   `Aplicacion.tsx`. Con el asistente (y la vista del PDF) la barra inferior se oculta y aparece `.barra-accion`.
+- **Insignias** (`marca/insignias.tsx`): círculo con el logo de la marca del auto (`InsigniaAuto`; logos de
+  `simple-icons`, CC0, en `marca/autos.ts`; sin logo → iniciales; sin marca → ícono de auto) o con las iniciales del
+  cliente (`InsigniaCliente`). Se usan en las listas de clientes, presupuestos, vehículos y en el buscador del
+  paso 1. Los logos son marcas registradas de los fabricantes: solo identifican el auto del cliente. Faltan Mercedes-Benz,
+  Lexus, Jaguar, Land Rover, Alfa Romeo, Dodge y casi todas las chinas (se pueden agregar pegando su trazo en `autos.ts`).
+  La foto del auto/cliente queda para la etapa de atención (necesita R2).
 - **La marca es el tema del taller**: solo estas variables cambian por taller (`--color-marca-950/900/700`,
   `--color-acento`, `--color-acento-sobre-oscuro`, `--color-tinte`, `--color-tinte-texto`) y el logo sale de
   `useMarca()` (`src/marca.ts`, hoy siempre Vega: logos en `src/marca/vega/`, íconos de la PWA en `public/icons/`).

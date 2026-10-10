@@ -3,6 +3,7 @@ import { api, ApiError } from '../api';
 import { CamposVehiculo } from '../clientes/CamposVehiculo';
 import { descripcionVehiculo, type ClienteLista } from '../clientes/tipos';
 import { Icono } from '../Iconos';
+import { InsigniaAuto } from '../marca/insignias';
 import type { Actualizar } from './Asistente';
 import { normalizarPatente } from './calculo';
 import type { Borrador, VehiculoEncontrado } from './tipos';
@@ -161,6 +162,7 @@ function Buscador({ inicial, actualizar, onCrear }: { inicial: string; actualiza
           </div>
           {c.vehiculos.map((v) => (
             <button key={v.id} type="button" className="item" disabled={eligiendo} onClick={() => void elegirVehiculo(v.id)}>
+              <InsigniaAuto marca={v.marca} />
               <span className="item-texto">
                 <span className="placa">{v.patente}</span>
                 <span className="detalle"> {descripcionVehiculo({ marca: v.marca, modelo: v.modelo, anio: null })}</span>

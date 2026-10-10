@@ -100,6 +100,7 @@
   --interruptor-margen: 3px;
   --pieza-ancho-min: 9.5rem; /* rejilla de piezas: 2 columnas en un telefono de 360px */
   --pieza-alto-min: 64px;
+  --insignia: 44px; /* circulo con el logo del auto o las iniciales del cliente */
 
   /* Tipografia (del sistema) */
   --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
@@ -1266,4 +1267,40 @@ canvas.pdf-pagina {
 .barra-accion .boton.secundario {
   background: var(--color-suave);
   box-shadow: none;
+}
+
+/* Insignias: logo de la marca del auto o iniciales del cliente, en un circulo. */
+.insignia {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: var(--insignia);
+  height: var(--insignia);
+  border-radius: 50%;
+  font-size: var(--texto-s);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--color-marca-900);
+  background: var(--color-tinte);
+}
+
+.insignia svg {
+  width: 58%;
+  height: 58%;
+  fill: currentColor;
+}
+
+.insignia-texto {
+  color: var(--color-tinte-texto);
+}
+
+.insignia-cliente {
+  color: var(--color-neutro-texto);
+  background: var(--color-neutro-fondo);
+}
+
+.insignia-vacia {
+  color: var(--color-texto-suave);
+  background: var(--color-neutro-fondo);
 }

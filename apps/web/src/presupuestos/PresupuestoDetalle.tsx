@@ -8,6 +8,7 @@ import { Cargando } from '../Cargando';
 import { Encabezado } from '../Encabezado';
 import { Hoja } from '../Hoja';
 import { Icono } from '../Iconos';
+import { InsigniaAuto, InsigniaCliente } from '../marca/insignias';
 import { irA } from '../ruta';
 import { ESTADOS, nombreConLado, type Estado, type Presupuesto } from './tipos';
 
@@ -86,7 +87,7 @@ export function PresupuestoDetalle({ id }: { id: string }) {
       <h2>Cliente y vehículo</h2>
       <div className="grupo">
         <button type="button" className="item" onClick={() => irA(`/clientes/${p.cliente.id}`)}>
-          <Icono nombre="clientes" />
+          <InsigniaCliente nombre={p.cliente.nombre} />
           <span className="item-texto">
             <span className="item-titulo">{p.cliente.nombre}</span>
             <span className="detalle">{p.cliente.telefono}</span>
@@ -94,6 +95,7 @@ export function PresupuestoDetalle({ id }: { id: string }) {
           <Icono nombre="chevron" />
         </button>
         <button type="button" className="item" onClick={() => irA(`/vehiculos/${p.vehiculo.id}`)}>
+          <InsigniaAuto marca={p.vehiculo.marca} />
           <span className="item-texto">
             <span className="placa">{p.vehiculo.patente}</span>
             <span className="detalle"> {descripcionVehiculo(p.vehiculo)}</span>
