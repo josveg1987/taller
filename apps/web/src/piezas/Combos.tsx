@@ -194,7 +194,7 @@ function FormularioCombo({
   }
 
   // Las piezas del combo que ahora estan inactivas siguen apareciendo para poder quitarlas.
-  const visibles = [...piezas, ...(inicial?.piezas.filter((p) => !piezas.some((x) => x.id === p.id)).map((p) => ({ ...p, activa: false, tarifaPintura: null, orden: 0 })) ?? [])];
+  const visibles = [...piezas, ...(inicial?.piezas.filter((p) => !piezas.some((x) => x.id === p.id)).map((p) => ({ ...p, activa: false, tarifaPintura: null, desabolladoSugerido: null, orden: 0 })) ?? [])];
 
   return (
     <form onSubmit={enviar} className="formulario">

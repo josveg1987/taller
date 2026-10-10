@@ -8,6 +8,8 @@ export interface Pieza {
   usaPosicion: boolean;
   /** null = usa la tarifa de pintura del taller. */
   tarifaPintura: number | null;
+  /** Monto con que parte el desabollado al reparar esta pieza (editable en el presupuesto); null = sin sugerencia. */
+  desabolladoSugerido: number | null;
   activa: boolean;
   orden: number;
 }
@@ -17,6 +19,7 @@ interface FilaPieza {
   nombre: string;
   usa_posicion: boolean;
   tarifa_pintura: number | null;
+  desabollado_sugerido: number | null;
   activa: boolean;
   orden: number;
 }
@@ -26,11 +29,12 @@ const aPieza = (f: FilaPieza): Pieza => ({
   nombre: f.nombre,
   usaPosicion: f.usa_posicion,
   tarifaPintura: f.tarifa_pintura,
+  desabolladoSugerido: f.desabollado_sugerido,
   activa: f.activa,
   orden: f.orden,
 });
 
-const COLUMNAS = 'id, nombre, usa_posicion, tarifa_pintura, activa, orden';
+const COLUMNAS = 'id, nombre, usa_posicion, tarifa_pintura, desabollado_sugerido, activa, orden';
 
 type Consulta = (sql: string, params: unknown[]) => Promise<{ rowCount: number | null }>;
 
@@ -82,15 +86,15 @@ export class PiezasService {
 
   async crear(
     tallerId: string,
-    d: { nombre: string; usaPosicion: boolean; tarifaPintura: number | null },
+    d: { nombre: string; usaPosicion: boolean; tarifaPintura: number | null; desabolladoSugerido: number | null },
   ): Promise<Pieza> {
     try {
       const { rows } = await this.db.conTaller(tallerId, (c) =>
         c.query<FilaPieza>(
-          `INSERT INTO piezas (taller_id, nombre, usa_posicion, tarifa_pintura, orden)
-           VALUES ($1, $2, $3, $4, COALESCE((SELECT max(orden) FROM piezas), 0) + 1)
+          `INSERT INTO piezas (taller_id, nombre, usa_posicion, tarifa_pintura, desabollado_sugerido, orden)
+           VALUES ($1, $2, $3, $4, $5, COALESCE((SELECT max(orden) FROM piezas), 0) + 1)
            RETURNING ${COLUMNAS}`,
-          [tallerId, d.nombre, d.usaPosicion, d.tarifaPintura],
+          [tallerId, d.nombre, d.usaPosicion, d.tarifaPintura, d.desabolladoSugerido],
         ),
       );
       return aPieza(rows[0]);
@@ -102,7 +106,13 @@ export class PiezasService {
   async actualizar(
     tallerId: string,
     id: string,
-    cambios: { nombre?: string; usaPosicion?: boolean; tarifaPintura?: number | null; activa?: boolean },
+    cambios: {
+      nombre?: string;
+      usaPosicion?: boolean;
+      tarifaPintura?: number | null;
+      desabolladoSugerido?: number | null;
+      activa?: boolean;
+    },
   ): Promise<Pieza> {
     const sets: string[] = [];
     const valores: unknown[] = [];
@@ -113,6 +123,7 @@ export class PiezasService {
     if (cambios.nombre !== undefined) agregar('nombre', cambios.nombre);
     if (cambios.usaPosicion !== undefined) agregar('usa_posicion', cambios.usaPosicion);
     if (cambios.tarifaPintura !== undefined) agregar('tarifa_pintura', cambios.tarifaPintura);
+    if (cambios.desabolladoSugerido !== undefined) agregar('desabollado_sugerido', cambios.desabolladoSugerido);
     if (cambios.activa !== undefined) agregar('activa', cambios.activa);
     try {
       const { rows } = await this.db.conTaller(tallerId, (c) =>

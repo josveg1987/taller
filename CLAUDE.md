@@ -191,7 +191,11 @@ combos sí se pueden eliminar (nada los referencia). Un combo guarda solo las pi
 (izquierda/derecha) se elige al aplicarlo** en el presupuesto, y solo afecta a las piezas con `usa_posicion`.
 `pieza.tarifa_pintura` NULL = usa `talleres.tarifa_pintura` (ahora editable en Mi taller, junto a
 `montos_desabollado`, que parten en 30.000/60.000/100.000 y se editan como chips). Web `apps/web/src/piezas/`
-(Piezas y Combos, colgando de Mi taller) y `dinero.ts` (`clp()`). 223 tests.
+(Piezas y Combos, colgando de Mi taller) y `dinero.ts` (`clp()`). **Desabollado:** no tiene tarifa fija (varía con el
+daño); cada pieza tiene un `desabollado_sugerido` opcional (NULL = sin sugerencia) con el que **parte** el monto al
+reparar la pieza en el presupuesto, editable, además de los montos rápidos del taller (Fase 5: pre-llenar con él). La
+plantilla estándar NO trae valores (ni pintura ni desabollado): cada taller pone los suyos. Cada pieza se repara
+(pintura + desabollado) o se reemplaza (pintura + repuesto con margen). 224 tests.
 
 Permisos de Claude Code: `.claude/settings.json` lista los comandos de solo lectura, build y tests permitidos
 sin preguntar. Usar comandos simples, uno por llamada (los compuestos con `;`/pipes/`foreach` piden permiso).

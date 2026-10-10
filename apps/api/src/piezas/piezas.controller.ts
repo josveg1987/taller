@@ -42,6 +42,7 @@ export class PiezasController {
       nombre: texto(b.nombre, 'El nombre de la pieza', 80),
       usaPosicion: b.usaPosicion === undefined ? true : booleano(b.usaPosicion, 'Usa posición'),
       tarifaPintura: opcional(b.tarifaPintura, (v) => entero(v, 'La tarifa de pintura', 0, MAX_TARIFA)) ?? null,
+      desabolladoSugerido: opcional(b.desabolladoSugerido, (v) => entero(v, 'El desabollado sugerido', 0, MAX_TARIFA)) ?? null,
     });
   }
 
@@ -53,6 +54,8 @@ export class PiezasController {
       usaPosicion: b.usaPosicion === undefined ? undefined : booleano(b.usaPosicion, 'Usa posición'),
       // Vacio o null = vuelve a usar la tarifa del taller.
       tarifaPintura: opcional(b.tarifaPintura, (v) => entero(v, 'La tarifa de pintura', 0, MAX_TARIFA)),
+      // Vacio o null = sin desabollado sugerido.
+      desabolladoSugerido: opcional(b.desabolladoSugerido, (v) => entero(v, 'El desabollado sugerido', 0, MAX_TARIFA)),
       activa: b.activa === undefined ? undefined : booleano(b.activa, 'Activa'),
     });
   }

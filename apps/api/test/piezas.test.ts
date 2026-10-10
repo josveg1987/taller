@@ -24,6 +24,7 @@ interface Pieza {
   nombre: string;
   usaPosicion: boolean;
   tarifaPintura: number | null;
+  desabolladoSugerido: number | null;
   activa: boolean;
   orden: number;
 }
@@ -122,7 +123,8 @@ describe('plantilla estandar', () => {
     expect(por['Puerta delantera'].usaPosicion).toBe(true);
     expect(por['Zócalo'].usaPosicion).toBe(true);
     expect(por['Maleta / portalón'].usaPosicion).toBe(false);
-    expect(lista.every((p) => p.activa && p.tarifaPintura === null)).toBe(true);
+    // La plantilla no inventa valores: cada taller pone su pintura y su desabollado sugerido.
+    expect(lista.every((p) => p.activa && p.tarifaPintura === null && p.desabolladoSugerido === null)).toBe(true);
   });
 
   it('cargarlas de nuevo no duplica ni pisa los cambios del taller', async () => {
@@ -180,9 +182,21 @@ describe('piezas del taller', () => {
     const antes = await piezas(b);
     const r = await llamar('POST', '/piezas', b.cookie, { nombre: '  Faro  ' });
     expect(r.status).toBe(201);
-    expect(r.json).toMatchObject({ nombre: 'Faro', usaPosicion: true, tarifaPintura: null, activa: true, orden: antes.length + 1 });
-    const sola = await llamar('POST', '/piezas', b.cookie, { nombre: 'Antena', usaPosicion: false, tarifaPintura: 30000 });
-    expect(sola.json).toMatchObject({ usaPosicion: false, tarifaPintura: 30000 });
+    expect(r.json).toMatchObject({
+      nombre: 'Faro',
+      usaPosicion: true,
+      tarifaPintura: null,
+      desabolladoSugerido: null,
+      activa: true,
+      orden: antes.length + 1,
+    });
+    const sola = await llamar('POST', '/piezas', b.cookie, {
+      nombre: 'Antena',
+      usaPosicion: false,
+      tarifaPintura: 30000,
+      desabolladoSugerido: 20000,
+    });
+    expect(sola.json).toMatchObject({ usaPosicion: false, tarifaPintura: 30000, desabolladoSugerido: 20000 });
   });
 
   it('valida los datos', async () => {
@@ -195,6 +209,10 @@ describe('piezas del taller', () => {
     expect((await malo({ nombre: 'P3', tarifaPintura: '80000' })).status).toBe(400);
     expect((await malo({ nombre: 'P4', tarifaPintura: 100_000_001 })).status).toBe(400);
     expect((await malo({ nombre: 'P5', usaPosicion: 'si' })).status).toBe(400);
+    expect((await malo({ nombre: 'P6', desabolladoSugerido: -1 })).status).toBe(400);
+    expect((await malo({ nombre: 'P7', desabolladoSugerido: 60000.5 })).status).toBe(400);
+    expect((await malo({ nombre: 'P8', desabolladoSugerido: '60000' })).status).toBe(400);
+    expect((await malo({ nombre: 'P9', desabolladoSugerido: 100_000_001 })).status).toBe(400);
     expect((await malo('texto')).status).toBe(400);
   });
 
@@ -221,6 +239,23 @@ describe('piezas del taller', () => {
     expect((await llamar('PATCH', `/piezas/${p.id}`, b.cookie, { nombre: 'Pieza repetida' })).status).toBe(409);
     expect((await llamar('PATCH', '/piezas/00000000-0000-4000-8000-000000000000', b.cookie, { nombre: 'x' })).status).toBe(404);
     expect((await llamar('PATCH', '/piezas/no-es-un-id', b.cookie, { nombre: 'x' })).status).toBe(404);
+  });
+
+  it('el desabollado sugerido se pone, se cambia y se borra enviandolo vacio', async () => {
+    const p = (await llamar('POST', '/piezas', b.cookie, { nombre: 'Con sugerido' })).json as Pieza;
+    expect(p.desabolladoSugerido).toBeNull();
+    expect((await llamar('PATCH', `/piezas/${p.id}`, b.cookie, { desabolladoSugerido: 60000 })).json.desabolladoSugerido).toBe(60000);
+    expect((await llamar('PATCH', `/piezas/${p.id}`, b.cookie, { desabolladoSugerido: 0 })).json.desabolladoSugerido).toBe(0);
+    expect((await llamar('PATCH', `/piezas/${p.id}`, b.cookie, { desabolladoSugerido: 45000, tarifaPintura: 80000 })).json).toMatchObject({
+      desabolladoSugerido: 45000,
+      tarifaPintura: 80000,
+    });
+    // Otros cambios no lo tocan.
+    expect((await llamar('PATCH', `/piezas/${p.id}`, b.cookie, { nombre: 'Con sugerido 2' })).json.desabolladoSugerido).toBe(45000);
+    expect((await llamar('PATCH', `/piezas/${p.id}`, b.cookie, { desabolladoSugerido: '' })).json.desabolladoSugerido).toBeNull();
+    expect((await llamar('PATCH', `/piezas/${p.id}`, b.cookie, { desabolladoSugerido: -5 })).status).toBe(400);
+    // Es una sugerencia por taller: el otro taller no la ve en sus piezas.
+    expect((await piezas(a)).some((x) => x.id === p.id)).toBe(false);
   });
 
   it('por defecto solo lista las activas; con ?todas=1 tambien las desactivadas', async () => {

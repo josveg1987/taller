@@ -11,6 +11,7 @@ interface DatosPieza {
   nombre: string;
   usaPosicion: boolean;
   tarifaPintura: number | null;
+  desabolladoSugerido: number | null;
   activa: boolean;
 }
 
@@ -107,6 +108,7 @@ export function Piezas() {
                   <span className="item-titulo">{p.nombre}</span>
                   <span className="detalle">
                     {p.usaPosicion ? 'Por lado' : 'Una sola'} · Pintura {p.tarifaPintura === null ? `${clp(tarifaTaller)} (del taller)` : clp(p.tarifaPintura)}
+                    {p.desabolladoSugerido !== null && ` · Desabollado ${clp(p.desabolladoSugerido)}`}
                   </span>
                 </span>
                 {!p.activa && <span className="chip suspendido">Inactiva</span>}
@@ -191,6 +193,7 @@ function FormularioPieza({
   const [nombre, setNombre] = useState(inicial?.nombre ?? '');
   const [usaPosicion, setUsaPosicion] = useState(inicial?.usaPosicion ?? true);
   const [tarifa, setTarifa] = useState(inicial?.tarifaPintura === null || inicial === undefined ? '' : String(inicial.tarifaPintura));
+  const [sugerido, setSugerido] = useState(inicial?.desabolladoSugerido == null ? '' : String(inicial.desabolladoSugerido));
   const [activa, setActiva] = useState(inicial?.activa ?? true);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
 
@@ -199,7 +202,15 @@ function FormularioPieza({
     setErrorLocal(null);
     const digitos = tarifa.replace(/\D/g, '');
     if (tarifa.trim() !== '' && digitos === '') return setErrorLocal('La tarifa debe ser un número');
-    onGuardar({ nombre, usaPosicion, tarifaPintura: digitos === '' ? null : Number(digitos), activa });
+    const digitosSugerido = sugerido.replace(/\D/g, '');
+    if (sugerido.trim() !== '' && digitosSugerido === '') return setErrorLocal('El desabollado sugerido debe ser un número');
+    onGuardar({
+      nombre,
+      usaPosicion,
+      tarifaPintura: digitos === '' ? null : Number(digitos),
+      desabolladoSugerido: digitosSugerido === '' ? null : Number(digitosSugerido),
+      activa,
+    });
   }
 
   return (
@@ -230,6 +241,13 @@ function FormularioPieza({
         Tarifa de pintura propia ($)
         <span className="ayuda">Déjala vacía para usar la del taller ({clp(tarifaTaller)}).</span>
         <input inputMode="numeric" autoComplete="off" placeholder={`Usa la del taller`} value={tarifa} onChange={(e) => setTarifa(e.target.value)} />
+      </label>
+      <label className="campo">
+        Desabollado sugerido ($)
+        <span className="ayuda">
+          Con este monto parte el desabollado al reparar la pieza; en el presupuesto lo puedes cambiar. Vacío: sin sugerencia.
+        </span>
+        <input inputMode="numeric" autoComplete="off" placeholder="Sin sugerencia" value={sugerido} onChange={(e) => setSugerido(e.target.value)} />
       </label>
       {(errorLocal ?? error) && (
         <p className="error" role="alert">
