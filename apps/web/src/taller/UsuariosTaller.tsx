@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
+import { Icono } from '../Iconos';
+import { irA } from '../ruta';
 import { useSesion } from '../sesion';
 import { GestionUsuarios, type RutasUsuarios, type UsuarioFila } from '../usuarios/GestionUsuarios';
 
@@ -47,6 +49,10 @@ export function UsuariosTaller() {
 
   return (
     <section>
+      <button type="button" className="enlace volver" onClick={() => irA('/mi-taller')}>
+        <Icono nombre="atras" />
+        Mi taller
+      </button>
       <h1>Usuarios</h1>
       <p className="subtitulo">Quienes pueden entrar a la app de este taller. Todos tienen los mismos permisos.</p>
       {error && (

@@ -3,6 +3,7 @@ import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
 import { HojaSelector } from '../Hoja';
 import { Icono } from '../Iconos';
+import { irA } from '../ruta';
 
 type TipoAnticipo = 'ninguno' | 'repuestos' | 'porcentaje' | 'fijo';
 
@@ -100,6 +101,17 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
     <section>
       <h1>Mi taller</h1>
       <p className="subtitulo">Estos datos aparecen en tus presupuestos.</p>
+
+      <div className="grupo">
+        <button type="button" className="item" onClick={() => irA('/usuarios')}>
+          <Icono nombre="usuarios" />
+          <span className="item-texto">
+            <span className="item-titulo">Usuarios</span>
+            <span className="detalle">Quiénes pueden entrar a la app</span>
+          </span>
+          <Icono nombre="chevron" />
+        </button>
+      </div>
 
       <form onSubmit={guardar} className="formulario">
         <h2>Datos</h2>

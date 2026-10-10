@@ -144,6 +144,17 @@ Para dejar producción funcionando, en este orden:
 4. Cambiar la contraseña de la BD de Neon y actualizar `DATABASE_URL` en Render.
 Después: passkeys (2e).
 
+**Fase 3 hecha en local (2026-10-10): clientes y vehículos** (HU-01 a 03). API `apps/api/src/clientes/` y
+`apps/api/src/vehiculos/` (por `conTaller()`): `GET|POST /clientes` (`?q=` busca por nombre sin tildes, por
+dígitos del teléfono o por patente; crear acepta un `vehiculo` en la misma transacción), `GET|PATCH
+/clientes/:id`, `POST /vehiculos`, `GET /vehiculos/patente/:patente` (exacta, para el paso 1 del
+presupuesto), `GET|PATCH /vehiculos/:id` (incluye cambiar de dueño dentro del taller). Validadores en
+`src/validacion.ts`: patente normalizada (`ABCD12`, única por taller), teléfono, RUT con dígito
+verificador (se guarda `12345678-5`). Migración `…busqueda-sin-tildes` (extensión estándar `unaccent`;
+en Neon se crea sola al migrar). Web `apps/web/src/clientes/` con pestaña **Clientes** (la barra inferior
+queda en Inicio · Clientes · Mi taller; "Usuarios" ahora cuelga de Mi taller). 95 tests. Sin borrado de
+clientes ni vehículos todavía. Siguiente: Fase 4 (catálogo) o saltar al presupuesto (Fase 5).
+
 Pendiente al retomar:
 - **Cambiar la contraseña de la BD en Neon** (quedó visible en una captura del chat): Neon > Connect >
   Reset password, y actualizar `DATABASE_URL` en Render.

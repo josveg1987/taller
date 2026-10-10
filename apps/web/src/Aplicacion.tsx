@@ -5,6 +5,10 @@ import { Icono, type NombreIcono } from './Iconos';
 import { Inicio } from './Inicio';
 import { irA, useRuta } from './ruta';
 import { useSesion, type Perfil } from './sesion';
+import { ClienteDetalle } from './clientes/ClienteDetalle';
+import { ClienteNuevo } from './clientes/ClienteNuevo';
+import { Clientes } from './clientes/Clientes';
+import { VehiculoDetalle } from './clientes/VehiculoDetalle';
 import { TallerDetalle } from './admin/TallerDetalle';
 import { TallerNuevo } from './admin/TallerNuevo';
 import { Talleres } from './admin/Talleres';
@@ -53,19 +57,33 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
     if (segundo === 'nuevo') pantalla = <TallerNuevo />;
     else if (segundo) pantalla = <TallerDetalle key={segundo} id={segundo} />;
     else pantalla = <Talleres />;
-  } else if (hayTaller && ruta === '/mi-taller') {
-    pantalla = <MiTaller />;
-  } else if (hayTaller && ruta === '/usuarios') {
-    pantalla = <UsuariosTaller />;
+  } else if (hayTaller) {
+    const [primero, segundo] = ruta.split('/').filter(Boolean);
+    if (primero === 'mi-taller') pantalla = <MiTaller />;
+    else if (primero === 'usuarios') pantalla = <UsuariosTaller />;
+    else if (primero === 'clientes' && segundo === 'nuevo') pantalla = <ClienteNuevo />;
+    else if (primero === 'clientes' && segundo) pantalla = <ClienteDetalle key={segundo} id={segundo} />;
+    else if (primero === 'clientes') pantalla = <Clientes />;
+    else if (primero === 'vehiculos' && segundo) pantalla = <VehiculoDetalle key={segundo} id={segundo} />;
   }
 
+  // Seccion de la barra inferior a la que pertenece la pantalla actual.
+  const primerTramo = ruta.split('/').filter(Boolean)[0];
+  const seccion = enAdmin
+    ? 'talleres'
+    : primerTramo === 'clientes' || primerTramo === 'vehiculos'
+      ? 'clientes'
+      : primerTramo === 'mi-taller' || primerTramo === 'usuarios'
+        ? 'mi-taller'
+        : 'inicio';
+
   const pestanas: Pestana[] = [];
-  if (esAdmin) pestanas.push({ ruta: '/talleres', texto: 'Talleres', icono: 'talleres', actual: enAdmin });
+  if (esAdmin) pestanas.push({ ruta: '/talleres', texto: 'Talleres', icono: 'talleres', actual: seccion === 'talleres' });
   if (hayTaller) {
     pestanas.push(
-      { ruta: '/', texto: 'Inicio', icono: 'inicio', actual: !enAdmin && ruta !== '/mi-taller' && ruta !== '/usuarios' },
-      { ruta: '/mi-taller', texto: 'Mi taller', icono: 'ajustes', actual: ruta === '/mi-taller' },
-      { ruta: '/usuarios', texto: 'Usuarios', icono: 'usuarios', actual: ruta === '/usuarios' },
+      { ruta: '/', texto: 'Inicio', icono: 'inicio', actual: seccion === 'inicio' },
+      { ruta: '/clientes', texto: 'Clientes', icono: 'clientes', actual: seccion === 'clientes' },
+      { ruta: '/mi-taller', texto: 'Mi taller', icono: 'ajustes', actual: seccion === 'mi-taller' },
     );
   }
 

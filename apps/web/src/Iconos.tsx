@@ -8,6 +8,10 @@ const TRAZOS = {
   atras: 'M15 6l-6 6 6 6',
   check: 'M5 12l5 5 9-10',
   mas: 'M12 5v14M5 12h14',
+  clientes: 'M12 12a4 4 0 1 0 0-8a4 4 0 0 0 0 8M4 21c0-4 3.6-7 8-7s8 3 8 7',
+  buscar: 'M11 18a7 7 0 1 0 0-14a7 7 0 0 0 0 14M21 21l-5-5',
+  telefono: 'M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2',
+  mensaje: 'M4 5h16v11H9l-5 4z',
 } as const;
 
 export type NombreIcono = keyof typeof TRAZOS;

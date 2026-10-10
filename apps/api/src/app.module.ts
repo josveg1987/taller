@@ -2,9 +2,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
+import { ClientesModule } from './clientes/clientes.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
 import { TallerModule } from './taller/taller.module';
+import { VehiculosModule } from './vehiculos/vehiculos.module';
 
 @Module({
   imports: [
@@ -13,6 +15,8 @@ import { TallerModule } from './taller/taller.module';
     AuthModule,
     AdminModule,
     TallerModule,
+    ClientesModule,
+    VehiculosModule,
   ],
   controllers: [HealthController],
 })
