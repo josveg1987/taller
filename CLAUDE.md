@@ -158,8 +158,11 @@ clientes ni vehículos todavía. Siguiente: Fase 4 (catálogo) o saltar al presu
 
 **Catálogo de vehículos (2026-10-10)**: marca > modelo > años para sugerir al escribir (en cualquier orden:
 marca→año→modelo o marca→modelo→año). Fuente: tasación fiscal de livianos del SII
-(https://www.sii.cl/servicios_online/1049-2612.html, `liv<año>.xlsx`; sin motos): 147 marcas, 2.305 modelos,
-17.576 combinaciones. Tablas **globales de solo lectura** (`catalogo_marcas`, `catalogo_modelos`,
+(https://www.sii.cl/servicios_online/1049-2612.html, `liv<año>.xlsx`; sin motos): 147 marcas, 2.175 modelos,
+17.311 combinaciones. El SII trae el modelo con códigos y variantes pegados ("Forester 7300", "118I",
+"Sprinter 314 CDI", "Verna CB 1.4 MT Plus"): `limpiarModelo()` en `apps/api/datos/formato.cjs` los une en el modelo
+base (conservando los años) y descarta filas sin modelo útil ("DFSK 4533", "1.6"); reglas por marca para BMW y
+Mercedes comerciales, con tests. Si aparece otra marca con ruido, agregar su regla ahí y regenerar. Tablas **globales de solo lectura** (`catalogo_marcas`, `catalogo_modelos`,
 `catalogo_modelo_anios`, `catalogo_cargas`; sin `taller_id` ni RLS; `taller_app` solo tiene SELECT). Los
 vehículos NO apuntan a ellas: guardan marca/modelo/año como texto, así un auto fuera del catálogo se escribe a
 mano y cambiar el catálogo no altera lo guardado. API `apps/api/src/catalogo/` (`GET /catalogo/marcas|modelos|anios`,

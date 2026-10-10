@@ -14,7 +14,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const zlib = require('node:zlib');
-const { nombreMarca, nombreModelo, SIGLAS_MODELO } = require('../datos/formato.cjs');
+const { nombreMarca, nombreModelo, limpiarModelo, SIGLAS_MODELO } = require('../datos/formato.cjs');
 
 function argumentos() {
   const r = {};
@@ -141,8 +141,11 @@ async function main() {
       continue;
     }
     const marca = nombreMarca(f.marca);
-    const modelo = nombreModelo(f.modelo);
-    if (!marca || !modelo) continue;
+    const modelo = limpiarModelo(marca, nombreModelo(f.modelo));
+    if (!marca || !modelo) {
+      sinDatos++;
+      continue;
+    }
     claves.add(`${marca}\t${modelo}\t${anioNum}`);
     // Para el informe: palabras cortas que quedaron como palabra normal y podrian ser siglas.
     for (const palabra of modelo.split(/[ \-/]/)) {

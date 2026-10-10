@@ -72,4 +72,44 @@ function nombreMarca(sii) {
     .join(' ');
 }
 
-module.exports = { nombreMarca, nombreModelo, limpiar, SIGLAS_MODELO };
+// Relleno que el SII deja al final del nombre: codigo interno de 4 digitos, diesel, aire, transmision.
+const RELLENO_FINAL = /^(\d{4}|CDI|TDI|AC|MT|AT|DA)$/i;
+const CILINDRADA = /^\d\.\d{1,2}[A-Za-z]?$/; // "1.4", "1.6T"
+
+/**
+ * Deja el modelo "base": quita lo que el SII le pega (codigos internos, cilindrada, transmision,
+ * variantes de motor) para que "Forester 7300", "Forester 7305"... sean un solo "Forester".
+ * Devuelve null si no queda un modelo util (p. ej. "DFSK 4533", que es solo marca + codigo).
+ * Recibe la marca y el modelo YA formateados con nombreMarca() y nombreModelo().
+ */
+function limpiarModelo(marca, modelo) {
+  let m = modelo;
+
+  // Una cilindrada sola ("1.6", "1.300 KG") no es un modelo.
+  if (/^\d\.\d{1,3}(\s|$)/.test(m)) return null;
+
+  // BMW: "118", "118i", "118 D", "M135I", "330E" -> "118", "M135", "330" (el motor no es otro modelo).
+  if (marca === 'BMW') m = m.replace(/^(M?\d{3})\s?(?:I|D|E|TI|XI|XD|S)$/, '$1');
+
+  // Mercedes-Benz comerciales: "Sprinter 314 CDI", "Vito Tourer 116 CDI" -> "Sprinter", "Vito Tourer".
+  if (marca === 'Mercedes-Benz') m = m.replace(/^(Sprinter|Vito Tourer|Vito|Viano)\s+\d{3}.*$/, '$1');
+
+  let t = m.split(' ');
+  // Desde la cilindrada en adelante es motor/version: "Verna CB 1.4 MT Plus" -> "Verna CB".
+  const i = t.findIndex((x, k) => k > 0 && CILINDRADA.test(x));
+  if (i > 0) t = t.slice(0, i);
+
+  // Relleno al final, mientras quede algo con letras ("Truck DC C22 AC" -> "Truck DC C22").
+  while (t.length > 1 && /[A-Za-z]/.test(t.slice(0, -1).join(' '))) {
+    const ultimo = t[t.length - 1];
+    const dieselSuelto = ultimo === 'D' && /\d/.test(t[t.length - 2]); // "V-220 D"
+    if (!RELLENO_FINAL.test(ultimo) && !dieselSuelto) break;
+    t = t.slice(0, -1);
+  }
+
+  m = t.join(' ').trim();
+  if (!m || m.toLowerCase() === String(marca).toLowerCase()) return null;
+  return m;
+}
+
+module.exports = { nombreMarca, nombreModelo, limpiarModelo, limpiar, SIGLAS_MODELO };
