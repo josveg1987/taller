@@ -103,9 +103,13 @@ export function ClienteDetalle({ id }: { id: string }) {
       )}
 
       <div className="pila">
+        <button type="button" className="boton" onClick={() => irA(`/presupuestos/nuevo/cliente/${cliente.id}`)}>
+          <Icono nombre="mas" />
+          Nuevo presupuesto
+        </button>
         <button
           type="button"
-          className="boton"
+          className="boton secundario"
           onClick={() => {
             limpiarError();
             setAgregando(true);

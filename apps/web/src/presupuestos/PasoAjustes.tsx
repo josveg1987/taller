@@ -23,6 +23,7 @@ export function PasoAjustes({ b, actualizar, datos, totales }: Props) {
   return (
     <>
       {b.lineas.length === 0 && <p className="vacio">No hay piezas. Vuelve al paso anterior para agregarlas.</p>}
+      {b.lineas.length > 0 && <p className="ayuda">Parten con los valores de tu taller; puedes cambiarlos en cada pieza.</p>}
 
       {b.lineas.map((l, i) => (
         <Linea
@@ -35,8 +36,9 @@ export function PasoAjustes({ b, actualizar, datos, totales }: Props) {
         />
       ))}
 
-      <h2>Descuento y notas</h2>
+      <h2>Plazo, descuento y notas</h2>
       <div className="grupo">
+        <CampoDias valor={b.plazoDias ?? 0} onCambio={(plazoDias) => actualizar({ plazoDias })} />
         <CampoDinero corto etiqueta="Descuento" valor={b.descuento} onCambio={(descuento) => actualizar({ descuento })} />
       </div>
       <div className="grupo formulario">
@@ -138,10 +140,10 @@ function Linea({
               </button>
             </div>
           </div>
-          <CampoDinero corto etiqueta="Pintura" valor={l.pintura} onCambio={(pintura) => onCambio({ pintura })} />
+          <CampoDinero corto etiqueta="Pintura" ayuda="Mano de obra y materiales" valor={l.pintura} onCambio={(pintura) => onCambio({ pintura })} />
           {l.operacion === 'reparar' ? (
             <>
-              <CampoDinero corto etiqueta="Desabollado" valor={l.desabollado} onCambio={(desabollado) => onCambio({ desabollado })} />
+              <CampoDinero corto etiqueta="Desabollado" ayuda="Mano de obra" valor={l.desabollado} onCambio={(desabollado) => onCambio({ desabollado })} />
               {montosRapidos.length > 0 && (
                 <div className="item columna">
                   <div className="fila-montos" role="group" aria-label="Montos rápidos de desabollado">
@@ -156,7 +158,7 @@ function Linea({
             </>
           ) : (
             <>
-              <CampoDinero corto etiqueta="Costo del repuesto" valor={l.repuestoCosto} onCambio={(repuestoCosto) => onCambio({ repuestoCosto })} />
+              <CampoDinero corto etiqueta="Costo del repuesto" ayuda="Lo que te cuesta a ti" valor={l.repuestoCosto} onCambio={(repuestoCosto) => onCambio({ repuestoCosto })} />
               <CampoMargen valor={l.margenPct} onCambio={(margenPct) => onCambio({ margenPct })} />
             </>
           )}
@@ -171,6 +173,29 @@ function Linea({
   );
 }
 
+/** Plazo total del trabajo en dias habiles (vacio = sin plazo). */
+function CampoDias({ valor, onCambio }: { valor: number; onCambio(n: number): void }) {
+  return (
+    <label className="item campo-fila">
+      <span className="item-texto">
+        <span className="item-titulo">Plazo estimado (días hábiles)</span>
+        <span className="detalle">Todo el trabajo. Opcional</span>
+      </span>
+      <input
+        className="corto"
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="0"
+        value={valor === 0 ? '' : String(valor)}
+        onChange={(e) => {
+          const digitos = e.target.value.replace(/\D/g, '').slice(0, 3);
+          onCambio(Math.min(Number(digitos) || 0, 365));
+        }}
+      />
+    </label>
+  );
+}
+
 /** Margen en %, con coma o punto decimal (22,5). */
 function CampoMargen({ valor, onCambio }: { valor: number; onCambio(n: number): void }) {
   const [texto, setTexto] = useState(String(valor).replace('.', ','));
@@ -178,6 +203,7 @@ function CampoMargen({ valor, onCambio }: { valor: number; onCambio(n: number): 
     <label className="item campo-fila">
       <span className="item-texto">
         <span className="item-titulo">Margen del repuesto (%)</span>
+        <span className="detalle">Se suma al costo del repuesto</span>
       </span>
       <input
         className="corto"

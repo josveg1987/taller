@@ -118,7 +118,7 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
 - **Hecho, probado y subido a GitHub:** Fases 1, 1b, 2 (2a a 2d: BD, login, administrador de la APP, administrador
   de taller), 3 (clientes y vehículos), catálogo de vehículos (SII) con sugerencias propias del taller, y 4 (piezas,
   combos, montos rápidos y desabollado sugerido).
-- **Hecho en local (sin push): Fase 5, el presupuesto** (ver detalle abajo). 262 tests de la API (`npm run test:db`)
+- **Hecho en local (sin push): Fase 5, el presupuesto** (ver detalle abajo). 263 tests de la API (`npm run test:db`)
   + 10 de `shared` (`npm test`).
 - **Siguiente: Fase 6** (PDF + compartir por WhatsApp + logo con R2; cambiar el estado a "enviado" al compartir).
   Supuestos a confirmar con el taller piloto: pintura igual por pieza y editable; anticipo de repuestos con el precio
@@ -246,6 +246,17 @@ tarifas quedan en caché para armar sin señal (`datos.ts`); guardar sin señal 
 `/presupuestos/nuevo`, `/presupuestos/nuevo/vehiculo/<id>` (botón en el detalle del vehículo), `/presupuestos/borrador/<id>`,
 `/presupuestos/<id>` y `/presupuestos/<id>/editar`; dentro del asistente se oculta la barra inferior. Falta: cambiar
 estado (aceptado/rechazado) desde la pantalla, y el PDF (Fase 6).
+**Ajustes tras probarlo (2026-10-10):** (1) el paso 1 es un **buscador único** por patente o nombre (`GET /clientes?q=`,
+que ya trae los vehículos de cada cliente): se toca un vehículo para elegirlo, "Otro vehículo" crea un vehículo nuevo
+de ese cliente y "Crear cliente nuevo" abre el formulario (con la patente o el nombre ya escritos); si la patente
+escrita ya existe, se usa ese vehículo. La ficha del cliente tiene "Nuevo presupuesto" (`/presupuestos/nuevo/cliente/<id>`:
+1 vehículo → directo a piezas, 0 → vehículo nuevo, varios → buscador con su nombre). (2) El paso 3 rotula cada valor:
+pintura = "Mano de obra y materiales" (se decidió que la pintura debe incluir todos los materiales; falta confirmarlo con el
+taller), desabollado = "Mano de obra", repuesto = costo + margen. (3) **Plazo estimado**: columna
+`presupuestos.plazo_dias` (migración `…plazo-dias-habiles`, 1 a 365, NULL = sin plazo), un solo plazo total en **días
+hábiles**, opcional; se edita en el paso 3 y se ve en el detalle (irá en el PDF). En el borrador local `plazoDias` 0 = sin plazo.
+Las dudas para el taller piloto están en `docs/preguntas-para-el-taller.md`.
+Nota: no correr `npm run build` (raíz) con `dev:api` abierto: borra `apps/api/dist` y la API se cae; usar `-w @taller/web`.
 
 Permisos de Claude Code: `.claude/settings.json` lista los comandos de solo lectura, build y tests permitidos
 sin preguntar. Usar comandos simples, uno por llamada (los compuestos con `;`/pipes/`foreach` piden permiso).

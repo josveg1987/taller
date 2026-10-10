@@ -69,6 +69,9 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
     if (primero === 'presupuestos' && segundo === 'nuevo' && tercero === 'vehiculo' && cuarto) {
       pantalla = <IniciarBorrador key={ruta} modo={{ tipo: 'vehiculo', vehiculoId: cuarto }} />;
       enAsistente = true;
+    } else if (primero === 'presupuestos' && segundo === 'nuevo' && tercero === 'cliente' && cuarto) {
+      pantalla = <IniciarBorrador key={ruta} modo={{ tipo: 'cliente', clienteId: cuarto }} />;
+      enAsistente = true;
     } else if (primero === 'presupuestos' && segundo === 'nuevo') {
       pantalla = <IniciarBorrador key={ruta} modo={{ tipo: 'nuevo' }} />;
       enAsistente = true;

@@ -44,6 +44,11 @@ export function PresupuestoDetalle({ id }: { id: string }) {
       <p className="subtitulo">
         {fechaCorta(p.fecha)} · válido hasta el {fechaCorta(p.validoHasta)}
       </p>
+      {p.plazoDias && (
+        <p className="subtitulo">
+          Plazo estimado: {p.plazoDias} {p.plazoDias === 1 ? 'día hábil' : 'días hábiles'}
+        </p>
+      )}
 
       {p.estado === 'borrador' && (
         <div className="pila">

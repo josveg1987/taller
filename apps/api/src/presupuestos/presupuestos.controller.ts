@@ -70,6 +70,7 @@ function entrada(body: unknown): EntradaPresupuesto {
     lineas: b.lineas.map(linea),
     descuento: b.descuento === undefined || b.descuento === null ? 0 : entero(b.descuento, 'El descuento', 0, 2_000_000_000),
     observaciones: opcional(b.observaciones, (x) => textoOpcional(x, 'Las observaciones', 2000)) ?? null,
+    plazoDias: opcional(b.plazoDias, (x) => entero(x, 'El plazo', 1, 365)) ?? null,
     condiciones: b.condiciones === undefined ? undefined : (textoOpcional(b.condiciones, 'Las condiciones', 4000) ?? ''),
   };
 }

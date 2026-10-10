@@ -36,6 +36,8 @@ export interface Presupuesto {
   precioRepuestos: number;
   gananciaRepuestos: number;
   observaciones: string | null;
+  /** Plazo total estimado, en dias habiles. */
+  plazoDias: number | null;
   condiciones: string;
 }
 
@@ -98,9 +100,13 @@ export interface Borrador {
   lineas: LineaBorrador[];
   descuento: number;
   observaciones: string;
+  /** Plazo total en dias habiles; 0 = sin plazo indicado. (Borradores antiguos no lo traen: se lee con `?? 0`.) */
+  plazoDias: number;
   /** null = todavia no se tocan: se usan las del taller. */
   condiciones: string | null;
   actualizado: number;
+  /** Texto con que parte el buscador del paso 1 (p. ej. el nombre de un cliente con varios vehiculos). */
+  busqueda?: string;
 }
 
 export interface PiezaCatalogo {

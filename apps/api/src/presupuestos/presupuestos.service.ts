@@ -38,6 +38,8 @@ export interface EntradaPresupuesto {
   lineas: LineaEntrada[];
   descuento: number;
   observaciones: string | null;
+  /** Plazo total estimado en dias habiles (opcional). */
+  plazoDias: number | null;
   /** Si no viene, se copian las del taller. */
   condiciones?: string;
 }
@@ -77,6 +79,8 @@ export interface Presupuesto {
   precioRepuestos: number;
   gananciaRepuestos: number;
   observaciones: string | null;
+  /** Plazo total estimado, en dias habiles. */
+  plazoDias: number | null;
   condiciones: string;
 }
 
@@ -270,10 +274,10 @@ export class PresupuestosService {
       const { rows: num } = await c.query<{ n: number }>('SELECT siguiente_numero_presupuesto() AS n');
       const { rows } = await c.query<{ id: string }>(
         `INSERT INTO presupuestos (taller_id, numero, cliente_id, vehiculo_id, valido_hasta, estado, descuento, total,
-                                   monto_inicio, costo_repuestos, observaciones, condiciones, creado_por)
-         VALUES ($1, $2, $3, $4, current_date + (SELECT validez_dias FROM talleres), 'borrador', $5, $6, $7, $8, $9, $10, $11)
+                                   monto_inicio, costo_repuestos, observaciones, plazo_dias, condiciones, creado_por)
+         VALUES ($1, $2, $3, $4, current_date + (SELECT validez_dias FROM talleres), 'borrador', $5, $6, $7, $8, $9, $10, $11, $12)
          RETURNING id`,
-        [tallerId, num[0].n, calc.clienteId, calc.vehiculoId, calc.descuento, calc.total, calc.montoInicio, calc.costoRepuestos, e.observaciones, calc.condiciones, usuarioId],
+        [tallerId, num[0].n, calc.clienteId, calc.vehiculoId, calc.descuento, calc.total, calc.montoInicio, calc.costoRepuestos, e.observaciones, e.plazoDias, calc.condiciones, usuarioId],
       );
       const id = rows[0].id;
       await this.guardarLineas(c, tallerId, id, calc);
@@ -294,9 +298,9 @@ export class PresupuestosService {
       const calc = await this.preparar(c, tallerId, e);
       await c.query(
         `UPDATE presupuestos SET cliente_id = $1, vehiculo_id = $2, descuento = $3, total = $4, monto_inicio = $5,
-                costo_repuestos = $6, observaciones = $7, condiciones = $8, actualizado_en = now()
-          WHERE id = $9`,
-        [calc.clienteId, calc.vehiculoId, calc.descuento, calc.total, calc.montoInicio, calc.costoRepuestos, e.observaciones, calc.condiciones, id],
+                costo_repuestos = $6, observaciones = $7, plazo_dias = $8, condiciones = $9, actualizado_en = now()
+          WHERE id = $10`,
+        [calc.clienteId, calc.vehiculoId, calc.descuento, calc.total, calc.montoInicio, calc.costoRepuestos, e.observaciones, e.plazoDias, calc.condiciones, id],
       );
       await c.query('DELETE FROM presupuesto_lineas WHERE presupuesto_id = $1', [id]);
       await this.guardarLineas(c, tallerId, id, calc);
@@ -320,6 +324,7 @@ export class PresupuestosService {
       monto_inicio: number;
       costo_repuestos: number;
       observaciones: string | null;
+      plazo_dias: number | null;
       condiciones: string;
       cliente_id: string;
       cliente_nombre: string;
@@ -331,7 +336,7 @@ export class PresupuestosService {
       anio: number | null;
     }>(
       `SELECT p.id, p.numero, to_char(p.fecha, 'YYYY-MM-DD') AS fecha, to_char(p.valido_hasta, 'YYYY-MM-DD') AS valido_hasta,
-              p.estado, p.descuento, p.total, p.monto_inicio, p.costo_repuestos, p.observaciones, p.condiciones,
+              p.estado, p.descuento, p.total, p.monto_inicio, p.costo_repuestos, p.observaciones, p.plazo_dias, p.condiciones,
               c.id AS cliente_id, c.nombre AS cliente_nombre, c.telefono AS cliente_telefono,
               v.id AS vehiculo_id, v.patente, v.marca, v.modelo, v.anio
          FROM presupuestos p
@@ -403,6 +408,7 @@ export class PresupuestosService {
       precioRepuestos,
       gananciaRepuestos: precioRepuestos - p.costo_repuestos,
       observaciones: p.observaciones,
+      plazoDias: p.plazo_dias,
       condiciones: p.condiciones,
     };
   }

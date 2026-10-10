@@ -58,6 +58,7 @@ export function aEnvio(b: Borrador, condicionesTaller: string) {
     })),
     descuento: b.descuento,
     observaciones: b.observaciones.trim() || null,
+    plazoDias: (b.plazoDias ?? 0) > 0 ? b.plazoDias : null,
     condiciones: b.condiciones ?? condicionesTaller,
   };
 }

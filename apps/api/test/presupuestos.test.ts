@@ -206,6 +206,20 @@ describe('crear un presupuesto', () => {
     expect((await conVehiculoA([linea('Capot')], { descuento: 80001 })).status).toBe(400);
   });
 
+  it('guarda el plazo total en dias habiles (opcional, de 1 a 365) y se puede cambiar al editar', async () => {
+    const sin = await conVehiculoA([linea('Capot')]);
+    expect(sin.json.plazoDias).toBeNull();
+    const con = await conVehiculoA([linea('Capot')], { plazoDias: 7 });
+    expect(con.json.plazoDias).toBe(7);
+    const editado = await llamar('PUT', `/presupuestos/${con.json.id}`, a.cookie, { vehiculoId: vehiculoA.id, lineas: [linea('Capot')], plazoDias: 10 });
+    expect(editado.json.plazoDias).toBe(10);
+    const quitado = await llamar('PUT', `/presupuestos/${con.json.id}`, a.cookie, { vehiculoId: vehiculoA.id, lineas: [linea('Capot')], plazoDias: null });
+    expect(quitado.json.plazoDias).toBeNull();
+    for (const malo of [0, 366, 2.5, 'tres']) {
+      expect((await conVehiculoA([linea('Capot')], { plazoDias: malo })).status).toBe(400);
+    }
+  });
+
   it('crea el cliente y el vehiculo nuevos en el mismo paso', async () => {
     const patente = `NV${sufijo}`.slice(0, 8);
     const r = await presupuesto({
