@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from './api';
 import { Hoja } from './Hoja';
 import { Icono, type NombreIcono } from './Iconos';
-import { Inicio } from './Inicio';
 import { irA, useRuta } from './ruta';
 import { useSesion, type Perfil } from './sesion';
 import { ClienteDetalle } from './clientes/ClienteDetalle';
@@ -14,6 +13,10 @@ import { TallerNuevo } from './admin/TallerNuevo';
 import { Talleres } from './admin/Talleres';
 import { Combos } from './piezas/Combos';
 import { Piezas } from './piezas/Piezas';
+import { Asistente } from './presupuestos/Asistente';
+import { IniciarBorrador } from './presupuestos/IniciarBorrador';
+import { PresupuestoDetalle } from './presupuestos/PresupuestoDetalle';
+import { Presupuestos } from './presupuestos/Presupuestos';
 import { MiTaller } from './taller/MiTaller';
 import { UsuariosTaller } from './taller/UsuariosTaller';
 
@@ -53,15 +56,30 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
     irA('/talleres');
   }
 
-  let pantalla = <Inicio />;
+  let pantalla = <Presupuestos />;
+  // Dentro del asistente la barra inferior se oculta: la accion principal va abajo, fija.
+  let enAsistente = false;
   if (enAdmin) {
     const [, segundo] = ruta.split('/').filter(Boolean);
     if (segundo === 'nuevo') pantalla = <TallerNuevo />;
     else if (segundo) pantalla = <TallerDetalle key={segundo} id={segundo} />;
     else pantalla = <Talleres />;
   } else if (hayTaller) {
-    const [primero, segundo] = ruta.split('/').filter(Boolean);
-    if (primero === 'mi-taller') pantalla = <MiTaller />;
+    const [primero, segundo, tercero, cuarto] = ruta.split('/').filter(Boolean);
+    if (primero === 'presupuestos' && segundo === 'nuevo' && tercero === 'vehiculo' && cuarto) {
+      pantalla = <IniciarBorrador key={ruta} modo={{ tipo: 'vehiculo', vehiculoId: cuarto }} />;
+      enAsistente = true;
+    } else if (primero === 'presupuestos' && segundo === 'nuevo') {
+      pantalla = <IniciarBorrador key={ruta} modo={{ tipo: 'nuevo' }} />;
+      enAsistente = true;
+    } else if (primero === 'presupuestos' && segundo === 'borrador' && tercero) {
+      pantalla = <Asistente key={tercero} borradorId={tercero} />;
+      enAsistente = true;
+    } else if (primero === 'presupuestos' && segundo && tercero === 'editar') {
+      pantalla = <IniciarBorrador key={ruta} modo={{ tipo: 'editar', presupuestoId: segundo }} />;
+      enAsistente = true;
+    } else if (primero === 'presupuestos' && segundo) pantalla = <PresupuestoDetalle key={segundo} id={segundo} />;
+    else if (primero === 'mi-taller') pantalla = <MiTaller />;
     else if (primero === 'usuarios') pantalla = <UsuariosTaller />;
     else if (primero === 'piezas') pantalla = <Piezas />;
     else if (primero === 'combos') pantalla = <Combos />;
@@ -85,7 +103,7 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
   if (esAdmin) pestanas.push({ ruta: '/talleres', texto: 'Talleres', icono: 'talleres', actual: seccion === 'talleres' });
   if (hayTaller) {
     pestanas.push(
-      { ruta: '/', texto: 'Inicio', icono: 'inicio', actual: seccion === 'inicio' },
+      { ruta: '/', texto: 'Presupuestos', icono: 'documento', actual: seccion === 'inicio' },
       { ruta: '/clientes', texto: 'Clientes', icono: 'clientes', actual: seccion === 'clientes' },
       { ruta: '/mi-taller', texto: 'Mi taller', icono: 'ajustes', actual: seccion === 'mi-taller' },
     );
@@ -116,7 +134,7 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
       </main>
 
       {/* Con una sola seccion (administrador fuera de un taller) la barra no aporta. */}
-      {pestanas.length > 1 && (
+      {pestanas.length > 1 && !enAsistente && (
         <nav className="barra-inferior" aria-label="Secciones">
           {pestanas.map((p) => (
             <button

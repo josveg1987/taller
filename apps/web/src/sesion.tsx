@@ -71,6 +71,12 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }
 
+/** Id del taller en que se trabaja (el propio, o al que entro el administrador de la APP); null si ninguno. */
+export function useTallerActual(): string | null {
+  const { estado } = useSesion();
+  return estado.fase === 'activa' ? (estado.perfil.taller?.id ?? null) : null;
+}
+
 export function useSesion(): Sesion {
   const s = useContext(Contexto);
   if (!s) throw new Error('useSesion debe usarse dentro de <ProveedorSesion>');

@@ -53,6 +53,9 @@
   --interruptor-ancho: 52px;
   --interruptor-alto: 32px;
   --interruptor-margen: 4px;
+  --pieza-ancho-min: 9.5rem; /* rejilla de piezas: 2 columnas en un telefono de 360px */
+  --pieza-alto-min: 64px;
+  --sombra-barra: 0 -4px 16px rgb(17 24 39 / 0.08);
 
   /* Tipografia (del sistema) */
   --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
@@ -351,9 +354,34 @@ h2,
   background: var(--color-error-fondo);
 }
 
-.chip.conectando {
+.chip.conectando,
+.chip.estado-borrador {
   color: var(--color-texto-suave);
   background: var(--color-secundario);
+}
+
+.chip.estado-enviado {
+  color: var(--color-aviso-texto);
+  background: var(--color-aviso-fondo);
+}
+
+.chip.estado-aceptado {
+  color: var(--color-ok-texto);
+  background: var(--color-ok-fondo);
+}
+
+.chip.estado-rechazado,
+.chip.estado-vencido {
+  color: var(--color-error-texto);
+  background: var(--color-error-fondo);
+}
+
+.aviso {
+  margin: var(--esp-3) 0 0;
+  padding: var(--esp-3) var(--esp-4);
+  border-radius: var(--radio-m);
+  color: var(--color-aviso-texto);
+  background: var(--color-aviso-fondo);
 }
 
 /* ==========================================================================
@@ -582,9 +610,22 @@ input.interruptor:checked::before {
   background: var(--color-secundario);
 }
 
+.chip-monto[aria-pressed='true'] {
+  color: var(--color-sobre-primario);
+  background: var(--color-primario);
+}
+
+.chip-monto .icono {
+  vertical-align: middle;
+}
+
 .item.columna {
   flex-direction: column;
   align-items: stretch;
+}
+
+.item.columna .fila-montos {
+  margin-top: 0;
 }
 
 /* Sugerencias del catalogo bajo un campo: en linea (no flotantes) para que funcionen dentro de las hojas. */
@@ -699,6 +740,153 @@ input.interruptor:checked::before {
   display: flex;
   justify-content: center;
   margin-top: var(--esp-4);
+}
+
+/* ==========================================================================
+   Presupuestos
+   ========================================================================== */
+/* Fila con una accion propia a la derecha (p. ej. descartar un borrador). */
+.item-interno {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+}
+
+li.item:has(> .item-interno) {
+  padding-right: var(--esp-1);
+}
+
+.columna-derecha {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--esp-1);
+}
+
+.monto-fuerte {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.texto-largo {
+  padding: var(--esp-3) var(--esp-4);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Control segmentado (lado, reparar / cambiar). */
+.segmentos {
+  display: inline-flex;
+  gap: var(--esp-1);
+  padding: var(--esp-1);
+  border-radius: var(--radio-m);
+  background: var(--color-secundario);
+}
+
+.segmentos.ancho {
+  display: flex;
+  width: 100%;
+}
+
+.segmento {
+  flex: 1;
+  min-height: var(--toque);
+  padding: 0 var(--esp-4);
+  border: 0;
+  border-radius: var(--radio-s);
+  font-weight: 600;
+  color: var(--color-texto-suave);
+  background: none;
+  transition:
+    background-color var(--t-rapida) var(--curva),
+    color var(--t-rapida) var(--curva);
+}
+
+.segmento[aria-pressed='true'] {
+  color: var(--color-texto);
+  background: var(--color-superficie);
+}
+
+/* Rejilla de piezas para tocar. */
+.rejilla-piezas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--pieza-ancho-min), 1fr));
+  gap: var(--esp-2);
+}
+
+.pieza-boton {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--esp-1);
+  min-height: var(--pieza-alto-min);
+  padding: var(--esp-3);
+  border: 2px solid transparent;
+  border-radius: var(--radio-m);
+  text-align: left;
+  background: var(--color-superficie);
+  transition:
+    border-color var(--t-rapida) var(--curva),
+    background-color var(--t-rapida) var(--curva);
+}
+
+.pieza-boton[aria-pressed='true'] {
+  border-color: var(--color-primario);
+}
+
+.pieza-nombre {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.marcas-lado {
+  display: flex;
+  gap: var(--esp-1);
+}
+
+.marca-lado {
+  padding: 0 var(--esp-2);
+  border-radius: var(--radio-pildora);
+  font-size: var(--texto-xs);
+  font-weight: 700;
+  color: var(--color-sobre-primario);
+  background: var(--color-primario);
+}
+
+.linea-presupuesto {
+  margin-top: var(--esp-3);
+}
+
+/* Barra fija al pie del asistente: total en vivo y la accion principal. */
+.contenido:has(> .asistente) {
+  padding-bottom: 0; /* la barra fija llega hasta el borde */
+}
+
+.barra-accion {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-2);
+  margin: var(--esp-5) calc(var(--margen-lateral) * -1) 0;
+  padding: var(--esp-3) var(--margen-lateral) calc(var(--esp-3) + var(--seguro-abajo));
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-barra);
+}
+
+.fila-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--esp-3);
+}
+
+.total-vivo {
+  font-size: var(--texto-l);
+  font-weight: 700;
 }
 
 /* ==========================================================================

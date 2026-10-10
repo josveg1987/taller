@@ -12,6 +12,8 @@ const TRAZOS = {
   buscar: 'M11 18a7 7 0 1 0 0-14a7 7 0 0 0 0 14M21 21l-5-5',
   telefono: 'M5 4h4l2 5l-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2',
   mensaje: 'M4 5h16v11H9l-5 4z',
+  documento: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6',
+  cerrar: 'M6 6l12 12M18 6L6 18',
 } as const;
 
 export type NombreIcono = keyof typeof TRAZOS;

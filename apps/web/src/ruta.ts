@@ -14,3 +14,8 @@ export function useRuta(): string {
 export function irA(ruta: string): void {
   location.hash = ruta;
 }
+
+/** Como irA, pero sin dejar la ruta actual en el historial (el boton "atras" no vuelve a ella). */
+export function reemplazarRuta(ruta: string): void {
+  location.replace(`#${ruta}`);
+}

@@ -58,6 +58,13 @@ export function VehiculoDetalle({ id }: { id: string }) {
         </p>
       )}
 
+      <div className="pila">
+        <button type="button" className="boton" onClick={() => irA(`/presupuestos/nuevo/vehiculo/${vehiculo.id}`)}>
+          <Icono nombre="mas" />
+          Nuevo presupuesto
+        </button>
+      </div>
+
       <h2>Dueño</h2>
       <div className="grupo">
         <button type="button" className="item" onClick={() => irA(`/clientes/${vehiculo.cliente.id}`)}>

@@ -117,12 +117,12 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
 **RESUMEN PARA RETOMAR (cierre de sesión 2026-10-10):**
 - **Hecho, probado y subido a GitHub:** Fases 1, 1b, 2 (2a a 2d: BD, login, administrador de la APP, administrador
   de taller), 3 (clientes y vehículos), catálogo de vehículos (SII) con sugerencias propias del taller, y 4 (piezas,
-  combos, montos rápidos y desabollado sugerido). 224 tests de la API (`npm run test:db`) + 8 de `shared` (`npm test`).
-- **Siguiente: Fase 5, el presupuesto** (HU-05 a 10, 13, 28, 30, 32, 35, 43): flujo de 3 pantallas (patente → piezas →
-  ajustar), lado elegido una vez, combos, reparar/reemplazar por pieza, desabollado pre-llenado con el sugerido de la
-  pieza, total en vivo con `@taller/shared`, el servidor recalcula, numeración, vista interna, borradores locales.
-  Luego Fase 6 (PDF + compartir por WhatsApp + logo con R2). Supuestos a confirmar con el taller piloto: pintura igual
-  por pieza y editable; anticipo de repuestos con el precio con margen.
+  combos, montos rápidos y desabollado sugerido).
+- **Hecho en local (sin push): Fase 5, el presupuesto** (ver detalle abajo). 262 tests de la API (`npm run test:db`)
+  + 10 de `shared` (`npm test`).
+- **Siguiente: Fase 6** (PDF + compartir por WhatsApp + logo con R2; cambiar el estado a "enviado" al compartir).
+  Supuestos a confirmar con el taller piloto: pintura igual por pieza y editable; anticipo de repuestos con el precio
+  con margen. Importar el cliente desde la libreta de contactos quedó para después (solo funciona en Android Chrome).
 - **Retomar en local:** abrir Docker Desktop → `npm run db:up` → `npm run dev:api` y `npm run dev:web`
   (http://localhost:5173). Cuentas de prueba SOLO en la BD local: administrador de la APP `admin@taller.local` (la
   contraseña la mostró `crear-admin`; si se perdió, crear otra) y taller demo `dueno@taller.local` / `demo-taller-2026`
@@ -228,6 +228,24 @@ daño); cada pieza tiene un `desabollado_sugerido` opcional (NULL = sin sugerenc
 reparar la pieza en el presupuesto, editable, además de los montos rápidos del taller (Fase 5: pre-llenar con él). La
 plantilla estándar NO trae valores (ni pintura ni desabollado): cada taller pone los suyos. Cada pieza se repara
 (pintura + desabollado) o se reemplaza (pintura + repuesto con margen). 224 tests.
+
+**Fase 5 hecha en local (2026-10-10): presupuestos** (HU-05 a 10, 13, 28, 30, 32, 35, 43). Todo presupuesto tiene
+cliente y vehículo (mínimo: patente, nombre y teléfono). API `apps/api/src/presupuestos/` (por `conTaller()`):
+`GET /presupuestos` (`?estado=`), `GET /presupuestos/:id`, `POST` y `PUT /presupuestos/:id` (solo en borrador). El
+cuerpo trae `vehiculoId` o `vehiculo` + (`clienteId` o `cliente`): si la patente es nueva, cliente y vehículo se crean
+en la misma transacción. El servidor completa lo que falte (pintura de la pieza o del taller, desabollado sugerido,
+margen del taller), **recalcula con `@taller/shared`** (la API ya depende del paquete; en los tests vitest lo toma del
+código fuente) y guarda la "foto" de cada línea. Operaciones: `reparar`, `reemplazar` y `libre` (ítem fuera del
+catálogo con precio propio). Número con `siguiente_numero_presupuesto()`, vigencia con `validez_dias`, historial de
+estados. Web `apps/web/src/presupuestos/`: inicio = lista (`Presupuestos.tsx`, con los borradores sin guardar de este
+teléfono), asistente de 3 pasos (`Asistente.tsx`: `PasoVehiculo` busca la patente al escribir, `PasoPiezas` con lado,
+combos, rejilla de piezas e ítems libres, `PasoAjustes` con reparar/cambiar, montos rápidos, descuento, notas, resumen y
+vista interna), barra fija con el total en vivo, y detalle (`PresupuestoDetalle.tsx`). Los borradores viven en
+IndexedDB con Dexie (`local.ts`; editar un presupuesto guardado crea el borrador `editar-<id>`), y piezas, combos y
+tarifas quedan en caché para armar sin señal (`datos.ts`); guardar sin señal deja el borrador intacto. Rutas:
+`/presupuestos/nuevo`, `/presupuestos/nuevo/vehiculo/<id>` (botón en el detalle del vehículo), `/presupuestos/borrador/<id>`,
+`/presupuestos/<id>` y `/presupuestos/<id>/editar`; dentro del asistente se oculta la barra inferior. Falta: cambiar
+estado (aceptado/rechazado) desde la pantalla, y el PDF (Fase 6).
 
 Permisos de Claude Code: `.claude/settings.json` lista los comandos de solo lectura, build y tests permitidos
 sin preguntar. Usar comandos simples, uno por llamada (los compuestos con `;`/pipes/`foreach` piden permiso).

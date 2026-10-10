@@ -1,8 +1,12 @@
+import { vaciarBaseLocal } from './presupuestos/local';
+
 /**
- * Borra todo lo guardado en el dispositivo (regla: al cerrar sesion se borran los datos locales).
- * Hoy limpia preferencias y cualquier base IndexedDB; los borradores locales (Fase 5) viviran ahi.
+ * Borra todo lo guardado en el dispositivo (regla: al cerrar sesion se borran los datos locales):
+ * preferencias, borradores de presupuestos y la copia de la configuracion (IndexedDB).
  */
 export async function limpiarDatosLocales(): Promise<void> {
+  // Primero la base de borradores, que esta abierta: si no, el navegador no deja borrarla.
+  await vaciarBaseLocal();
   try {
     localStorage.clear();
     sessionStorage.clear();
