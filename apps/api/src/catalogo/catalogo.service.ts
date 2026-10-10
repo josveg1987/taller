@@ -56,6 +56,33 @@ export class CatalogoService {
     return rows;
   }
 
+  /**
+   * Marcas (o, con `marca`, modelos de esa marca) que el propio taller ya uso en sus vehiculos y que
+   * pueden no estar en el catalogo (p. ej. un modelo del año nuevo). Asi lo escrito una vez se sugiere
+   * despues. Va por conTaller(): cada taller ve solo lo suyo.
+   */
+  async propias(tallerId: string, marca?: string, texto?: string): Promise<string[]> {
+    const campo = marca ? 'modelo' : 'marca';
+    const params: unknown[] = [];
+    const filtros = [`${campo} IS NOT NULL`];
+    if (marca) {
+      params.push(marca.trim());
+      filtros.push('unaccent(lower(marca)) = unaccent(lower($1))');
+    }
+    const q = (texto ?? '').trim();
+    if (q) {
+      params.push(`%${escaparLike(q)}%`);
+      filtros.push(`unaccent(lower(${campo})) LIKE unaccent(lower($${params.length}))`);
+    }
+    const { rows } = await this.db.conTaller(tallerId, (c) =>
+      c.query<{ nombre: string }>(
+        `SELECT DISTINCT ${campo} AS nombre FROM vehiculos WHERE ${filtros.join(' AND ')} ORDER BY ${campo} LIMIT ${MAX_MARCAS}`,
+        params,
+      ),
+    );
+    return rows.map((r) => r.nombre);
+  }
+
   /** Años (del mas nuevo al mas antiguo) de un modelo, o de todos los modelos de una marca. */
   async anios(filtro: { modeloId: number } | { marcaId: number }): Promise<number[]> {
     const { rows } = await this.db.admin<{ anio: number }>(

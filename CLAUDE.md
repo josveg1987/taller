@@ -174,7 +174,10 @@ el catálogo, sin ningún paso aparte (idempotente: solo agrega). Actualizar cad
 siglas) y crear una migración nueva igual a la de 2026 apuntando al TSV nuevo. Los nombres se limpian en
 `apps/api/datos/formato.cjs` ("KIA MOTORS"→"Kia", "MERCEDES BENZ"→"Mercedes-Benz"); si algún modelo queda mal
 escrito (una sigla como palabra), agregarlo a `SIGLAS_MODELO`. Los modelos del año en curso pueden no estar
-hasta la lista siguiente del SII. 152 tests.
+hasta la lista siguiente del SII. **Sugerencias propias del taller:** `GET /catalogo/propios` (por `conTaller`) devuelve
+las marcas, o los modelos de una marca, que ese taller ya registró en sus vehículos; el formulario las mezcla con las
+del catálogo sin repetir lo que el catálogo ya tiene. El catálogo global NO se modifica (decidido: lo nuevo solo se
+sugiere dentro del taller que lo escribió, sin aprobación ni promoción). 201 tests.
 
 Permisos de Claude Code: `.claude/settings.json` lista los comandos de solo lectura, build y tests permitidos
 sin preguntar. Usar comandos simples, uno por llamada (los compuestos con `;`/pipes/`foreach` piden permiso).

@@ -171,6 +171,74 @@ describe('/catalogo/modelos y /catalogo/anios', () => {
   });
 });
 
+describe('autos que no estan en el catalogo', () => {
+  let tallerOtro: string;
+  let cookieOtro: string;
+
+  const como = async (c: string, ruta: string) => {
+    const res = await fetch(base + ruta, { headers: { cookie: c } });
+    return { status: res.status, json: await res.json() };
+  };
+
+  beforeAll(async () => {
+    tallerOtro = (await pool.query('INSERT INTO talleres (nombre) VALUES ($1) RETURNING id', [`Otro catalogo (test ${sufijo})`])).rows[0].id;
+    const email = `otro-catalogo-${sufijo}@test.local`;
+    await pool.query('INSERT INTO usuarios (taller_id, nombre, email, password_hash) VALUES ($1, $2, $3, $4)', [
+      tallerOtro,
+      'Otro',
+      email,
+      await hashPassword(CLAVE),
+    ]);
+    const res = await fetch(base + '/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email, password: CLAVE }),
+    });
+    cookieOtro = res.headers.getSetCookie().find((c) => c.startsWith(`${COOKIE_SESION}=`))!.split(';')[0];
+  });
+
+  afterAll(async () => {
+    await pool.query('DELETE FROM talleres WHERE id = $1', [tallerOtro]);
+  });
+
+  it('un vehiculo con marca, modelo y año nuevos se guarda tal cual', async () => {
+    const res = await fetch(base + '/clientes', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie },
+      body: JSON.stringify({
+        nombre: 'Dueño de un auto nuevo',
+        telefono: '911112222',
+        vehiculo: { patente: `NEW${sufijo}`.slice(0, 8), marca: 'Marca Inventada', modelo: 'Modelo Nuevo 2026', anio: 2026 },
+      }),
+    });
+    expect(res.status).toBe(201);
+    const c = await res.json();
+    expect(c.vehiculos[0]).toMatchObject({ marca: 'Marca Inventada', modelo: 'Modelo Nuevo 2026', anio: 2026 });
+  });
+
+  it('el catalogo global no cambia: lo nuevo no se agrega para los demas', async () => {
+    expect((await marcas('Inventada')).map((m) => m.nombre)).toEqual([]);
+  });
+
+  it('el mismo taller recibe lo que ya registro como sugerencia', async () => {
+    expect((await get('/catalogo/propios')).json).toContain('Marca Inventada');
+    expect((await get('/catalogo/propios?q=inven')).json).toContain('Marca Inventada');
+    expect((await get('/catalogo/propios?q=zzzz')).json).toEqual([]);
+    // Los modelos de esa marca, sin importar mayusculas ni tildes.
+    expect((await get('/catalogo/propios?marca=marca%20inventada')).json).toEqual(['Modelo Nuevo 2026']);
+    expect((await get('/catalogo/propios?marca=Otra')).json).toEqual([]);
+  });
+
+  it('otro taller no ve lo que registro este', async () => {
+    expect((await como(cookieOtro, '/catalogo/propios')).json).toEqual([]);
+    expect((await como(cookieOtro, '/catalogo/propios?marca=Marca%20Inventada')).json).toEqual([]);
+  });
+
+  it('exige sesion y que haya un taller', async () => {
+    expect((await get('/catalogo/propios', true)).status).toBe(401);
+  });
+});
+
 describe('permisos', () => {
   it('la app solo puede leer el catalogo, no modificarlo', async () => {
     const c = await pool.connect();

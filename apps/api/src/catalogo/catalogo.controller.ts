@@ -1,4 +1,5 @@
 import { BadRequestException, Controller, Get, Inject, Query } from '@nestjs/common';
+import { TallerActual } from '../auth/decoradores';
 import { CatalogoService } from './catalogo.service';
 
 /** Entero positivo que llega como texto en la URL; si no viene, undefined. */
@@ -18,6 +19,12 @@ export class CatalogoController {
   @Get('marcas')
   marcas(@Query('q') q?: string) {
     return this.catalogo.marcas(textoBusqueda(q));
+  }
+
+  /** Marcas (o modelos de `marca`) que este taller ya registro en sus vehiculos, aunque no esten en el catalogo. */
+  @Get('propios')
+  propios(@TallerActual() tallerId: string, @Query('marca') marca?: string, @Query('q') q?: string) {
+    return this.catalogo.propias(tallerId, textoBusqueda(marca), textoBusqueda(q));
   }
 
   /** Modelos de una marca (marcaId obligatorio). Con `anio` solo los que existieron ese año. */
