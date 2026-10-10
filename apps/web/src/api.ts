@@ -14,6 +14,22 @@ interface Opciones extends Omit<RequestInit, 'body'> {
   json?: unknown;
 }
 
+/** Descarga un archivo (p. ej. el PDF de un presupuesto) enviando la cookie de sesion. */
+export async function apiBlob(ruta: string): Promise<Blob> {
+  let res: Response;
+  try {
+    res = await fetch(API_URL + ruta, { credentials: 'include' });
+  } catch {
+    throw new ApiError(0, 'No hay conexión con el servidor');
+  }
+  if (!res.ok) {
+    const cuerpo: unknown = await res.json().catch(() => null);
+    const mensaje = (cuerpo as { message?: unknown } | null)?.message;
+    throw new ApiError(res.status, typeof mensaje === 'string' ? mensaje : 'No se pudo obtener el archivo');
+  }
+  return res.blob();
+}
+
 /** Llama a la API enviando la cookie de sesion. Los errores salen como ApiError en espanol. */
 export async function api<T = void>(ruta: string, { json, headers, ...resto }: Opciones = {}): Promise<T> {
   let res: Response;

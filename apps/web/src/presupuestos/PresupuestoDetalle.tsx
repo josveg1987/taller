@@ -4,9 +4,10 @@ import { mensajeDe } from '../acciones';
 import { descripcionVehiculo } from '../clientes/tipos';
 import { clp } from '../dinero';
 import { fechaCorta } from '../fechas';
+import { Hoja } from '../Hoja';
 import { Icono } from '../Iconos';
 import { irA } from '../ruta';
-import { ESTADOS, nombreConLado, type Presupuesto } from './tipos';
+import { ESTADOS, nombreConLado, type Estado, type Presupuesto } from './tipos';
 
 const OPERACION = { reparar: 'Reparar', reemplazar: 'Cambiar', libre: 'Ítem libre' } as const;
 
@@ -14,6 +15,18 @@ export function PresupuestoDetalle({ id }: { id: string }) {
   const [p, setP] = useState<Presupuesto | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [vistaInterna, setVistaInterna] = useState(false);
+  const [cambiandoEstado, setCambiandoEstado] = useState(false);
+  const [errorEstado, setErrorEstado] = useState<string | null>(null);
+
+  async function cambiarEstado(estado: Estado) {
+    setCambiandoEstado(false);
+    setErrorEstado(null);
+    try {
+      setP(await api<Presupuesto>(`/presupuestos/${id}/estado`, { method: 'PATCH', json: { estado } }));
+    } catch (e) {
+      setErrorEstado(mensajeDe(e, 'No se pudo cambiar el estado'));
+    }
+  }
 
   useEffect(() => {
     api<Presupuesto>(`/presupuestos/${id}`)
@@ -50,12 +63,31 @@ export function PresupuestoDetalle({ id }: { id: string }) {
         </p>
       )}
 
-      {p.estado === 'borrador' && (
-        <div className="pila">
-          <button type="button" className="boton" onClick={() => irA(`/presupuestos/${p.id}/editar`)}>
+      <div className="pila">
+        <button type="button" className="boton" onClick={() => irA(`/presupuestos/${p.id}/pdf`)}>
+          <Icono nombre="documento" />
+          {p.estado === 'borrador' ? 'Ver PDF y enviar' : 'Ver PDF'}
+        </button>
+        {p.estado === 'borrador' ? (
+          <button type="button" className="boton secundario" onClick={() => irA(`/presupuestos/${p.id}/editar`)}>
             Editar presupuesto
           </button>
-        </div>
+        ) : (
+          <>
+            <button type="button" className="boton secundario" onClick={() => setCambiandoEstado(true)}>
+              Cambiar estado
+            </button>
+            <button type="button" className="boton secundario" onClick={() => irA(`/presupuestos/${p.id}/duplicar`)}>
+              Duplicar como borrador
+            </button>
+          </>
+        )}
+      </div>
+      {p.estado !== 'borrador' && <p className="ayuda centro-texto">Ya salió hacia el cliente, por eso no se edita. Para hacer cambios, duplícalo.</p>}
+      {errorEstado && (
+        <p className="error" role="alert">
+          {errorEstado}
+        </p>
       )}
 
       <h2>Cliente y vehículo</h2>
@@ -126,6 +158,25 @@ export function PresupuestoDetalle({ id }: { id: string }) {
           <p className="grupo texto-largo">{p.condiciones}</p>
         </>
       )}
+
+      <Hoja abierta={cambiandoEstado} titulo="Cambiar estado" onCerrar={() => setCambiandoEstado(false)}>
+        <div className="grupo">
+          {(p.estado === 'aceptado' || p.estado === 'rechazado'
+            ? [{ estado: 'enviado' as const, texto: 'Volver a Enviado', detalle: 'Si te equivocaste al marcarlo' }]
+            : [
+                { estado: 'aceptado' as const, texto: 'Aceptado', detalle: 'El cliente aprobó el presupuesto' },
+                { estado: 'rechazado' as const, texto: 'Rechazado', detalle: 'El cliente no lo aprobó' },
+              ]
+          ).map((o) => (
+            <button key={o.estado} type="button" className="item" onClick={() => void cambiarEstado(o.estado)}>
+              <span className="item-texto">
+                <span className="item-titulo">{o.texto}</span>
+                <span className="detalle">{o.detalle}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      </Hoja>
     </section>
   );
 }

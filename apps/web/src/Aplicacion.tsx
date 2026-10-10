@@ -17,6 +17,7 @@ import { Asistente } from './presupuestos/Asistente';
 import { IniciarBorrador } from './presupuestos/IniciarBorrador';
 import { PresupuestoDetalle } from './presupuestos/PresupuestoDetalle';
 import { Presupuestos } from './presupuestos/Presupuestos';
+import { VistaPdf } from './presupuestos/VistaPdf';
 import { MiTaller } from './taller/MiTaller';
 import { UsuariosTaller } from './taller/UsuariosTaller';
 
@@ -77,6 +78,12 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
       enAsistente = true;
     } else if (primero === 'presupuestos' && segundo === 'borrador' && tercero) {
       pantalla = <Asistente key={tercero} borradorId={tercero} />;
+      enAsistente = true;
+    } else if (primero === 'presupuestos' && segundo && tercero === 'pdf') {
+      pantalla = <VistaPdf key={segundo} id={segundo} />;
+      enAsistente = true;
+    } else if (primero === 'presupuestos' && segundo && tercero === 'duplicar') {
+      pantalla = <IniciarBorrador key={ruta} modo={{ tipo: 'duplicar', presupuestoId: segundo }} />;
       enAsistente = true;
     } else if (primero === 'presupuestos' && segundo && tercero === 'editar') {
       pantalla = <IniciarBorrador key={ruta} modo={{ tipo: 'editar', presupuestoId: segundo }} />;

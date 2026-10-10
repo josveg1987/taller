@@ -387,6 +387,70 @@ describe('ver, listar y editar', () => {
   });
 });
 
+describe('estado y PDF', () => {
+  const nuevoBorrador = async () => (await conVehiculoA([linea('Capot')], { plazoDias: 5 })).json.id as string;
+  const cambiar = (id: string, estado: string, cuenta: Cuenta = a) => llamar('PATCH', `/presupuestos/${id}/estado`, cuenta.cookie, { estado });
+  const historial = async (id: string) =>
+    (await pool.query('SELECT estado FROM historial_estados WHERE presupuesto_id = $1 ORDER BY fecha, id', [id])).rows.map((r) => r.estado);
+
+  it('sigue borrador → enviado → aceptado o rechazado, y deja el historial', async () => {
+    const id = await nuevoBorrador();
+    expect((await cambiar(id, 'aceptado')).status).toBe(409); // no se salta el envio
+    expect((await cambiar(id, 'enviado')).json.estado).toBe('enviado');
+    expect((await cambiar(id, 'aceptado')).json.estado).toBe('aceptado');
+    expect((await cambiar(id, 'enviado')).json.estado).toBe('enviado'); // deshacer
+    expect((await cambiar(id, 'rechazado')).json.estado).toBe('rechazado');
+    expect(await historial(id)).toEqual(['borrador', 'enviado', 'aceptado', 'enviado', 'rechazado']);
+  });
+
+  it('no deja volver a borrador, elegir vencido ni un estado inventado, y un enviado ya no se edita', async () => {
+    const id = await nuevoBorrador();
+    await cambiar(id, 'enviado');
+    expect((await cambiar(id, 'borrador')).status).toBe(409);
+    expect((await cambiar(id, 'vencido')).status).toBe(409);
+    expect((await cambiar(id, 'inventado')).status).toBe(400);
+    expect((await llamar('PATCH', `/presupuestos/${id}/estado`, a.cookie, {})).status).toBe(400);
+    expect((await llamar('PUT', `/presupuestos/${id}`, a.cookie, { vehiculoId: vehiculoA.id, lineas: [linea('Capot')] })).status).toBe(409);
+  });
+
+  it('un enviado cuya validez pasó se muestra como vencido (en el detalle y en el filtro) y aun se puede aceptar', async () => {
+    const id = await nuevoBorrador();
+    await cambiar(id, 'enviado');
+    await pool.query("UPDATE presupuestos SET fecha = current_date - 20, valido_hasta = current_date - 1 WHERE id = $1", [id]);
+    expect((await llamar('GET', `/presupuestos/${id}`, a.cookie)).json.estado).toBe('vencido');
+    const vencidos = (await llamar('GET', '/presupuestos?estado=vencido', a.cookie)).json as { id: string }[];
+    expect(vencidos.map((x) => x.id)).toContain(id);
+    const enviados = (await llamar('GET', '/presupuestos?estado=enviado', a.cookie)).json as { id: string }[];
+    expect(enviados.map((x) => x.id)).not.toContain(id);
+    expect((await cambiar(id, 'aceptado')).json.estado).toBe('aceptado');
+  });
+
+  it('otro taller no puede cambiar el estado de un presupuesto ajeno', async () => {
+    const id = await nuevoBorrador();
+    expect((await cambiar(id, 'enviado', b)).status).toBe(404);
+    expect((await llamar('GET', `/presupuestos/${id}`, a.cookie)).json.estado).toBe('borrador');
+  });
+
+  it('entrega el PDF del presupuesto (solo a su taller) y exige sesión', async () => {
+    const r = await conVehiculoA([linea('Capot'), { piezaId: null, nombre: 'Pulido de focos', operacion: 'libre', posicion: 'no_aplica', precio: 25000 }], {
+      plazoDias: 4,
+      descuento: 5000,
+      observaciones: 'Incluye pulido general',
+    });
+    const pedir = (cookie?: string) => fetch(`${base}/presupuestos/${r.json.id}/pdf`, { headers: cookie ? { cookie } : {} });
+    const ok = await pedir(a.cookie);
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get('content-type')).toBe('application/pdf');
+    expect(ok.headers.get('content-disposition')).toContain(`presupuesto-${r.json.numero}.pdf`);
+    const bytes = Buffer.from(await ok.arrayBuffer());
+    expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(bytes.length).toBeGreaterThan(1500);
+    expect((await pedir(b.cookie)).status).toBe(404);
+    expect((await pedir()).status).toBe(401);
+    expect((await fetch(`${base}/presupuestos/no-es-un-id/pdf`, { headers: { cookie: a.cookie } })).status).toBe(404);
+  });
+});
+
 describe('aislamiento y acceso', () => {
   it('exige sesion y, al administrador de la app, haber entrado a un taller', async () => {
     expect((await llamar('GET', '/presupuestos')).status).toBe(401);

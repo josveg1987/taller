@@ -16,8 +16,8 @@ haya reglas de negocio, y commit al terminar cada paso.
 | 3b. Catálogo de vehículos | Marca, modelo y año con sugerencias al escribir, desde el listado del SII; carga automática con las migraciones. **Hecha (local).** | HU-02 |
 | 4. Catálogo | Piezas, posiciones, combos y montos rápidos. **Hecha (local).** | HU-16, 33, 38 |
 | 5. Presupuesto | Flujo de 3 pantallas + cálculo con tests + borradores locales. **Hecha (local).** | HU-05 a 10, 13, 28, 30, 32, 35, 43 |
-| 6. PDF | Generación y compartir por WhatsApp | HU-21, 22 |
-| 7. Seguimiento | Estados, listado e historiales | HU-23, 24, 39, 40 |
+| 6. PDF | Generación, vista previa y compartir por WhatsApp (sin logo aún). **Hecha (local).** | HU-21, 22 |
+| 7. Seguimiento | Estados, listado e historiales. Cambio de estado y vencimiento automático **hechos** con la fase 6; faltan filtros en la lista y la pantalla de historial. | HU-23, 24, 39, 40 |
 | 8. Reportes | Resumen del mes y pendientes | HU-41, 42 |
 | 9. Piloto | El taller lo usa en paralelo con el Excel y se ajusta | — |
 

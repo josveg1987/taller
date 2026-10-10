@@ -123,6 +123,17 @@ interface Calculo {
   condiciones: string;
 }
 
+/** Un presupuesto enviado cuya validez ya pasó se muestra como vencido (no se guarda: depende de la fecha). */
+const ESTADO_EFECTIVO = "CASE WHEN p.estado = 'enviado' AND p.valido_hasta < current_date THEN 'vencido' ELSE p.estado END";
+
+// Pasos permitidos entre estados guardados. Enviado = ya salió hacia el cliente: desde ahí no se edita.
+const TRANSICIONES: Record<string, Estado[]> = {
+  borrador: ['enviado'],
+  enviado: ['aceptado', 'rechazado'],
+  aceptado: ['enviado'],
+  rechazado: ['enviado'],
+};
+
 // La columna total es integer: se corta mucho antes de su limite para no desbordar.
 const MAX_TOTAL = 2_000_000_000;
 
@@ -308,6 +319,26 @@ export class PresupuestosService {
     });
   }
 
+  /** Cambia el estado: borrador → enviado → aceptado o rechazado. Queda en el historial. "Vencido" no se elige: es automático. */
+  async cambiarEstado(tallerId: string, quien: Contexto, id: string, nuevo: Estado): Promise<Presupuesto> {
+    const usuarioId = quien.tipo === 'taller' ? quien.usuarioId : null;
+    return this.db.conTaller(tallerId, async (c) => {
+      const { rows } = await c.query<{ estado: Estado }>('SELECT estado FROM presupuestos WHERE id = $1 FOR UPDATE', [id]);
+      if (!rows[0]) throw new NotFoundException('El presupuesto no existe');
+      if (!(TRANSICIONES[rows[0].estado] ?? []).includes(nuevo)) {
+        throw new ConflictException(`No se puede pasar un presupuesto de "${rows[0].estado}" a "${nuevo}"`);
+      }
+      await c.query('UPDATE presupuestos SET estado = $1, actualizado_en = now() WHERE id = $2', [nuevo, id]);
+      await c.query('INSERT INTO historial_estados (taller_id, presupuesto_id, estado, usuario_id) VALUES ($1, $2, $3, $4)', [
+        tallerId,
+        id,
+        nuevo,
+        usuarioId,
+      ]);
+      return this.leer(c, id);
+    });
+  }
+
   async obtener(tallerId: string, id: string): Promise<Presupuesto> {
     return this.db.conTaller(tallerId, (c) => this.leer(c, id));
   }
@@ -336,7 +367,7 @@ export class PresupuestosService {
       anio: number | null;
     }>(
       `SELECT p.id, p.numero, to_char(p.fecha, 'YYYY-MM-DD') AS fecha, to_char(p.valido_hasta, 'YYYY-MM-DD') AS valido_hasta,
-              p.estado, p.descuento, p.total, p.monto_inicio, p.costo_repuestos, p.observaciones, p.plazo_dias, p.condiciones,
+              ${ESTADO_EFECTIVO} AS estado, p.descuento, p.total, p.monto_inicio, p.costo_repuestos, p.observaciones, p.plazo_dias, p.condiciones,
               c.id AS cliente_id, c.nombre AS cliente_nombre, c.telefono AS cliente_telefono,
               v.id AS vehiculo_id, v.patente, v.marca, v.modelo, v.anio
          FROM presupuestos p
@@ -429,12 +460,12 @@ export class PresupuestosService {
         marca: string | null;
         modelo: string | null;
       }>(
-        `SELECT p.id, p.numero, to_char(p.fecha, 'YYYY-MM-DD') AS fecha, p.estado, p.total,
+        `SELECT p.id, p.numero, to_char(p.fecha, 'YYYY-MM-DD') AS fecha, ${ESTADO_EFECTIVO} AS estado, p.total,
                 c.id AS cliente_id, c.nombre AS cliente_nombre, v.id AS vehiculo_id, v.patente, v.marca, v.modelo
            FROM presupuestos p
            JOIN clientes c ON c.id = p.cliente_id
            JOIN vehiculos v ON v.id = p.vehiculo_id
-          ${estado ? 'WHERE p.estado = $1' : ''}
+          ${estado ? `WHERE (${ESTADO_EFECTIVO}) = $1` : ''}
           ORDER BY p.numero DESC
           LIMIT 100`,
         estado ? [estado] : [],

@@ -118,9 +118,12 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
 - **Hecho, probado y subido a GitHub:** Fases 1, 1b, 2 (2a a 2d: BD, login, administrador de la APP, administrador
   de taller), 3 (clientes y vehículos), catálogo de vehículos (SII) con sugerencias propias del taller, y 4 (piezas,
   combos, montos rápidos y desabollado sugerido).
-- **Hecho en local (sin push): Fase 5, el presupuesto** (ver detalle abajo). 263 tests de la API (`npm run test:db`)
+- **Hecho en local (sin push): Fase 5, el presupuesto** (ver detalle abajo). 273 tests de la API (`npm run test:db`)
   + 10 de `shared` (`npm test`).
-- **Siguiente: Fase 6** (PDF + compartir por WhatsApp + logo con R2; cambiar el estado a "enviado" al compartir).
+- **Hecho en local (sin push): Fase 6, PDF + vista previa + enviar por WhatsApp + estados** (ver detalle abajo).
+- **Siguiente:** revisar el prototipo de interfaz que diseña el dueño del proyecto y, de ahí, definir por taller el
+  rubro (pintura o mecánica: otra interfaz), el logo en SVG (se guardaría como texto en la BD, sin R2; sanear el SVG) y la
+  paleta de colores (variables CSS por taller). El PDF ya tiene el lugar del logo (`TallerParaPdf` en `pdf.documento.ts`).
   Supuestos a confirmar con el taller piloto: pintura igual por pieza y editable; anticipo de repuestos con el precio
   con margen. Importar el cliente desde la libreta de contactos quedó para después (solo funciona en Android Chrome).
 - **Retomar en local:** abrir Docker Desktop → `npm run db:up` → `npm run dev:api` y `npm run dev:web`
@@ -256,6 +259,20 @@ taller), desabollado = "Mano de obra", repuesto = costo + margen. (3) **Plazo es
 `presupuestos.plazo_dias` (migración `…plazo-dias-habiles`, 1 a 365, NULL = sin plazo), un solo plazo total en **días
 hábiles**, opcional; se edita en el paso 3 y se ve en el detalle (irá en el PDF). En el borrador local `plazoDias` 0 = sin plazo.
 Las dudas para el taller piloto están en `docs/preguntas-para-el-taller.md`.
+**Fase 6 hecha en local (2026-10-10): PDF, vista previa, WhatsApp y estados.** API `apps/api/src/pdf/` (módulo aparte):
+`GET /presupuestos/:id/pdf` genera el PDF a demanda con `pdfmake` 0.3 (fuente Roboto que trae el paquete; sin Puppeteer,
+no se guarda). `pdf.documento.ts` es una función pura que arma el documento A4 (taller, N°, fechas, cliente, vehículo,
+tabla de trabajos con precio por línea, subtotal/descuento/total, monto para iniciar, plazo, observaciones, condiciones
+y datos de transferencia; **nunca costos ni ganancia**: su tipo de entrada no los tiene) y tiene tests. Estados:
+`PATCH /presupuestos/:id/estado` con pasos permitidos borrador → enviado → aceptado/rechazado (y aceptado/rechazado →
+enviado para deshacer), con historial; **vencido no se guarda**: un enviado cuya `valido_hasta` ya pasó se muestra como
+vencido (en detalle, lista y filtro) y aún se puede aceptar o rechazar. Un presupuesto que ya no es borrador no se edita:
+se **duplica** (`/presupuestos/<id>/duplicar`, crea un borrador local sin número). Web: pantalla `VistaPdf.tsx`
+(`/presupuestos/<id>/pdf`) que muestra el PDF real, página por página, con `pdfjs-dist` cargado solo ahí (los celulares
+no muestran PDFs dentro de la página); botón "Enviar por WhatsApp": en el celular abre la hoja de compartir del sistema
+con el archivo (`navigator.share`); en el computador (o si falla) descarga el PDF y abre WhatsApp con el mensaje, y
+pregunta "¿Ya se lo enviaste?" para marcarlo Enviado. El detalle tiene "Ver PDF y enviar", "Editar" (borrador),
+"Cambiar estado" y "Duplicar como borrador". Falta: logo, colores y datos de pago por taller (ver Siguiente).
 Nota: no correr `npm run build` (raíz) con `dev:api` abierto: borra `apps/api/dist` y la API se cae; usar `-w @taller/web`.
 
 Permisos de Claude Code: `.claude/settings.json` lista los comandos de solo lectura, build y tests permitidos

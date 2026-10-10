@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Inject, Param, Post, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import type { Contexto } from '../auth/contexto';
 import { SesionActual, TallerActual } from '../auth/decoradores';
 import { cuerpo, decimal, entero, idValido, opcion, opcional, telefono, texto, textoOpcional } from '../validacion';
@@ -92,6 +92,12 @@ export class PresupuestosController {
   @Post()
   crear(@TallerActual() tallerId: string, @SesionActual() quien: Contexto, @Body() body: unknown) {
     return this.presupuestos.crear(tallerId, quien, entrada(body));
+  }
+
+  @Patch(':id/estado')
+  cambiarEstado(@TallerActual() tallerId: string, @SesionActual() quien: Contexto, @Param('id') id: string, @Body() body: unknown) {
+    const estado = opcion(cuerpo(body).estado, 'El estado', ESTADOS) as Estado;
+    return this.presupuestos.cambiarEstado(tallerId, quien, idValido(id), estado);
   }
 
   /** Reemplaza el contenido de un presupuesto en borrador. */

@@ -11,7 +11,8 @@ type Modo =
   | { tipo: 'nuevo' }
   | { tipo: 'vehiculo'; vehiculoId: string }
   | { tipo: 'cliente'; clienteId: string }
-  | { tipo: 'editar'; presupuestoId: string };
+  | { tipo: 'editar'; presupuestoId: string }
+  | { tipo: 'duplicar'; presupuestoId: string };
 
 export function borradorVacio(tallerId: string): Borrador {
   return {
@@ -47,21 +48,22 @@ export function IniciarBorrador({ modo }: { modo: Modo }) {
     if (!tallerId || hecho.current) return;
     hecho.current = true; // en modo estricto React ejecuta el efecto dos veces: un solo borrador
     (async () => {
-      if (modo.tipo === 'editar') {
-        const id = `editar-${modo.presupuestoId}`;
-        if (!(await leerBorrador(id))) {
+      if (modo.tipo === 'editar' || modo.tipo === 'duplicar') {
+        // Editar reutiliza su borrador si ya existe; duplicar siempre crea uno nuevo (sin numero, se numera al guardar).
+        const id = modo.tipo === 'editar' ? `editar-${modo.presupuestoId}` : crypto.randomUUID();
+        if (modo.tipo === 'duplicar' || !(await leerBorrador(id))) {
           const [p, datos] = await Promise.all([api<Presupuesto>(`/presupuestos/${modo.presupuestoId}`), cargarDatosPresupuesto(tallerId)]);
           const usaPosicion = new Map(datos.piezas.map((x) => [x.id, x.usaPosicion]));
           await guardarBorrador({
             ...borradorVacio(tallerId),
             id,
-            presupuestoId: p.id,
-            numero: p.numero,
+            presupuestoId: modo.tipo === 'editar' ? p.id : null,
+            numero: modo.tipo === 'editar' ? p.numero : null,
             paso: 3,
             patente: p.vehiculo.patente,
             vehiculo: { ...p.vehiculo, cliente: p.cliente },
             lineas: p.lineas.map((l) => ({
-              clave: l.id,
+              clave: modo.tipo === 'editar' ? l.id : crypto.randomUUID(),
               piezaId: l.piezaId,
               nombre: l.nombre,
               usaPosicion: (l.piezaId ? usaPosicion.get(l.piezaId) : undefined) ?? l.posicion !== 'no_aplica',

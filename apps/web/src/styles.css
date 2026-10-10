@@ -56,6 +56,7 @@
   --pieza-ancho-min: 9.5rem; /* rejilla de piezas: 2 columnas en un telefono de 360px */
   --pieza-alto-min: 64px;
   --sombra-barra: 0 -4px 16px rgb(17 24 39 / 0.08);
+  --sombra-pagina: 0 1px 6px rgb(17 24 39 / 0.18);
 
   /* Tipografia (del sistema) */
   --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
@@ -853,6 +854,33 @@ li.item:has(> .item-interno) {
   font-weight: 700;
   color: var(--color-sobre-primario);
   background: var(--color-primario);
+}
+
+.aviso-barra {
+  margin: 0;
+  font-size: var(--texto-s);
+}
+
+.centro-texto {
+  margin-top: var(--esp-3);
+  text-align: center;
+}
+
+/* Vista previa del PDF: cada pagina es un canvas del ancho de la columna. */
+.pdf-paginas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--esp-3);
+  margin-top: var(--esp-4);
+}
+
+canvas.pdf-pagina {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radio-s);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-pagina);
 }
 
 .linea-presupuesto {
