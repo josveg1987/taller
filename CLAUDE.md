@@ -131,6 +131,32 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
 ## Estado actual
 
 **RESUMEN PARA RETOMAR (cierre de sesión 2026-10-10):**
+- **SIGUIENTE SESIÓN: PASO A PRODUCCIÓN (con el dueño del proyecto, ~40 min, usan sus claves).** La app está lista para que
+  el dueño de Vega la pruebe y mande observaciones. Estado: **todo lo posterior a la Fase 4 está solo en local** (8 commits
+  sin subir a `main`, 3 migraciones nuevas que Neon aún no tiene; Neon está vacía). Orden del día:
+  1. Pedirle que tenga a mano Neon, Render y Cloudflare. No hacer push ni migrar sin que lo pida.
+  2. **Copia manual de la base** antes de que entren datos reales (ver "Respaldo" abajo).
+  3. Cloudflare Pages (proyecto `taller`, Production): `API_URL=https://taller-api-5n9i.onrender.com` y `VITE_API_URL=/api`.
+  4. **Migrar Neon primero** (conexión directa, sin `-pooler`): `$env:DATABASE_URL='<directa>'; npm run db:migrate`
+     (también carga el catálogo de vehículos y la plantilla de piezas).
+  5. Crear el administrador de la APP en Neon con `crear-admin` (sin `--password`: genera una clave, la muestra una vez y
+     **obliga a cambiarla al entrar**; usar un nombre sin espacios en Windows). Entrar y crear un segundo administrador.
+  6. **Subir el código** (`git push` a `main`): Render y Cloudflare redespliegan solos.
+  7. **Cambiar la contraseña de la BD en Neon** (quedó visible en una captura del chat) y actualizar `DATABASE_URL` en Render.
+  8. Desde el panel: crear el taller Vega, su usuario con clave temporal (se la pasa por WhatsApp) y subir el logo para el PDF
+     (`vega-logo-pack/vega-logo/logos/svg/horizontal-color-naranja.svg`). El dueño configura Mi taller (tarifa, margen,
+     condiciones, transferencia, dirección y teléfono; ver el aviso del inicio).
+  9. **Probar en un celular real**: ingresar y cambiar la clave, crear un presupuesto, ver el PDF, compartir por WhatsApp
+     (el menú de compartir con archivo solo existe en celular y nunca se probó), instalar la app (ícono de Vega).
+  10. Avisarle de los límites del piloto: la primera carga puede tardar casi un minuto (Render gratis se duerme a los
+     15 min); no se pueden borrar clientes, vehículos ni presupuestos; no hay "olvidé mi contraseña"; sin fotos; el ícono
+     de instalación es el de Vega para todos.
+  Después de publicar: definir con el dueño las **preguntas para el taller** (base en `docs/preguntas-para-el-taller.md`,
+  agregar lo que vea en la app) y cómo recibir sus observaciones (WhatsApp o un botón "Enviar comentario").
+- **Respaldo (decidido 2026-10-10):** antes de datos reales, copia manual de Neon con `pg_dump` (explicarle los comandos);
+  poco después, copia diaria automática con GitHub Actions: `pg_dump` cifrado con clave, guardado en un lugar privado
+  (Cloudflare R2; NO como archivo de Actions si el repo es público), últimas 30 copias. Neon gratis solo guarda un historial
+  corto de cambios. Hoy no existe `.github/`.
 - **Hecho, probado y subido a GitHub:** Fases 1, 1b, 2 (2a a 2d: BD, login, administrador de la APP, administrador
   de taller), 3 (clientes y vehículos), catálogo de vehículos (SII) con sugerencias propias del taller, y 4 (piezas,
   combos, montos rápidos y desabollado sugerido).
@@ -172,7 +198,10 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
 - **Retomar en local:** abrir Docker Desktop → `npm run db:up` → `npm run dev:api` y `npm run dev:web`
   (http://localhost:5173). Cuentas de prueba SOLO en la BD local: administrador de la APP `admin@taller.local` (la
   contraseña la mostró `crear-admin`; si se perdió, crear otra) y taller demo `dueno@taller.local` / `demo-taller-2026`
-  (Taller Demo, con clientes, piezas y combos de prueba).
+  (Taller Demo, con clientes, piezas y combos de prueba). También de prueba, solo en la BD local: administrador de la APP
+  `prueba-admin@taller.local` / `admin-demo-2026` y un taller "Taller Nuevo NNNNN" con usuario `nuevoNNNNN@taller.local`
+  (su clave ya fue cambiada en las pruebas). Hay muchos clientes y presupuestos de prueba (Pedro Prueba, etc.).
+  Dev servers: `npm run dev:api` y `npm run dev:web` (no correr `npm run build` de la raíz con la API abierta: la tumba).
 - **Cómo trabajar con el dueño del proyecto:** es nuevo en DevOps, explicarle en lenguaje simple; **antes de cambios
   nuevos, proponer y esperar su autorización** (lo pidió explícitamente); no hacer push ni migrar Neon sin que lo pida;
   comandos simples, uno por llamada (menos avisos de permiso).
@@ -194,8 +223,8 @@ Fase 1b completa (2026-10-09): publicado y validado desde el celular y el comput
   Variables: `VITE_API_URL` (URL de Render, sin barra final) y `NODE_VERSION=24`.
 - Render y Cloudflare redespliegan solos con cada push a `main`.
 
-**ESTADO DE PRODUCCIÓN (2026-10-10, al cerrar la sesión):** todo el código hasta la Fase 4 está en `main`, así que
-Render y Cloudflare publican la versión nueva, **pero producción NO funciona para iniciar sesión**: (1) las
+**ESTADO DE PRODUCCIÓN (2026-10-10, al cerrar la sesión):** en `main` solo está el código hasta la Fase 4 (lo demás está
+local, ver arriba), así que Render y Cloudflare publican esa versión, **pero producción NO funciona para iniciar sesión**: (1) las
 migraciones **no se han aplicado en Neon** (no existen usuarios, sesiones, clientes, catálogos ni
 administradores allá), (2) no hay ningún administrador de la APP en Neon, y (3) la cookie de sesión no se
 envía entre `pages.dev` y `onrender.com` (falta configurar la función de reenvío, paso 1, o comprar dominio). La web pública hoy muestra el login
