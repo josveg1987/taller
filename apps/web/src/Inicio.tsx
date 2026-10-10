@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { calcularPresupuesto, type LineaInput } from '@taller/shared';
 import { api } from './api';
+import { clp } from './dinero';
 
 type Estado = 'conectando' | 'conectado' | 'sin-conexion';
 interface Health {
@@ -14,8 +15,6 @@ const ejemplo: LineaInput[] = [
   { operacion: 'reemplazar', pintura: 80000, repuestoCosto: 120000, margenPct: 25 },
   { operacion: 'reparar', pintura: 80000, desabollado: 60000, margenPct: 25 },
 ];
-
-const clp = (n: number) => n.toLocaleString('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
 
 const TEXTO_ESTADO: Record<Estado, string> = {
   conectando: 'Conectando…',

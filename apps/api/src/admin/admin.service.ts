@@ -1,6 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { hashPassword } from '../auth/password';
 import { DatabaseService } from '../database/database.service';
+import { sembrarCatalogo } from '../piezas/piezas.service';
 import { asegurarCorreoLibre } from '../auth/cuentas';
 import { traducirErrorBD } from '../validacion';
 
@@ -67,6 +68,8 @@ export class AdminService {
       'INSERT INTO talleres (nombre, max_usuarios) VALUES ($1, $2) RETURNING id',
       [nombre, maxUsuarios],
     );
+    // El taller nace con las piezas estandar y el combo de ejemplo, que despues edita a su gusto.
+    await sembrarCatalogo((sql, p) => this.db.admin(sql, p), rows[0].id);
     return (await this.obtenerResumen(rows[0].id))!;
   }
 

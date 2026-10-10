@@ -25,6 +25,13 @@ function anticipo(v: unknown): { tipo: TipoAnticipo; valor: number | null } {
   return { tipo, valor: null };
 }
 
+/** Montos rapidos de desabollado: hasta 12, enteros positivos, sin repetir, de menor a mayor. */
+function montos(v: unknown): number[] {
+  if (!Array.isArray(v) || v.length > 12) throw new BadRequestException('Los montos rápidos no son válidos (máximo 12)');
+  const lista = v.map((x) => entero(x, 'Cada monto rápido', 1, 100_000_000));
+  return [...new Set(lista)].sort((a, b) => a - b);
+}
+
 /** Datos, configuracion y usuarios del taller en el que se esta (el propio, o el del admin de la app). */
 @Controller('taller')
 export class TallerController {
@@ -48,6 +55,10 @@ export class TallerController {
     if (b.margenRepuestosPct !== undefined) {
       cambios.margenRepuestosPct = decimal(b.margenRepuestosPct, 'El margen de repuestos', 0, 500);
     }
+    if (b.tarifaPintura !== undefined) {
+      cambios.tarifaPintura = entero(b.tarifaPintura, 'La tarifa de pintura', 0, 100_000_000);
+    }
+    if (b.montosDesabollado !== undefined) cambios.montosDesabollado = montos(b.montosDesabollado);
     if (b.validezDias !== undefined) cambios.validezDias = entero(b.validezDias, 'La validez', 1, 365);
     if (b.condiciones !== undefined) {
       cambios.condiciones = textoOpcional(b.condiciones, 'Las condiciones', 4000) ?? '';

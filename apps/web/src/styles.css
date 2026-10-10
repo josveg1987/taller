@@ -50,6 +50,9 @@
   --campo-corto: 7rem;
   --hoja-alto-max: 88dvh;
   --sugerencias-alto: 14rem;
+  --interruptor-ancho: 52px;
+  --interruptor-alto: 32px;
+  --interruptor-margen: 4px;
 
   /* Tipografia (del sistema) */
   --fuente: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
@@ -524,6 +527,64 @@ input.corto {
   width: var(--campo-corto);
   flex: none;
   text-align: right;
+}
+
+/* Interruptor (si / no) para una fila de lista. */
+input.interruptor {
+  position: relative;
+  flex: none;
+  width: var(--interruptor-ancho);
+  min-height: 0;
+  height: var(--interruptor-alto);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radio-pildora);
+  appearance: none;
+  background: var(--color-borde-campo);
+  cursor: pointer;
+  transition: background-color var(--t-rapida) var(--curva);
+}
+
+input.interruptor::before {
+  content: '';
+  position: absolute;
+  top: var(--interruptor-margen);
+  left: var(--interruptor-margen);
+  width: calc(var(--interruptor-alto) - 2 * var(--interruptor-margen));
+  height: calc(var(--interruptor-alto) - 2 * var(--interruptor-margen));
+  border-radius: 50%;
+  background: var(--color-superficie);
+  transition: transform var(--t-rapida) var(--curva);
+}
+
+input.interruptor:checked {
+  background: var(--color-primario);
+}
+
+input.interruptor:checked::before {
+  transform: translateX(calc(var(--interruptor-ancho) - var(--interruptor-alto)));
+}
+
+/* Montos rapidos: cada uno es un boton que se quita al tocarlo. */
+.fila-montos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--esp-2);
+  margin-top: var(--esp-2);
+}
+
+.chip-monto {
+  min-height: var(--toque);
+  padding: 0 var(--esp-4);
+  border: 0;
+  border-radius: var(--radio-pildora);
+  font-weight: 600;
+  background: var(--color-secundario);
+}
+
+.item.columna {
+  flex-direction: column;
+  align-items: stretch;
 }
 
 /* Sugerencias del catalogo bajo un campo: en linea (no flotantes) para que funcionen dentro de las hojas. */

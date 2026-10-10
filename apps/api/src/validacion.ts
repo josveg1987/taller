@@ -124,6 +124,12 @@ export function traducirErrorBD(e: unknown): never {
   if (err.code === '23505' && err.constraint === 'vehiculos_taller_id_patente_key') {
     throw new ConflictException('Ya existe un vehículo con esa patente');
   }
+  if (err.code === '23505' && err.constraint === 'piezas_taller_id_nombre_key') {
+    throw new ConflictException('Ya existe una pieza con ese nombre');
+  }
+  if (err.code === '23505' && err.constraint === 'combos_taller_id_nombre_key') {
+    throw new ConflictException('Ya existe un combo con ese nombre');
+  }
   const limite = /limite de (\d+) usuarios/.exec(err.message ?? '');
   if (err.code === '23514' && limite) {
     throw new ConflictException(

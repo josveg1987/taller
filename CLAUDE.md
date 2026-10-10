@@ -179,6 +179,20 @@ las marcas, o los modelos de una marca, que ese taller ya registró en sus vehí
 del catálogo sin repetir lo que el catálogo ya tiene. El catálogo global NO se modifica (decidido: lo nuevo solo se
 sugiere dentro del taller que lo escribió, sin aprobación ni promoción). 201 tests.
 
+**Fase 4 hecha en local (2026-10-10): catálogo de piezas, combos y montos rápidos** (HU-16, 33, 38). Dos capas,
+igual que el catálogo de vehículos: **plantilla global de solo lectura** (`catalogo_piezas_base` con las 13 piezas
+de carrocería, `catalogo_combos_base` con "Lateral completo") y **catálogo propio de cada taller** (`piezas` y
+`combos` + `combo_piezas`, con `taller_id` y RLS; reemplazan a la columna `talleres.combos`, ya eliminada). Al crear
+un taller el administrador de la APP, `sembrarCatalogo()` (`apps/api/src/piezas/piezas.service.ts`) le copia la
+plantilla; `POST /piezas/estandar` agrega las que falten (idempotente: no pisa cambios ni repone piezas que el
+taller quitó de un combo). API `apps/api/src/piezas/`: `/piezas` (listar, `?todas=1` incluye inactivas, crear,
+editar, `:id/mover` arriba/abajo, `estandar`) y `/combos` (CRUD). Las piezas se desactivan, no se borran; los
+combos sí se pueden eliminar (nada los referencia). Un combo guarda solo las piezas: **el lado
+(izquierda/derecha) se elige al aplicarlo** en el presupuesto, y solo afecta a las piezas con `usa_posicion`.
+`pieza.tarifa_pintura` NULL = usa `talleres.tarifa_pintura` (ahora editable en Mi taller, junto a
+`montos_desabollado`, que parten en 30.000/60.000/100.000 y se editan como chips). Web `apps/web/src/piezas/`
+(Piezas y Combos, colgando de Mi taller) y `dinero.ts` (`clp()`). 223 tests.
+
 Permisos de Claude Code: `.claude/settings.json` lista los comandos de solo lectura, build y tests permitidos
 sin preguntar. Usar comandos simples, uno por llamada (los compuestos con `;`/pipes/`foreach` piden permiso).
 

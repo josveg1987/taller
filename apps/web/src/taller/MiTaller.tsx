@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
+import { clp } from '../dinero';
 import { HojaSelector } from '../Hoja';
 import { Icono } from '../Iconos';
 import { irA } from '../ruta';
@@ -14,6 +15,8 @@ interface Config {
   telefono: string | null;
   datosTransferencia: string | null;
   margenRepuestosPct: number;
+  tarifaPintura: number;
+  montosDesabollado: number[];
   anticipo: { tipo: TipoAnticipo; valor: number | null };
   validezDias: number;
   condiciones: string;
@@ -55,6 +58,9 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
   const [telefono, setTelefono] = useState(config.telefono ?? '');
   const [transferencia, setTransferencia] = useState(config.datosTransferencia ?? '');
   const [margen, setMargen] = useState(String(config.margenRepuestosPct).replace('.', ','));
+  const [tarifa, setTarifa] = useState(String(config.tarifaPintura));
+  const [montos, setMontos] = useState<number[]>(config.montosDesabollado);
+  const [montoNuevo, setMontoNuevo] = useState('');
   const [validez, setValidez] = useState(String(config.validezDias));
   const [tipoAnticipo, setTipoAnticipo] = useState<TipoAnticipo>(config.anticipo.tipo);
   const [valorAnticipo, setValorAnticipo] = useState(String(config.anticipo.valor ?? ''));
@@ -65,12 +71,21 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
 
   const textoAnticipo = OPCIONES_ANTICIPO.find((o) => o.valor === tipoAnticipo)?.texto;
 
+  function agregarMonto() {
+    const n = Number(montoNuevo.replace(/\D/g, ''));
+    if (!n || montos.length >= 12) return;
+    setMontos([...new Set([...montos, n])].sort((x, y) => x - y));
+    setMontoNuevo('');
+  }
+
   function guardar(e: FormEvent) {
     e.preventDefault();
     setErrorLocal(null);
     // En Chile el decimal se escribe con coma: se acepta "22,5" y "22.5".
     const margenNum = Number(margen.replace(',', '.'));
     if (margen.trim() === '' || !Number.isFinite(margenNum)) return setErrorLocal('El margen debe ser un número');
+    const tarifaNum = Number(tarifa.replace(/\D/g, ''));
+    if (tarifa.trim() === '' || !Number.isFinite(tarifaNum)) return setErrorLocal('La tarifa de pintura debe ser un número');
     const anticipo =
       tipoAnticipo === 'porcentaje' || tipoAnticipo === 'fijo'
         ? { tipo: tipoAnticipo, valor: Number(valorAnticipo) }
@@ -88,6 +103,8 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
           telefono,
           datosTransferencia: transferencia,
           margenRepuestosPct: margenNum,
+          tarifaPintura: tarifaNum,
+          montosDesabollado: montos,
           validezDias: Number(validez),
           anticipo,
           condiciones,
@@ -108,6 +125,22 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
           <span className="item-texto">
             <span className="item-titulo">Usuarios</span>
             <span className="detalle">Quiénes pueden entrar a la app</span>
+          </span>
+          <Icono nombre="chevron" />
+        </button>
+        <button type="button" className="item" onClick={() => irA('/piezas')}>
+          <Icono nombre="ajustes" />
+          <span className="item-texto">
+            <span className="item-titulo">Piezas</span>
+            <span className="detalle">Qué cotizas y a qué tarifa</span>
+          </span>
+          <Icono nombre="chevron" />
+        </button>
+        <button type="button" className="item" onClick={() => irA('/combos')}>
+          <Icono nombre="mas" />
+          <span className="item-texto">
+            <span className="item-titulo">Combos</span>
+            <span className="detalle">Grupos de piezas, como “Lateral completo”</span>
           </span>
           <Icono nombre="chevron" />
         </button>
@@ -137,6 +170,44 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
 
         <h2>Presupuestos</h2>
         <div className="grupo">
+          <label className="item campo-fila">
+            <span className="item-texto">
+              <span className="item-titulo">Tarifa de pintura por pieza ($)</span>
+              <span className="detalle">Por defecto; cada pieza puede tener la suya.</span>
+            </span>
+            <input className="corto" inputMode="numeric" required value={tarifa} onChange={(e) => setTarifa(e.target.value)} />
+          </label>
+          <div className="item columna">
+            <span className="item-texto">
+              <span className="item-titulo">Montos rápidos de desabollado</span>
+              <span className="detalle">Toca un monto para quitarlo.</span>
+            </span>
+            <div className="fila-montos">
+              {montos.map((m) => (
+                <button key={m} type="button" className="chip-monto" aria-label={`Quitar ${clp(m)}`} onClick={() => setMontos(montos.filter((x) => x !== m))}>
+                  {clp(m)} ✕
+                </button>
+              ))}
+            </div>
+            <div className="campo-clave">
+              <input
+                inputMode="numeric"
+                aria-label="Agregar un monto rápido"
+                placeholder="Agregar monto"
+                value={montoNuevo}
+                onChange={(e) => setMontoNuevo(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    agregarMonto();
+                  }
+                }}
+              />
+              <button type="button" className="enlace" onClick={agregarMonto}>
+                Agregar
+              </button>
+            </div>
+          </div>
           <label className="item campo-fila">
             <span className="item-texto">
               <span className="item-titulo">Margen sobre repuestos (%)</span>

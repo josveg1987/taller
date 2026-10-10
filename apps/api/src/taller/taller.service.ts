@@ -13,6 +13,10 @@ export interface ConfigTaller {
   telefono: string | null;
   datosTransferencia: string | null;
   margenRepuestosPct: number;
+  /** Tarifa de pintura por defecto; cada pieza puede tener la suya. */
+  tarifaPintura: number;
+  /** Montos rapidos de desabollado (HU-33), de menor a mayor. */
+  montosDesabollado: number[];
   anticipo: { tipo: TipoAnticipo; valor: number | null };
   validezDias: number;
   condiciones: string;
@@ -26,6 +30,8 @@ export interface CambiosTaller {
   telefono?: string | null;
   datosTransferencia?: string | null;
   margenRepuestosPct?: number;
+  tarifaPintura?: number;
+  montosDesabollado?: number[];
   anticipo?: { tipo: TipoAnticipo; valor: number | null };
   validezDias?: number;
   condiciones?: string;
@@ -67,7 +73,7 @@ export class TallerService {
     const { rows } = await this.db.conTaller(tallerId, (c) =>
       c.query(`
         SELECT t.nombre, t.direccion, t.telefono, t.datos_transferencia, t.margen_repuestos_pct,
-               t.anticipo_tipo, t.anticipo_valor, t.validez_dias, t.condiciones, t.max_usuarios,
+               t.tarifa_pintura, t.montos_desabollado, t.anticipo_tipo, t.anticipo_valor, t.validez_dias, t.condiciones, t.max_usuarios,
                (SELECT count(*) FROM usuarios u WHERE u.activo)::int AS usuarios_activos
           FROM talleres t`),
     );
@@ -79,6 +85,8 @@ export class TallerService {
       telefono: t.telefono,
       datosTransferencia: t.datos_transferencia,
       margenRepuestosPct: Number(t.margen_repuestos_pct),
+      tarifaPintura: t.tarifa_pintura,
+      montosDesabollado: t.montos_desabollado,
       anticipo: { tipo: t.anticipo_tipo, valor: t.anticipo_valor },
       validezDias: t.validez_dias,
       condiciones: t.condiciones,
@@ -99,6 +107,8 @@ export class TallerService {
     if (cambios.telefono !== undefined) agregar('telefono', cambios.telefono);
     if (cambios.datosTransferencia !== undefined) agregar('datos_transferencia', cambios.datosTransferencia);
     if (cambios.margenRepuestosPct !== undefined) agregar('margen_repuestos_pct', cambios.margenRepuestosPct);
+    if (cambios.tarifaPintura !== undefined) agregar('tarifa_pintura', cambios.tarifaPintura);
+    if (cambios.montosDesabollado !== undefined) agregar('montos_desabollado', cambios.montosDesabollado);
     if (cambios.validezDias !== undefined) agregar('validez_dias', cambios.validezDias);
     if (cambios.condiciones !== undefined) agregar('condiciones', cambios.condiciones);
     if (cambios.anticipo) {
