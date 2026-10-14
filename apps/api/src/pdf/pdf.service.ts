@@ -47,7 +47,7 @@ export class PdfService {
       direccion: taller.direccion,
       telefono: taller.telefono,
       notaPago: taller.datos_transferencia,
-      // El encabezado del PDF es gris claro: va el logo para fondo claro.
+      // El encabezado del PDF es claro: va el logo para fondo claro.
       logoSvg: taller.logo_claro_svg,
       cuentas: cuentas.map((x) => ({ titular: x.titular, rut: x.rut, banco: x.banco, tipoCuenta: x.tipo_cuenta, numero: x.numero, email: x.email })),
       detallePintura: pasosDeDetalle(detalleEfectivo(taller.detalle_pintura, DETALLE_PINTURA_ESTANDAR)),

@@ -387,13 +387,13 @@ orden de la plantilla según el esquema 1-17 (Alerón y Tolva sin zona, al final
 Todo/Arriba/Izq./Der./Frente/Atrás; tocar una zona agrega la pieza en ese lado) arriba del paso 2; la ficha de pieza tiene
 "Zona en el dibujo del auto". PDF: bloque "Piezas a trabajar" (solo si alguna línea tiene zona) con las 5 vistas, reparar = franjas
 naranjas, cambiar = azul claro, y leyenda. **Diseño del PDF (2026-10-14, propuesta HTML del dueño):** banda
-gris claro `#D1D5DB` con franja naranja (alta en la página 1 con el logo para fondo claro, dirección y teléfono con íconos, N° en
+crema `#FFF7ED` con franja naranja (alta en la página 1 con el logo para fondo claro, dirección y teléfono con íconos, N° en
 naranja y fechas; delgada en las demás con nombre y N°), dibujada en `background` con posición fija → tarjetas Cliente / Vehículo
 (fondo suave, borde naranja; insignia de la marca en la del vehículo) → PIEZAS A TRABAJAR (pastillas por tipo, auto en recuadro
 redondeado, leyenda con los nombres de las piezas) → DETALLE DEL TRABAJO (Pieza · Trabajo · Precio, filas alternadas) → totales
-(TOTAL en caja gris `#D1D5DB`, monto en naranja) → Anticipo y Plazo en cajas punteadas → QUÉ INCLUYE (lista con check) →
+(TOTAL en caja crema `#FFF7ED`, monto en naranja) → Anticipo y Plazo en cajas punteadas → QUÉ INCLUYE (lista con check) →
 Observaciones → Condiciones → Datos para transferir (titular una vez si es el mismo en todas; una tarjeta por cuenta). Colores al
-inicio de `pdf.documento.ts` (los de la marca en la app, más `GRIS_ENCABEZADO`, pedido del dueño para encabezados y total).
+inicio de `pdf.documento.ts` (los de la marca en la app, más `FONDO_ENCABEZADO`, pedido del dueño para encabezados y total).
 pdfmake no redondea tablas: los fondos redondeados son `canvas` con `relativePosition` y alto calculado. En `vitest.config.mts` de la API el alias de `@taller/shared/plano` va antes que el
 del índice. 335 tests API + 18 shared.
 Nota: no correr `npm run build` (raíz) con `dev:api` abierto: borra `apps/api/dist` y la API se cae; usar `-w @taller/web`.

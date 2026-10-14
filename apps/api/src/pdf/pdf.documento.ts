@@ -62,8 +62,8 @@ export interface PresupuestoParaPdf {
 // llegaran aqui como parametro.
 const MARCA = '#11223d';
 const ACENTO = '#c2410c';
-// Encabezados de pagina y caja del TOTAL: gris claro (pedido del dueño), con texto oscuro encima.
-const GRIS_ENCABEZADO = '#d1d5db';
+// Encabezados de pagina y caja del TOTAL: tono crema (pedido del dueño), con texto oscuro encima.
+const FONDO_ENCABEZADO = '#fff7ed';
 const SOBRE_GRIS = '#374151';
 const TINTA = '#1f2937';
 const SUAVE = '#6b7280';
@@ -160,7 +160,7 @@ function contactoTaller(t: TallerParaPdf): Content[] {
   return [...(t.direccion ? [fila(TRAZO_UBICACION, t.direccion)] : []), ...(t.telefono ? [fila(TRAZO_TELEFONO, t.telefono)] : [])];
 }
 
-/** Encabezado de la primera pagina: se dibuja en el fondo de la pagina, sobre la banda gris (alto fijo). */
+/** Encabezado de la primera pagina: se dibuja en el fondo de la pagina, sobre la banda crema (alto fijo). */
 function encabezado(t: TallerParaPdf, p: PresupuestoParaPdf): Content {
   return {
     margin: [LADO, 20, LADO, 0],
@@ -387,7 +387,7 @@ function bloqueTotales(p: PresupuestoParaPdf): Content {
       {
         margin: [0, 6, 0, 0],
         stack: [
-          fondoRedondeado(ancho, 34, 6, { color: GRIS_ENCABEZADO }),
+          fondoRedondeado(ancho, 34, 6, { color: FONDO_ENCABEZADO }),
           {
             columns: [
               { text: 'TOTAL', bold: true, fontSize: 13, color: MARCA },
@@ -518,13 +518,13 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
     pageMargins: [LADO, ARRIBA, LADO, 50],
     info: { title: `Presupuesto N° ${p.numero} - ${taller.nombre}`, author: taller.nombre },
     defaultStyle: { font: 'Roboto', fontSize: 10, color: TINTA, lineHeight: 1.15 },
-    // Banda gris con franja naranja: alta (con el encabezado completo) en la primera pagina, delgada en las demas.
+    // Banda crema con franja naranja: alta (con el encabezado completo) en la primera pagina, delgada en las demas.
     background: (pagina: number) => {
       const alto = pagina === 1 ? BANDA : BANDA_DELGADA;
       const banda: Content = {
         absolutePosition: { x: 0, y: 0 },
         canvas: [
-          { type: 'rect', x: 0, y: 0, w: ANCHO_PAGINA, h: alto, color: GRIS_ENCABEZADO },
+          { type: 'rect', x: 0, y: 0, w: ANCHO_PAGINA, h: alto, color: FONDO_ENCABEZADO },
           { type: 'rect', x: 0, y: alto, w: ANCHO_PAGINA, h: FRANJA, color: ACENTO },
         ],
       };
