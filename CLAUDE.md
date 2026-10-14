@@ -390,8 +390,8 @@ naranjas, cambiar = azul claro, y leyenda. **Diseño del PDF (2026-10-14, propue
 crema `#FFF7ED` con franja naranja (alta en la página 1 con el logo para fondo claro, dirección y teléfono con íconos, N° en
 naranja y fechas; delgada en las demás con nombre y N°), dibujada en `background` con posición fija → tarjetas Cliente / Vehículo
 (fondo suave, borde naranja; insignia de la marca en la del vehículo) → PIEZAS A TRABAJAR (pastillas por tipo, auto en recuadro
-redondeado, leyenda con los nombres de las piezas) → DETALLE DEL TRABAJO (Pieza · Trabajo · Precio, filas alternadas) → totales
-(TOTAL en caja crema `#FFF7ED`, monto en naranja) → Anticipo y Plazo en cajas punteadas → QUÉ INCLUYE (lista con check) →
+redondeado, leyenda con los nombres de las piezas) → QUÉ INCLUYE (lista con check) → [salto: siempre página 2] DETALLE DEL TRABAJO (Pieza · Trabajo · Precio, filas alternadas) → totales
+(TOTAL en caja crema `#FFF7ED`, monto en naranja) → Anticipo y Plazo en cajas punteadas →
 Observaciones → Condiciones → Datos para transferir (titular una vez si es el mismo en todas; una tarjeta por cuenta). Colores al
 inicio de `pdf.documento.ts` (los de la marca en la app, más `FONDO_ENCABEZADO`, pedido del dueño para encabezados y total).
 pdfmake no redondea tablas: los fondos redondeados son `canvas` con `relativePosition` y alto calculado. En `vitest.config.mts` de la API el alias de `@taller/shared/plano` va antes que el

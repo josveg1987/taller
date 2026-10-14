@@ -182,9 +182,10 @@ describe('documento del presupuesto', () => {
     expect(textoDe({ ...base, vehiculo: { ...base.vehiculo, marca: null } })).toContain('M4 15v-3l2-5h12l2 5v3');
   });
 
-  it('orden: cliente, piezas a trabajar, detalle con precios y que incluye', () => {
+  it('orden: cliente, piezas a trabajar, que incluye y, en la pagina 2, el detalle con precios', () => {
     const t = textoDe(base);
-    const pos = ['CLIENTE', 'PIEZAS A TRABAJAR', 'DETALLE DEL TRABAJO', 'QUÉ INCLUYE EL TRABAJO'].map((x) => t.indexOf(x));
+    const pos = ['CLIENTE', 'PIEZAS A TRABAJAR', 'QUÉ INCLUYE EL TRABAJO', 'DETALLE DEL TRABAJO'].map((x) => t.indexOf(x));
+    expect(t).toMatch(/"pageBreak":"before"/);
     expect(pos.every((x) => x >= 0)).toBe(true);
     expect([...pos].sort((x, y) => x - y)).toEqual(pos);
   });

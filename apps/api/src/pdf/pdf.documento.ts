@@ -542,13 +542,14 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
     },
     content: [
       bloqueClienteVehiculo(p),
-      // Orden acordado: cliente y vehiculo, piezas a trabajar (el auto), detalle con precios, que incluye.
+      // Orden acordado con el dueño: pagina 1 = cliente y vehiculo, piezas a trabajar (el auto) y que incluye el trabajo;
+      // el detalle con precios parte SIEMPRE en la pagina 2.
       ...(plano ? [plano] : []),
-      titulo('Detalle del trabajo'),
+      ...(detalle ? [detalle] : []),
+      { stack: [titulo('Detalle del trabajo', [], 4)], pageBreak: 'before' },
       tablaDetalle(p),
       bloqueTotales(p),
       ...(pago ? [pago] : []),
-      ...(detalle ? [detalle] : []),
       ...(p.observaciones?.trim() ? [bloqueTexto('Observaciones', p.observaciones.trim())] : []),
       ...(p.condiciones.trim() ? [bloqueTexto('Condiciones', p.condiciones.trim())] : []),
       ...(cuentas ? [cuentas] : []),
