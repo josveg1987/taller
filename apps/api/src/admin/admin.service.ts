@@ -2,6 +2,7 @@ import { BadRequestException, Inject, Injectable, NotFoundException } from '@nes
 import { hashPassword } from '../auth/password';
 import { DatabaseService } from '../database/database.service';
 import { sembrarCatalogo } from '../piezas/piezas.service';
+import { sembrarServicios } from '../servicios/servicios.service';
 import { asegurarCorreoLibre } from '../auth/cuentas';
 import { traducirErrorBD } from '../validacion';
 
@@ -80,6 +81,7 @@ export class AdminService {
     );
     // El taller nace con las piezas estandar y el combo de ejemplo, que despues edita a su gusto.
     await sembrarCatalogo((sql, p) => this.db.admin(sql, p), rows[0].id);
+    await sembrarServicios((sql, p) => this.db.admin(sql, p), rows[0].id);
     return (await this.obtenerResumen(rows[0].id))!;
   }
 

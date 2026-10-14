@@ -64,6 +64,8 @@ export class TallerController {
       cambios.condiciones = textoOpcional(b.condiciones, 'Las condiciones', 4000) ?? '';
     }
     if (b.anticipo !== undefined) cambios.anticipo = anticipo(b.anticipo);
+    if (b.detallePintura !== undefined) cambios.detallePintura = textoOpcional(b.detallePintura, 'El detalle de pintura', 1500);
+    if (b.detalleDesabollado !== undefined) cambios.detalleDesabollado = textoOpcional(b.detalleDesabollado, 'El detalle de desabolladura', 1500);
     return this.taller.actualizar(tallerId, cambios);
   }
 

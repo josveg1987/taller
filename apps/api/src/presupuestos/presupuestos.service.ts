@@ -27,6 +27,8 @@ export interface LineaEntrada {
   repuestoCosto?: number;
   margenPct?: number;
   precio?: number;
+  /** Solo items libres y servicios: texto que sale bajo el nombre en el PDF. */
+  descripcion?: string;
 }
 
 export interface EntradaPresupuesto {
@@ -43,6 +45,8 @@ export interface EntradaPresupuesto {
   plazoDias: number | null;
   /** Si no viene, se copian las del taller. */
   condiciones?: string;
+  /** Pedir el anticipo que indica la configuracion del taller. Si no viene: si el taller tiene anticipo configurado. */
+  solicitaAnticipo?: boolean;
 }
 
 export interface LineaPresupuesto {
@@ -59,6 +63,8 @@ export interface LineaPresupuesto {
   repuestoPrecio: number;
   /** Lo que ve el cliente por esta linea. */
   precioTotal: number;
+  /** Texto bajo el nombre en el PDF (servicios e items libres); null si no tiene. */
+  descripcion: string | null;
 }
 
 export interface Presupuesto {
@@ -73,8 +79,10 @@ export interface Presupuesto {
   subtotal: number;
   descuento: number;
   total: number;
-  /** "Para iniciar el trabajo". */
+  /** Anticipo: 0 si no se solicita en este presupuesto. */
   montoInicio: number;
+  /** Si este presupuesto solicita el anticipo de la configuracion del taller. */
+  solicitaAnticipo: boolean;
   /** Vista interna: nunca va al PDF. */
   costoRepuestos: number;
   precioRepuestos: number;
@@ -134,10 +142,11 @@ interface PiezaCatalogo {
 interface Calculo {
   clienteId: string;
   vehiculoId: string;
-  lineas: (Required<Omit<LineaEntrada, 'precio' | 'nombre'>> & { nombre: string; precioTotal: number })[];
+  lineas: (Required<Omit<LineaEntrada, 'precio' | 'nombre' | 'descripcion'>> & { nombre: string; precioTotal: number; descripcion: string | null })[];
   descuento: number;
   total: number;
   montoInicio: number;
+  solicitaAnticipo: boolean;
   costoRepuestos: number;
   condiciones: string;
 }
@@ -236,6 +245,7 @@ export class PresupuestosService {
           repuestoCosto: 0,
           margenPct: 0,
           precio: l.precio,
+          descripcion: l.descripcion?.trim() || null,
         };
       }
 
@@ -255,6 +265,7 @@ export class PresupuestosService {
         repuestoCosto: repara ? 0 : (l.repuestoCosto ?? 0),
         margenPct: repara ? 0 : (l.margenPct ?? margenTaller),
         precio: 0,
+        descripcion: null,
       };
     });
 
@@ -266,6 +277,7 @@ export class PresupuestosService {
       margenPct: l.margenPct,
       precio: l.precio,
     }));
+    const solicita = e.solicitaAnticipo ?? config.anticipo_tipo !== 'ninguno';
     const calc = calcularPresupuesto(entradas, e.descuento);
     if (calc.subtotal > MAX_TOTAL) throw new BadRequestException('El total del presupuesto es demasiado alto');
     if (e.descuento > calc.subtotal) throw new BadRequestException('El descuento no puede ser mayor que el subtotal');
@@ -279,7 +291,9 @@ export class PresupuestosService {
       }),
       descuento: e.descuento,
       total: calc.total,
-      montoInicio: calcularMontoInicio(calc, reglaDe(config)),
+      // El anticipo se pide si el presupuesto lo indica; por defecto, si la configuracion del taller tiene uno.
+      solicitaAnticipo: solicita,
+      montoInicio: solicita ? calcularMontoInicio(calc, reglaDe(config)) : 0,
       costoRepuestos: calc.costoRepuestos,
       condiciones: e.condiciones ?? config.condiciones,
     };
@@ -289,9 +303,9 @@ export class PresupuestosService {
     for (const [i, l] of calc.lineas.entries()) {
       await c.query(
         `INSERT INTO presupuesto_lineas (taller_id, presupuesto_id, pieza_id, nombre_pieza, posicion, operacion,
-                                         pintura, desabollado, repuesto_costo, margen_pct, precio_total, orden)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-        [tallerId, presupuestoId, l.piezaId, l.nombre, l.posicion, l.operacion, l.pintura, l.desabollado, l.repuestoCosto, l.margenPct, l.precioTotal, i + 1],
+                                         pintura, desabollado, repuesto_costo, margen_pct, precio_total, orden, descripcion)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
+        [tallerId, presupuestoId, l.piezaId, l.nombre, l.posicion, l.operacion, l.pintura, l.desabollado, l.repuestoCosto, l.margenPct, l.precioTotal, i + 1, l.descripcion],
       );
     }
   }
@@ -304,10 +318,10 @@ export class PresupuestosService {
       const { rows: num } = await c.query<{ n: number }>('SELECT siguiente_numero_presupuesto() AS n');
       const { rows } = await c.query<{ id: string }>(
         `INSERT INTO presupuestos (taller_id, numero, cliente_id, vehiculo_id, valido_hasta, estado, descuento, total,
-                                   monto_inicio, costo_repuestos, observaciones, plazo_dias, condiciones, creado_por)
-         VALUES ($1, $2, $3, $4, current_date + (SELECT validez_dias FROM talleres), 'borrador', $5, $6, $7, $8, $9, $10, $11, $12)
+                                   monto_inicio, costo_repuestos, observaciones, plazo_dias, condiciones, creado_por, solicita_anticipo)
+         VALUES ($1, $2, $3, $4, current_date + (SELECT validez_dias FROM talleres), 'borrador', $5, $6, $7, $8, $9, $10, $11, $12, $13)
          RETURNING id`,
-        [tallerId, num[0].n, calc.clienteId, calc.vehiculoId, calc.descuento, calc.total, calc.montoInicio, calc.costoRepuestos, e.observaciones, e.plazoDias, calc.condiciones, usuarioId],
+        [tallerId, num[0].n, calc.clienteId, calc.vehiculoId, calc.descuento, calc.total, calc.montoInicio, calc.costoRepuestos, e.observaciones, e.plazoDias, calc.condiciones, usuarioId, calc.solicitaAnticipo],
       );
       const id = rows[0].id;
       await this.guardarLineas(c, tallerId, id, calc);
@@ -331,9 +345,9 @@ export class PresupuestosService {
       const calc = await this.preparar(c, tallerId, e);
       await c.query(
         `UPDATE presupuestos SET cliente_id = $1, vehiculo_id = $2, descuento = $3, total = $4, monto_inicio = $5,
-                costo_repuestos = $6, observaciones = $7, plazo_dias = $8, condiciones = $9, actualizado_en = now()
-          WHERE id = $10`,
-        [calc.clienteId, calc.vehiculoId, calc.descuento, calc.total, calc.montoInicio, calc.costoRepuestos, e.observaciones, e.plazoDias, calc.condiciones, id],
+                costo_repuestos = $6, observaciones = $7, plazo_dias = $8, condiciones = $9, solicita_anticipo = $10, actualizado_en = now()
+          WHERE id = $11`,
+        [calc.clienteId, calc.vehiculoId, calc.descuento, calc.total, calc.montoInicio, calc.costoRepuestos, e.observaciones, e.plazoDias, calc.condiciones, calc.solicitaAnticipo, id],
       );
       await c.query('DELETE FROM presupuesto_lineas WHERE presupuesto_id = $1', [id]);
       await this.guardarLineas(c, tallerId, id, calc);
@@ -378,6 +392,7 @@ export class PresupuestosService {
       descuento: number;
       total: number;
       monto_inicio: number;
+      solicita_anticipo: boolean;
       costo_repuestos: number;
       observaciones: string | null;
       plazo_dias: number | null;
@@ -392,7 +407,7 @@ export class PresupuestosService {
       anio: number | null;
     }>(
       `SELECT p.id, p.numero, to_char(p.fecha, 'YYYY-MM-DD') AS fecha, to_char(p.valido_hasta, 'YYYY-MM-DD') AS valido_hasta,
-              ${ESTADO_EFECTIVO} AS estado, p.descuento, p.total, p.monto_inicio, p.costo_repuestos, p.observaciones, p.plazo_dias, p.condiciones,
+              ${ESTADO_EFECTIVO} AS estado, p.descuento, p.total, p.monto_inicio, p.solicita_anticipo, p.costo_repuestos, p.observaciones, p.plazo_dias, p.condiciones,
               c.id AS cliente_id, c.nombre AS cliente_nombre, c.telefono AS cliente_telefono,
               v.id AS vehiculo_id, v.patente, v.marca, v.modelo, v.anio
          FROM presupuestos p
@@ -415,8 +430,9 @@ export class PresupuestosService {
       repuesto_costo: number;
       margen_pct: string;
       precio_total: number;
+      descripcion: string | null;
     }>(
-      `SELECT id, pieza_id, nombre_pieza, posicion, operacion, pintura, desabollado, repuesto_costo, margen_pct, precio_total
+      `SELECT id, pieza_id, nombre_pieza, posicion, operacion, pintura, desabollado, repuesto_costo, margen_pct, precio_total, descripcion
          FROM presupuesto_lineas WHERE presupuesto_id = $1 ORDER BY orden`,
       [id],
     );
@@ -443,6 +459,7 @@ export class PresupuestosService {
         margenPct,
         repuestoPrecio,
         precioTotal: l.precio_total,
+        descripcion: l.descripcion,
       };
     });
     const subtotal = lineas.reduce((s, l) => s + l.precioTotal, 0);
@@ -460,6 +477,7 @@ export class PresupuestosService {
       descuento: p.descuento,
       total: p.total,
       montoInicio: p.monto_inicio,
+      solicitaAnticipo: p.solicita_anticipo,
       costoRepuestos: p.costo_repuestos,
       precioRepuestos,
       gananciaRepuestos: precioRepuestos - p.costo_repuestos,

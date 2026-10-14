@@ -4,6 +4,7 @@ import { Contexto } from '../auth/contexto';
 import { hashPassword, verifyPassword } from '../auth/password';
 import { DatabaseService } from '../database/database.service';
 import { traducirErrorBD } from '../validacion';
+import { DETALLE_DESABOLLADO_ESTANDAR, DETALLE_PINTURA_ESTANDAR, detalleEfectivo, detalleParaGuardar } from '@taller/shared';
 
 export type TipoAnticipo = 'ninguno' | 'repuestos' | 'porcentaje' | 'fijo';
 
@@ -20,6 +21,10 @@ export interface ConfigTaller {
   anticipo: { tipo: TipoAnticipo; valor: number | null };
   validezDias: number;
   condiciones: string;
+  /** Texto de "Que incluye el trabajo" (pintura) que sale en el PDF: el del taller o el estandar. Un paso por linea. */
+  detallePintura: string;
+  /** Idem para desabolladura. */
+  detalleDesabollado: string;
   maxUsuarios: number;
   usuariosActivos: number;
 }
@@ -35,6 +40,9 @@ export interface CambiosTaller {
   anticipo?: { tipo: TipoAnticipo; valor: number | null };
   validezDias?: number;
   condiciones?: string;
+  /** Vacio o igual al estandar = vuelve a usar el estandar. */
+  detallePintura?: string | null;
+  detalleDesabollado?: string | null;
 }
 
 export interface UsuarioTaller {
@@ -73,7 +81,7 @@ export class TallerService {
     const { rows } = await this.db.conTaller(tallerId, (c) =>
       c.query(`
         SELECT t.nombre, t.direccion, t.telefono, t.datos_transferencia, t.margen_repuestos_pct,
-               t.tarifa_pintura, t.montos_desabollado, t.anticipo_tipo, t.anticipo_valor, t.validez_dias, t.condiciones, t.max_usuarios,
+               t.tarifa_pintura, t.montos_desabollado, t.anticipo_tipo, t.anticipo_valor, t.validez_dias, t.condiciones, t.detalle_pintura, t.detalle_desabollado, t.max_usuarios,
                (SELECT count(*) FROM usuarios u WHERE u.activo)::int AS usuarios_activos
           FROM talleres t`),
     );
@@ -90,6 +98,8 @@ export class TallerService {
       anticipo: { tipo: t.anticipo_tipo, valor: t.anticipo_valor },
       validezDias: t.validez_dias,
       condiciones: t.condiciones,
+      detallePintura: detalleEfectivo(t.detalle_pintura, DETALLE_PINTURA_ESTANDAR),
+      detalleDesabollado: detalleEfectivo(t.detalle_desabollado, DETALLE_DESABOLLADO_ESTANDAR),
       maxUsuarios: t.max_usuarios,
       usuariosActivos: t.usuarios_activos,
     };
@@ -111,6 +121,8 @@ export class TallerService {
     if (cambios.montosDesabollado !== undefined) agregar('montos_desabollado', cambios.montosDesabollado);
     if (cambios.validezDias !== undefined) agregar('validez_dias', cambios.validezDias);
     if (cambios.condiciones !== undefined) agregar('condiciones', cambios.condiciones);
+    if (cambios.detallePintura !== undefined) agregar('detalle_pintura', detalleParaGuardar(cambios.detallePintura, DETALLE_PINTURA_ESTANDAR));
+    if (cambios.detalleDesabollado !== undefined) agregar('detalle_desabollado', detalleParaGuardar(cambios.detalleDesabollado, DETALLE_DESABOLLADO_ESTANDAR));
     if (cambios.anticipo) {
       agregar('anticipo_tipo', cambios.anticipo.tipo);
       agregar('anticipo_valor', cambios.anticipo.valor);

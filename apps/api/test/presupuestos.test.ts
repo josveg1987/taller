@@ -451,6 +451,78 @@ describe('estado y PDF', () => {
   });
 });
 
+describe('anticipo por presupuesto, servicios y PDF con cuentas', () => {
+  const configurar = (anticipo: object) => llamar('PATCH', '/taller', a.cookie, { anticipo });
+  const restaurar = () => configurar({ tipo: 'repuestos' });
+
+  it('el anticipo se solicita segun la configuracion del taller y se puede quitar en cada presupuesto', async () => {
+    try {
+      await configurar({ tipo: 'fijo', valor: 50000 });
+      const porDefecto = (await conVehiculoA([linea('Capot')])).json;
+      expect(porDefecto).toMatchObject({ solicitaAnticipo: true, montoInicio: 50000 });
+
+      const sin = (await conVehiculoA([linea('Capot')], { solicitaAnticipo: false })).json;
+      expect(sin).toMatchObject({ solicitaAnticipo: false, montoInicio: 0 });
+      expect((await llamar('GET', `/presupuestos/${sin.id}`, a.cookie)).json).toMatchObject({ solicitaAnticipo: false, montoInicio: 0 });
+
+      // Se puede encender y apagar al editar el borrador.
+      const editar = (id: string, solicitaAnticipo: boolean) =>
+        llamar('PUT', `/presupuestos/${id}`, a.cookie, { vehiculoId: vehiculoA.id, lineas: [linea('Capot')], solicitaAnticipo });
+      expect((await editar(sin.id, true)).json).toMatchObject({ solicitaAnticipo: true, montoInicio: 50000 });
+      expect((await editar(sin.id, false)).json).toMatchObject({ solicitaAnticipo: false, montoInicio: 0 });
+
+      // Si el taller no tiene anticipo, parte sin solicitarlo.
+      await configurar({ tipo: 'ninguno' });
+      expect((await conVehiculoA([linea('Capot')])).json).toMatchObject({ solicitaAnticipo: false, montoInicio: 0 });
+
+      expect((await conVehiculoA([linea('Capot')], { solicitaAnticipo: 'si' })).status).toBe(400);
+    } finally {
+      await restaurar();
+    }
+  });
+
+  it('la eleccion del anticipo se conserva aunque despues cambie la configuracion del taller', async () => {
+    try {
+      await configurar({ tipo: 'fijo', valor: 40000 });
+      const r = (await conVehiculoA([linea('Capot')], { solicitaAnticipo: false })).json;
+      await configurar({ tipo: 'fijo', valor: 70000 });
+      expect((await llamar('GET', `/presupuestos/${r.id}`, a.cookie)).json).toMatchObject({ solicitaAnticipo: false, montoInicio: 0 });
+    } finally {
+      await restaurar();
+    }
+  });
+
+  it('un servicio (linea libre) guarda su descripcion como foto y la devuelve', async () => {
+    const libre = (extra: object) => ({ piezaId: null, nombre: 'Pulido de focos', operacion: 'libre', posicion: 'no_aplica', precio: 30000, ...extra });
+    const r = (await conVehiculoA([libre({ descripcion: '  Pulido de los focos.  ' })])).json;
+    expect(r.lineas[0]).toMatchObject({ nombre: 'Pulido de focos', precioTotal: 30000, descripcion: 'Pulido de los focos.' });
+    expect((await llamar('GET', `/presupuestos/${r.id}`, a.cookie)).json.lineas[0].descripcion).toBe('Pulido de los focos.');
+    expect((await conVehiculoA([libre({ descripcion: '   ' })])).json.lineas[0].descripcion).toBeNull();
+    expect((await conVehiculoA([libre({})])).json.lineas[0].descripcion).toBeNull();
+    // Una linea de pieza ignora la descripcion.
+    expect((await conVehiculoA([linea('Capot', { descripcion: 'no se guarda' })])).json.lineas[0].descripcion).toBeNull();
+    expect((await conVehiculoA([libre({ descripcion: 'x'.repeat(301) })])).status).toBe(400);
+  });
+
+  it('el PDF sale con las cuentas, la direccion y el detalle (y sigue siendo un PDF valido)', async () => {
+    await llamar('PATCH', '/taller', a.cookie, { direccion: 'Miraflores 222, Maipú', telefono: '+56 9 1111 2222' });
+    const c1 = await llamar('POST', '/cuentas', a.cookie, { titular: 'Luis Humberto Vega Pozo', rut: '126474199', banco: 'Banco Falabella', tipoCuenta: 'corriente', numero: '1-980-432549-6', email: 'luisvega1912@gmail.com' });
+    const c2 = await llamar('POST', '/cuentas', a.cookie, { titular: 'Luis Humberto Vega Pozo', rut: '126474199', banco: 'Mercado Pago', tipoCuenta: 'vista', numero: '1003355333' });
+    expect([c1.status, c2.status]).toEqual([201, 201]);
+    try {
+      const r = (await conVehiculoA([linea('Capot', { desabollado: 60000 }), { piezaId: null, nombre: 'Pulido general del auto', operacion: 'libre', posicion: 'no_aplica', precio: 90000, descripcion: 'Pulido de toda la carrocería.' }], { plazoDias: 5 })).json;
+      const pdf = await fetch(`${base}/presupuestos/${r.id}/pdf`, { headers: { cookie: a.cookie } });
+      expect(pdf.status).toBe(200);
+      const bytes = Buffer.from(await pdf.arrayBuffer());
+      expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
+      expect(bytes.length).toBeGreaterThan(3000);
+    } finally {
+      await llamar('DELETE', `/cuentas/${c1.json.id}`, a.cookie);
+      await llamar('DELETE', `/cuentas/${c2.json.id}`, a.cookie);
+    }
+  });
+});
+
 describe('eliminar (logico)', () => {
   const lista = async (cuenta: Cuenta = a, consulta = '') =>
     (await llamar('GET', `/presupuestos?limite=100${consulta}`, cuenta.cookie)).json.presupuestos as { id: string; numero: number }[];

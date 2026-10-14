@@ -4,11 +4,13 @@ import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
 import { CatalogoModule } from './catalogo/catalogo.module';
 import { ClientesModule } from './clientes/clientes.module';
+import { CuentasModule } from './cuentas/cuentas.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthController } from './health/health.controller';
 import { PdfModule } from './pdf/pdf.module';
 import { PiezasModule } from './piezas/piezas.module';
 import { PresupuestosModule } from './presupuestos/presupuestos.module';
+import { ServiciosModule } from './servicios/servicios.module';
 import { TallerModule } from './taller/taller.module';
 import { VehiculosModule } from './vehiculos/vehiculos.module';
 
@@ -25,6 +27,8 @@ import { VehiculosModule } from './vehiculos/vehiculos.module';
     PiezasModule,
     PresupuestosModule,
     PdfModule,
+    CuentasModule,
+    ServiciosModule,
   ],
   controllers: [HealthController],
 })

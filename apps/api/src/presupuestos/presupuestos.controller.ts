@@ -1,7 +1,7 @@
 import { BadRequestException, Body, Controller, Get, Delete, HttpCode, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import type { Contexto } from '../auth/contexto';
 import { SesionActual, TallerActual } from '../auth/decoradores';
-import { cuerpo, decimal, entero, idValido, opcion, opcional, telefono, texto, textoOpcional } from '../validacion';
+import { booleano, cuerpo, decimal, entero, idValido, opcion, opcional, telefono, texto, textoOpcional } from '../validacion';
 import { datosVehiculo } from '../vehiculos/vehiculos.controller';
 import type { DatosVehiculo } from '../vehiculos/vehiculos.service';
 import { EntradaPresupuesto, Estado, LineaEntrada, PresupuestosService } from './presupuestos.service';
@@ -36,6 +36,7 @@ function linea(v: unknown, i: number): LineaEntrada {
     repuestoCosto: monto(l.repuestoCosto, `El costo del repuesto ${de}`),
     margenPct: l.margenPct === undefined || l.margenPct === null ? undefined : decimal(l.margenPct, `El margen ${de}`, 0, 500),
     precio: monto(l.precio, `El precio ${de}`),
+    descripcion: l.descripcion === undefined || l.descripcion === null ? undefined : (textoOpcional(l.descripcion, `La descripción ${de}`, 300) ?? undefined),
   };
 }
 
@@ -71,6 +72,7 @@ function entrada(body: unknown): EntradaPresupuesto {
     descuento: b.descuento === undefined || b.descuento === null ? 0 : entero(b.descuento, 'El descuento', 0, 2_000_000_000),
     observaciones: opcional(b.observaciones, (x) => textoOpcional(x, 'Las observaciones', 2000)) ?? null,
     plazoDias: opcional(b.plazoDias, (x) => entero(x, 'El plazo', 1, 365)) ?? null,
+    solicitaAnticipo: b.solicitaAnticipo === undefined || b.solicitaAnticipo === null ? undefined : booleano(b.solicitaAnticipo, 'Solicitar anticipo'),
     condiciones: b.condiciones === undefined ? undefined : (textoOpcional(b.condiciones, 'Las condiciones', 4000) ?? ''),
   };
 }
