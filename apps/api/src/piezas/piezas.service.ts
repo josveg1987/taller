@@ -1,4 +1,5 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ZONAS, type Zona } from '@taller/shared/plano';
 import { DatabaseService } from '../database/database.service';
 import { traducirErrorBD } from '../validacion';
 
@@ -10,6 +11,8 @@ export interface Pieza {
   tarifaPintura: number | null;
   /** Monto con que parte el desabollado al reparar esta pieza (editable en el presupuesto); null = sin sugerencia. */
   desabolladoSugerido: number | null;
+  /** Zona del plano del auto (null = la pieza no esta en el dibujo, solo en la lista). */
+  zona: Zona | null;
   activa: boolean;
   orden: number;
 }
@@ -20,6 +23,7 @@ interface FilaPieza {
   usa_posicion: boolean;
   tarifa_pintura: number | null;
   desabollado_sugerido: number | null;
+  zona: Zona | null;
   activa: boolean;
   orden: number;
 }
@@ -30,11 +34,23 @@ const aPieza = (f: FilaPieza): Pieza => ({
   usaPosicion: f.usa_posicion,
   tarifaPintura: f.tarifa_pintura,
   desabolladoSugerido: f.desabollado_sugerido,
+  zona: f.zona,
   activa: f.activa,
   orden: f.orden,
 });
 
-const COLUMNAS = 'id, nombre, usa_posicion, tarifa_pintura, desabollado_sugerido, activa, orden';
+const COLUMNAS = 'id, nombre, usa_posicion, tarifa_pintura, desabollado_sugerido, zona, activa, orden';
+
+/** Una zona por lado (puertas, espejos…) solo calza con una pieza que se cotiza por lado, y al reves. */
+function validarZona(zona: Zona | null, usaPosicion: boolean) {
+  if (zona && ZONAS[zona].porLado !== usaPosicion) {
+    throw new BadRequestException(
+      ZONAS[zona].porLado
+        ? `La zona “${ZONAS[zona].nombre}” va por lado: la pieza debe cotizarse por lado`
+        : `La zona “${ZONAS[zona].nombre}” no va por lado: la pieza no debe cotizarse por lado`,
+    );
+  }
+}
 
 type Consulta = (sql: string, params: unknown[]) => Promise<{ rowCount: number | null }>;
 
@@ -45,8 +61,11 @@ type Consulta = (sql: string, params: unknown[]) => Promise<{ rowCount: number |
  */
 export async function sembrarCatalogo(consulta: Consulta, tallerId: string): Promise<number> {
   const piezas = await consulta(
-    `INSERT INTO piezas (taller_id, nombre, usa_posicion, orden)
-     SELECT $1, b.nombre, b.usa_posicion, b.orden + COALESCE((SELECT max(orden) FROM piezas WHERE taller_id = $1), 0)
+    // La zona solo si ninguna otra pieza del taller la usa (p. ej. si renombro la estandar).
+    `INSERT INTO piezas (taller_id, nombre, usa_posicion, zona, orden)
+     SELECT $1, b.nombre, b.usa_posicion,
+            CASE WHEN EXISTS (SELECT 1 FROM piezas x WHERE x.taller_id = $1 AND x.zona = b.zona) THEN NULL ELSE b.zona END,
+            b.orden + COALESCE((SELECT max(orden) FROM piezas WHERE taller_id = $1), 0)
        FROM catalogo_piezas_base b
      ON CONFLICT (taller_id, nombre) DO NOTHING`,
     [tallerId],
@@ -86,15 +105,16 @@ export class PiezasService {
 
   async crear(
     tallerId: string,
-    d: { nombre: string; usaPosicion: boolean; tarifaPintura: number | null; desabolladoSugerido: number | null },
+    d: { nombre: string; usaPosicion: boolean; tarifaPintura: number | null; desabolladoSugerido: number | null; zona: Zona | null },
   ): Promise<Pieza> {
+    validarZona(d.zona, d.usaPosicion);
     try {
       const { rows } = await this.db.conTaller(tallerId, (c) =>
         c.query<FilaPieza>(
-          `INSERT INTO piezas (taller_id, nombre, usa_posicion, tarifa_pintura, desabollado_sugerido, orden)
-           VALUES ($1, $2, $3, $4, $5, COALESCE((SELECT max(orden) FROM piezas), 0) + 1)
+          `INSERT INTO piezas (taller_id, nombre, usa_posicion, tarifa_pintura, desabollado_sugerido, zona, orden)
+           VALUES ($1, $2, $3, $4, $5, $6, COALESCE((SELECT max(orden) FROM piezas), 0) + 1)
            RETURNING ${COLUMNAS}`,
-          [tallerId, d.nombre, d.usaPosicion, d.tarifaPintura, d.desabolladoSugerido],
+          [tallerId, d.nombre, d.usaPosicion, d.tarifaPintura, d.desabolladoSugerido, d.zona],
         ),
       );
       return aPieza(rows[0]);
@@ -111,6 +131,7 @@ export class PiezasService {
       usaPosicion?: boolean;
       tarifaPintura?: number | null;
       desabolladoSugerido?: number | null;
+      zona?: Zona | null;
       activa?: boolean;
     },
   ): Promise<Pieza> {
@@ -124,20 +145,26 @@ export class PiezasService {
     if (cambios.usaPosicion !== undefined) agregar('usa_posicion', cambios.usaPosicion);
     if (cambios.tarifaPintura !== undefined) agregar('tarifa_pintura', cambios.tarifaPintura);
     if (cambios.desabolladoSugerido !== undefined) agregar('desabollado_sugerido', cambios.desabolladoSugerido);
+    if (cambios.zona !== undefined) agregar('zona', cambios.zona);
     if (cambios.activa !== undefined) agregar('activa', cambios.activa);
     try {
-      const { rows } = await this.db.conTaller(tallerId, (c) =>
-        sets.length
+      const { rows } = await this.db.conTaller(tallerId, async (c) => {
+        if (cambios.zona !== undefined || cambios.usaPosicion !== undefined) {
+          const actual = await c.query<FilaPieza>(`SELECT ${COLUMNAS} FROM piezas WHERE id = $1`, [id]);
+          if (!actual.rows[0]) throw new NotFoundException('La pieza no existe');
+          validarZona(cambios.zona !== undefined ? cambios.zona : actual.rows[0].zona, cambios.usaPosicion ?? actual.rows[0].usa_posicion);
+        }
+        return sets.length
           ? c.query<FilaPieza>(
               `UPDATE piezas SET ${sets.join(', ')} WHERE id = $${valores.length + 1} RETURNING ${COLUMNAS}`,
               [...valores, id],
             )
-          : c.query<FilaPieza>(`SELECT ${COLUMNAS} FROM piezas WHERE id = $1`, [id]),
-      );
+          : c.query<FilaPieza>(`SELECT ${COLUMNAS} FROM piezas WHERE id = $1`, [id]);
+      });
       if (!rows[0]) throw new NotFoundException('La pieza no existe');
       return aPieza(rows[0]);
     } catch (e) {
-      if (e instanceof NotFoundException) throw e;
+      if (e instanceof NotFoundException || e instanceof BadRequestException) throw e;
       return traducirErrorBD(e);
     }
   }

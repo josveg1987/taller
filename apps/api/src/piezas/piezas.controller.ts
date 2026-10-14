@@ -1,10 +1,18 @@
 import { BadRequestException, Body, Controller, Delete, Get, HttpCode, Inject, Param, Patch, Post, Query } from '@nestjs/common';
+import { esZona, type Zona } from '@taller/shared/plano';
 import { TallerActual } from '../auth/decoradores';
 import { booleano, cuerpo, entero, idValido, opcional, opcion, texto } from '../validacion';
 import { CombosService } from './combos.service';
 import { PiezasService } from './piezas.service';
 
 const MAX_TARIFA = 100_000_000;
+
+/** Zona del plano del auto: un codigo de ZONAS, o null/vacio = sin zona. */
+function zona(v: unknown): Zona | null {
+  if (v === null || v === '') return null;
+  if (!esZona(v)) throw new BadRequestException('La zona del dibujo no es válida');
+  return v;
+}
 
 /** Lista de ids de piezas del cuerpo de la peticion (400 si algo no es un id). */
 function listaIds(v: unknown): string[] {
@@ -43,6 +51,7 @@ export class PiezasController {
       usaPosicion: b.usaPosicion === undefined ? true : booleano(b.usaPosicion, 'Usa posición'),
       tarifaPintura: opcional(b.tarifaPintura, (v) => entero(v, 'La tarifa de pintura', 0, MAX_TARIFA)) ?? null,
       desabolladoSugerido: opcional(b.desabolladoSugerido, (v) => entero(v, 'El desabollado sugerido', 0, MAX_TARIFA)) ?? null,
+      zona: b.zona === undefined ? null : zona(b.zona),
     });
   }
 
@@ -56,6 +65,7 @@ export class PiezasController {
       tarifaPintura: opcional(b.tarifaPintura, (v) => entero(v, 'La tarifa de pintura', 0, MAX_TARIFA)),
       // Vacio o null = sin desabollado sugerido.
       desabolladoSugerido: opcional(b.desabolladoSugerido, (v) => entero(v, 'El desabollado sugerido', 0, MAX_TARIFA)),
+      zona: b.zona === undefined ? undefined : zona(b.zona),
       activa: b.activa === undefined ? undefined : booleano(b.activa, 'Activa'),
     });
   }

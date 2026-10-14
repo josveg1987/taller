@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { construirDocumento, fechaCl, formatoRut, pesos, type CuentaParaPdf, type PresupuestoParaPdf, type TallerParaPdf } from '../src/pdf/pdf.documento';
+import { construirDocumento, fechaCl, formatoRut, marcasDelPlano, pesos, type CuentaParaPdf, type PresupuestoParaPdf, type TallerParaPdf } from '../src/pdf/pdf.documento';
 
 const falabella: CuentaParaPdf = {
   titular: 'Luis Humberto Vega Pozo',
@@ -29,9 +29,9 @@ const base: PresupuestoParaPdf = {
   cliente: { nombre: 'María Pérez', telefono: '+56 9 8765 4321' },
   vehiculo: { patente: 'ABCD12', marca: 'Toyota', modelo: 'Yaris', anio: 2019 },
   lineas: [
-    { nombre: 'Capot', posicion: 'no_aplica', operacion: 'reparar', pintura: 80000, desabollado: 60000, precioTotal: 140000, descripcion: null },
-    { nombre: 'Puerta delantera', posicion: 'izquierda', operacion: 'reemplazar', pintura: 80000, desabollado: 0, precioTotal: 205000, descripcion: null },
-    { nombre: 'Pulido de focos', posicion: 'no_aplica', operacion: 'libre', pintura: 0, desabollado: 0, precioTotal: 25000, descripcion: 'Pulido de los focos para recuperar su transparencia.' },
+    { nombre: 'Capot', posicion: 'no_aplica', operacion: 'reparar', pintura: 80000, desabollado: 60000, precioTotal: 140000, descripcion: null, zona: 'capot' },
+    { nombre: 'Puerta delantera', posicion: 'izquierda', operacion: 'reemplazar', pintura: 80000, desabollado: 0, precioTotal: 205000, descripcion: null, zona: 'puerta_delantera' },
+    { nombre: 'Pulido de focos', posicion: 'no_aplica', operacion: 'libre', pintura: 0, desabollado: 0, precioTotal: 25000, descripcion: 'Pulido de los focos para recuperar su transparencia.', zona: null },
   ],
   subtotal: 370000,
   descuento: 10000,
@@ -81,10 +81,11 @@ describe('documento del presupuesto', () => {
     const t = textoDe(base);
     expect(t).toContain('Av. Pajaritos 1234, Maipú');
     expect(t).toContain('+56 9 1111 2222');
-    expect((t.match(/"svg"/g) ?? []).length).toBe(2); // ubicacion y telefono
+    const sinPlano = { ...base, lineas: [base.lineas[2]] };
+    expect((textoDe(sinPlano).match(/"svg"/g) ?? []).length).toBe(2); // ubicacion y telefono
     // Solo la direccion: un icono.
-    expect((textoDe(base, { ...taller, telefono: null }).match(/"svg"/g) ?? []).length).toBe(1);
-    expect(textoDe(base, { ...taller, direccion: null, telefono: null })).not.toContain('"svg"');
+    expect((textoDe(sinPlano, { ...taller, telefono: null }).match(/"svg"/g) ?? []).length).toBe(1);
+    expect(textoDe(sinPlano, { ...taller, direccion: null, telefono: null })).not.toContain('"svg"');
   });
 
   it('muestra todas las cuentas para transferir, con RUT con puntos, y la nota de pago', () => {
@@ -146,6 +147,22 @@ describe('documento del presupuesto', () => {
     expect(JSON.stringify(con)).toContain(logo.replace(/"/g, '\\"'));
     expect(JSON.stringify(con)).not.toContain('"text":"Taller Sur","fontSize":20');
     expect(JSON.stringify(construirDocumento(taller, base))).toContain('"text":"Taller Sur","fontSize":20');
+  });
+
+  it('dibuja el auto con las piezas del presupuesto: franjas al reparar, lleno al cambiar', () => {
+    expect([...marcasDelPlano(base)]).toEqual([
+      ['capot', 'reparar'],
+      ['puerta_delantera|izquierda', 'reemplazar'],
+    ]);
+    const t = textoDe(base);
+    expect(t).toContain('Piezas a trabajar');
+    expect(t).toContain('LATERAL IZQUIERDO');
+    expect(t).toContain('Reparar y pintar');
+    expect(t).toContain('Cambiar pieza y pintar');
+    // Solo servicios (sin zona): no hay dibujo.
+    expect(textoDe({ ...base, lineas: [base.lineas[2]] })).not.toContain('Piezas a trabajar');
+    // Solo reparaciones: la leyenda no muestra "cambiar".
+    expect(textoDe({ ...base, lineas: [base.lineas[0]] })).not.toContain('Cambiar pieza y pintar');
   });
 
   it('un dia de plazo va en singular', () => {

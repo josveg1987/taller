@@ -10,16 +10,28 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
+    },
+    "./plano": {
+      "types": "./dist/plano.d.ts",
+      "import": "./dist/plano.mjs",
+      "require": "./dist/plano.js"
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "build": "tsup src/index.ts src/plano.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts src/plano.ts --format cjs,esm --dts --watch",
     "test": "vitest run"
   },
   "devDependencies": {
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"
+  },
+  "typesVersions": {
+    "*": {
+      "plano": [
+        "./dist/plano.d.ts"
+      ]
+    }
   }
 }

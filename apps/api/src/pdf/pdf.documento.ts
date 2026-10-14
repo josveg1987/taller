@@ -1,3 +1,4 @@
+import { clavePlano, COLORES_PLANO_PDF, svgPlano, type MarcaPlano, type VistaPlano, type Zona } from '@taller/shared/plano';
 import type { Column, Content, TDocumentDefinitions } from 'pdfmake/interfaces';
 
 export interface CuentaParaPdf {
@@ -43,6 +44,8 @@ export interface PresupuestoParaPdf {
     precioTotal: number;
     /** Texto bajo el nombre (servicios e items libres). */
     descripcion: string | null;
+    /** Zona del plano del auto (null si la pieza no esta en el dibujo). */
+    zona: Zona | null;
   }[];
   subtotal: number;
   descuento: number;
@@ -156,6 +159,48 @@ function bloqueCuentas(t: TallerParaPdf): Content | null {
   );
 }
 
+/** Piezas del presupuesto marcadas en el plano: clave del plano → reparar o cambiar (cambiar gana si hay ambas). */
+export function marcasDelPlano(p: PresupuestoParaPdf): Map<string, MarcaPlano> {
+  const marcas = new Map<string, MarcaPlano>();
+  for (const l of p.lineas) {
+    if (!l.zona || l.operacion === 'libre') continue;
+    const lado = l.posicion === 'izquierda' || l.posicion === 'derecha' ? l.posicion : null;
+    const clave = clavePlano(l.zona, lado);
+    if (marcas.get(clave) !== 'reemplazar') marcas.set(clave, l.operacion);
+  }
+  return marcas;
+}
+
+/** El auto dibujado con las piezas del presupuesto coloreadas (solo si alguna pieza esta en el dibujo). */
+function bloquePlano(p: PresupuestoParaPdf): Content | null {
+  const marcas = marcasDelPlano(p);
+  if (marcas.size === 0) return null;
+  const vista = (v: VistaPlano, titulo: string, ancho: number): Column => ({
+    width: ancho,
+    stack: [
+      { text: titulo, fontSize: 7.5, color: COLOR_SUAVE, characterSpacing: 0.8, margin: [0, 0, 0, 2] },
+      { svg: svgPlano(marcas, v), width: ancho },
+    ],
+  });
+  const muestra = (m: MarcaPlano) => ({
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="12" height="12"><rect x="0.5" y="0.5" width="11" height="11" rx="2" fill="${m === 'reparar' ? COLORES_PLANO_PDF.reparar : COLORES_PLANO_PDF.reemplazar}" stroke="${COLORES_PLANO_PDF.linea}"/>${m === 'reparar' ? `<path d="M0 6L6 0M3 12L12 3" stroke="#fff" stroke-width="1.6" stroke-opacity="0.6"/>` : ''}</svg>`,
+    width: 10,
+  });
+  const usadas = new Set(marcas.values());
+  const leyenda: Column[] = [];
+  if (usadas.has('reparar')) leyenda.push({ width: 'auto', columns: [muestra('reparar'), { text: 'Reparar y pintar', fontSize: 8.5, margin: [4, 0, 0, 0] }] });
+  if (usadas.has('reemplazar')) leyenda.push({ width: 'auto', columns: [muestra('reemplazar'), { text: 'Cambiar pieza y pintar', fontSize: 8.5, margin: [4, 0, 0, 0] }] });
+  return {
+    unbreakable: true,
+    stack: [
+      { text: 'Piezas a trabajar', bold: true, fontSize: 12, margin: [0, 16, 0, 6] },
+      { columns: [vista('izquierda', 'LATERAL IZQUIERDO', 250), vista('derecha', 'LATERAL DERECHO', 250)], columnGap: 15 },
+      { columns: [vista('superior', 'VISTA SUPERIOR', 220), vista('frente', 'FRENTE', 130), vista('atras', 'ATRÁS', 130)], columnGap: 17, margin: [0, 8, 0, 0] },
+      { columns: leyenda, columnGap: 18, margin: [0, 6, 0, 0] },
+    ],
+  };
+}
+
 /** "Que incluye el trabajo": solo lo que ese presupuesto lleva (pintura y/o desabolladura). */
 function bloqueDetalle(t: TallerParaPdf, p: PresupuestoParaPdf): Content | null {
   const conPintura = p.lineas.some((l) => l.operacion !== 'libre' && l.pintura > 0);
@@ -220,6 +265,7 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
 
   const direccion = bloqueDireccion(taller);
   const detalle = bloqueDetalle(taller, p);
+  const plano = bloquePlano(p);
   const cuentas = bloqueCuentas(taller);
 
   return {
@@ -280,6 +326,7 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
       },
       { margin: [285, 12, 0, 0], unbreakable: true, stack: totales },
       ...(datos.length ? [{ margin: [0, 16, 0, 0] as [number, number, number, number], stack: datos }] : []),
+      ...(plano ? [plano] : []),
       ...(detalle ? [detalle] : []),
       ...bloques,
       ...(cuentas ? [cuentas] : []),

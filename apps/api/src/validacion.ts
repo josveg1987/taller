@@ -130,6 +130,9 @@ export function traducirErrorBD(e: unknown): never {
   if (err.code === '23505' && err.constraint === 'combos_taller_id_nombre_key') {
     throw new ConflictException('Ya existe un combo con ese nombre');
   }
+  if (err.code === '23505' && err.constraint === 'piezas_taller_zona') {
+    throw new ConflictException('Otra pieza ya usa esa zona del dibujo');
+  }
   if (err.code === '23505' && err.constraint === 'servicios_taller_id_nombre_key') {
     throw new ConflictException('Ya existe un servicio con ese nombre');
   }

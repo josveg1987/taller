@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { lazy, Suspense, useState, type FormEvent } from 'react';
 import { CampoDinero } from '../CampoDinero';
 import { Hoja } from '../Hoja';
 import { Icono } from '../Iconos';
@@ -25,13 +25,15 @@ function nuevaLinea(p: PiezaCatalogo, posicion: Posicion, d: DatosPresupuesto): 
 
 const posicionDe = (p: { usaPosicion: boolean }, lado: Lado): Posicion => (p.usaPosicion ? lado : 'no_aplica');
 
+// El dibujo del auto pesa (~70 KB de trazos): se carga aparte, solo al llegar a este paso.
+const PlanoAuto = lazy(() => import('./PlanoAuto'));
+
 export function PasoPiezas({ b, actualizar, datos }: { b: Borrador; actualizar: Actualizar; datos: DatosPresupuesto }) {
   const [agregandoLibre, setAgregandoLibre] = useState(false);
 
   const tiene = (piezaId: string, posicion: Posicion) => b.lineas.some((l) => l.piezaId === piezaId && l.posicion === posicion);
 
-  function alternar(p: PiezaCatalogo) {
-    const posicion = posicionDe(p, b.lado);
+  function alternar(p: PiezaCatalogo, posicion: Posicion = posicionDe(p, b.lado)) {
     actualizar((x) => ({
       lineas: x.lineas.some((l) => l.piezaId === p.id && l.posicion === posicion)
         ? x.lineas.filter((l) => !(l.piezaId === p.id && l.posicion === posicion))
@@ -83,7 +85,13 @@ export function PasoPiezas({ b, actualizar, datos }: { b: Borrador; actualizar: 
   return (
     <>
       <div className="flotante">
-      <h2>Lado</h2>
+        <Suspense fallback={<p className="vacio">Cargando el dibujo…</p>}>
+          <PlanoAuto piezas={datos.piezas} lineas={b.lineas} onAlternar={alternar} />
+        </Suspense>
+      </div>
+
+      <div className="cuerpo">
+      <h2>Lado para la lista y los combos</h2>
       <div className="segmentos ancho" role="group" aria-label="Lado del vehículo">
         {(['izquierda', 'derecha'] as const).map((lado) => (
           <button key={lado} type="button" className="segmento" aria-pressed={b.lado === lado} onClick={() => actualizar({ lado })}>
@@ -91,10 +99,7 @@ export function PasoPiezas({ b, actualizar, datos }: { b: Borrador; actualizar: 
           </button>
         ))}
       </div>
-      <p className="ayuda">Las piezas que van por lado se agregan del lado elegido. Para el otro lado, cámbialo y vuelve a tocarlas.</p>
-      </div>
-
-      <div className="cuerpo">
+      <p className="ayuda">En la lista, las piezas que van por lado se agregan del lado elegido. En el dibujo, se toca el lado directamente.</p>
 
       {datos.combos.length > 0 && (
         <>
@@ -109,7 +114,7 @@ export function PasoPiezas({ b, actualizar, datos }: { b: Borrador; actualizar: 
         </>
       )}
 
-      <h2>Piezas</h2>
+      <h2>Todas las piezas</h2>
       {datos.piezas.length === 0 ? (
         <p className="vacio">No tienes piezas. Cárgalas en Mi taller → Piezas.</p>
       ) : (

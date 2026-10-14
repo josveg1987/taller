@@ -377,7 +377,19 @@ que el presupuesto lleva. (3) **Servicios** (`servicios`, API `src/servicios/`, 
 `presupuesto_lineas.descripcion`) y precio editable en el paso 3. (4) "Para iniciar el trabajo" ahora se llama **Anticipo**.
 (5) `presupuestos.solicita_anticipo`: interruptor por presupuesto (parte según la configuración: activo salvo tipo 'ninguno');
 apagado, `monto_inicio` = 0 y el PDF no muestra anticipo. 328 tests API + 14 shared.
+**Hecho en local (2026-10-14, SIN publicar): plano del auto (paso 2 y PDF).** Migración `1791600400000_zonas-plano-auto`:
+`piezas.zona` y `catalogo_piezas_base.zona` (códigos de `ZONAS`, una zona por pieza del taller: índice único `piezas_taller_zona`),
+orden de la plantilla según el esquema 1-17 (Alerón y Tolva sin zona, al final; se mantiene "Maleta / portalón") y
+`presupuesto_lineas.zona` (foto; las líneas viejas la toman de su pieza). Una zona por lado exige pieza por lado (400).
+`packages/shared`: `zonas.ts` (liviano, en el índice) y `@taller/shared/plano` (segunda entrada de tsup; dibujo ~70 KB en
+`plano-datos.ts`, GENERADO desde `C:\Users\jose\Desktop\vega-proto` con un script que lee el bloque `/*CARDATA*/` de su
+`index.html`; para otro dibujo, ver `vega-proto/HANDOFF.md`). Web: `presupuestos/PlanoAuto.tsx` (carga diferida, vistas
+Todo/Arriba/Izq./Der./Frente/Atrás; tocar una zona agrega la pieza en ese lado) arriba del paso 2; la ficha de pieza tiene
+"Zona en el dibujo del auto". PDF: bloque "Piezas a trabajar" (solo si alguna línea tiene zona) con las 5 vistas, reparar = franjas
+naranjas, cambiar = azul claro, y leyenda. En `vitest.config.mts` de la API el alias de `@taller/shared/plano` va antes que el
+del índice. 335 tests API + 18 shared.
 Nota: no correr `npm run build` (raíz) con `dev:api` abierto: borra `apps/api/dist` y la API se cae; usar `-w @taller/web`.
+Nota: `TaskStop` sobre `npm run dev:api` deja vivo el proceso de Node en el puerto 3000: matarlo por PID (`netstat -ano`).
 
 Permisos de Claude Code: `.claude/settings.json` lista los comandos de solo lectura, build y tests permitidos
 sin preguntar. Usar comandos simples, uno por llamada (los compuestos con `;`/pipes/`foreach` piden permiso).

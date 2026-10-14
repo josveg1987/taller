@@ -5,8 +5,9 @@ import { defineConfig } from 'vitest/config';
 // prueban reglas de calculo viejas aunque se haya olvidado recompilar el paquete compartido.
 export default defineConfig({
   resolve: {
-    alias: {
-      '@taller/shared': fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)),
-    },
+    alias: [
+      { find: /^@taller\/shared\/plano$/, replacement: fileURLToPath(new URL('../../packages/shared/src/plano.ts', import.meta.url)) },
+      { find: /^@taller\/shared$/, replacement: fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)) },
+    ],
   },
 });

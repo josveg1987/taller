@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
 import { clp } from '../dinero';
-import { Hoja } from '../Hoja';
+import { LISTA_ZONAS, ZONAS, type Zona } from '@taller/shared';
+import { Hoja, HojaSelector } from '../Hoja';
 import { Cargando } from '../Cargando';
 import { Encabezado } from '../Encabezado';
 import { Icono } from '../Iconos';
@@ -13,8 +14,14 @@ interface DatosPieza {
   usaPosicion: boolean;
   tarifaPintura: number | null;
   desabolladoSugerido: number | null;
+  zona: Zona | null;
   activa: boolean;
 }
+
+const OPCIONES_ZONA: { valor: Zona | ''; texto: string }[] = [
+  { valor: '', texto: 'No está en el dibujo' },
+  ...LISTA_ZONAS.map((z) => ({ valor: z, texto: ZONAS[z].nombre + (ZONAS[z].porLado ? ' (por lado)' : '') })),
+];
 
 export function Piezas() {
   const [piezas, setPiezas] = useState<Pieza[] | null>(null);
@@ -102,6 +109,7 @@ export function Piezas() {
                   <span className="detalle">
                     {p.usaPosicion ? 'Por lado' : 'Una sola'} · Pintura {p.tarifaPintura === null ? `${clp(tarifaTaller)} (del taller)` : clp(p.tarifaPintura)}
                     {p.desabolladoSugerido !== null && ` · Desabollado ${clp(p.desabolladoSugerido)}`}
+                    {p.zona === null && ' · Sin zona en el dibujo'}
                   </span>
                 </span>
                 {!p.activa && <span className="chip suspendido">Inactiva</span>}
@@ -190,6 +198,8 @@ function FormularioPieza({
   const [tarifa, setTarifa] = useState(inicial?.tarifaPintura === null || inicial === undefined ? '' : String(inicial.tarifaPintura));
   const [sugerido, setSugerido] = useState(inicial?.desabolladoSugerido == null ? '' : String(inicial.desabolladoSugerido));
   const [activa, setActiva] = useState(inicial?.activa ?? true);
+  const [zona, setZona] = useState<Zona | ''>(inicial?.zona ?? '');
+  const [eligiendoZona, setEligiendoZona] = useState(false);
   const [errorLocal, setErrorLocal] = useState<string | null>(null);
 
   function enviar(e: FormEvent) {
@@ -204,6 +214,7 @@ function FormularioPieza({
       usaPosicion,
       tarifaPintura: digitos === '' ? null : Number(digitos),
       desabolladoSugerido: digitosSugerido === '' ? null : Number(digitosSugerido),
+      zona: zona || null,
       activa,
     });
   }
@@ -232,6 +243,27 @@ function FormularioPieza({
           </label>
         )}
       </div>
+      <div className="grupo">
+        <button type="button" className="item" onClick={() => setEligiendoZona(true)}>
+          <span className="item-texto">
+            <span className="item-titulo">Zona en el dibujo del auto</span>
+            <span className="detalle">{zona ? ZONAS[zona].nombre : 'No está en el dibujo (solo en la lista)'}</span>
+          </span>
+          <Icono nombre="chevron" />
+        </button>
+      </div>
+      <HojaSelector<Zona | ''>
+        abierta={eligiendoZona}
+        titulo="Zona en el dibujo"
+        opciones={OPCIONES_ZONA}
+        valor={zona}
+        onElegir={(z) => {
+          setZona(z);
+          // Una zona por lado (puertas, espejos…) va con una pieza que se cotiza por lado, y al reves.
+          if (z) setUsaPosicion(ZONAS[z].porLado);
+        }}
+        onCerrar={() => setEligiendoZona(false)}
+      />
       <label className="campo">
         Tarifa de pintura propia ($)
         <span className="ayuda">Déjala vacía para usar la del taller ({clp(tarifaTaller)}).</span>

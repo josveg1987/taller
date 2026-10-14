@@ -7,6 +7,7 @@ import {
   type Operacion,
   type ReglaAnticipo,
 } from '@taller/shared';
+import type { Zona } from '@taller/shared/plano';
 import type { PoolClient } from 'pg';
 import type { Contexto } from '../auth/contexto';
 import { DatabaseService } from '../database/database.service';
@@ -65,6 +66,8 @@ export interface LineaPresupuesto {
   precioTotal: number;
   /** Texto bajo el nombre en el PDF (servicios e items libres); null si no tiene. */
   descripcion: string | null;
+  /** Zona del plano del auto (foto de la de la pieza al guardar); null si no esta en el dibujo. */
+  zona: Zona | null;
 }
 
 export interface Presupuesto {
@@ -136,13 +139,14 @@ interface PiezaCatalogo {
   usa_posicion: boolean;
   tarifa_pintura: number | null;
   desabollado_sugerido: number | null;
+  zona: Zona | null;
 }
 
 /** Lo que se guarda: lineas ya resueltas (la "foto") y los montos oficiales calculados aqui. */
 interface Calculo {
   clienteId: string;
   vehiculoId: string;
-  lineas: (Required<Omit<LineaEntrada, 'precio' | 'nombre' | 'descripcion'>> & { nombre: string; precioTotal: number; descripcion: string | null })[];
+  lineas: (Required<Omit<LineaEntrada, 'precio' | 'nombre' | 'descripcion'>> & { nombre: string; precioTotal: number; descripcion: string | null; zona: Zona | null })[];
   descuento: number;
   total: number;
   montoInicio: number;
@@ -220,7 +224,7 @@ export class PresupuestosService {
     const piezas = new Map<string, PiezaCatalogo>();
     if (ids.length) {
       const { rows } = await c.query<PiezaCatalogo>(
-        'SELECT id, nombre, usa_posicion, tarifa_pintura, desabollado_sugerido FROM piezas WHERE id = ANY($1::uuid[])',
+        'SELECT id, nombre, usa_posicion, tarifa_pintura, desabollado_sugerido, zona FROM piezas WHERE id = ANY($1::uuid[])',
         [ids],
       );
       for (const p of rows) piezas.set(p.id, p);
@@ -246,6 +250,7 @@ export class PresupuestosService {
           margenPct: 0,
           precio: l.precio,
           descripcion: l.descripcion?.trim() || null,
+          zona: null,
         };
       }
 
@@ -266,6 +271,7 @@ export class PresupuestosService {
         margenPct: repara ? 0 : (l.margenPct ?? margenTaller),
         precio: 0,
         descripcion: null,
+        zona: pieza?.zona ?? null,
       };
     });
 
@@ -303,9 +309,9 @@ export class PresupuestosService {
     for (const [i, l] of calc.lineas.entries()) {
       await c.query(
         `INSERT INTO presupuesto_lineas (taller_id, presupuesto_id, pieza_id, nombre_pieza, posicion, operacion,
-                                         pintura, desabollado, repuesto_costo, margen_pct, precio_total, orden, descripcion)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
-        [tallerId, presupuestoId, l.piezaId, l.nombre, l.posicion, l.operacion, l.pintura, l.desabollado, l.repuestoCosto, l.margenPct, l.precioTotal, i + 1, l.descripcion],
+                                         pintura, desabollado, repuesto_costo, margen_pct, precio_total, orden, descripcion, zona)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+        [tallerId, presupuestoId, l.piezaId, l.nombre, l.posicion, l.operacion, l.pintura, l.desabollado, l.repuestoCosto, l.margenPct, l.precioTotal, i + 1, l.descripcion, l.zona],
       );
     }
   }
@@ -431,8 +437,9 @@ export class PresupuestosService {
       margen_pct: string;
       precio_total: number;
       descripcion: string | null;
+      zona: Zona | null;
     }>(
-      `SELECT id, pieza_id, nombre_pieza, posicion, operacion, pintura, desabollado, repuesto_costo, margen_pct, precio_total, descripcion
+      `SELECT id, pieza_id, nombre_pieza, posicion, operacion, pintura, desabollado, repuesto_costo, margen_pct, precio_total, descripcion, zona
          FROM presupuesto_lineas WHERE presupuesto_id = $1 ORDER BY orden`,
       [id],
     );
@@ -460,6 +467,7 @@ export class PresupuestosService {
         repuestoPrecio,
         precioTotal: l.precio_total,
         descripcion: l.descripcion,
+        zona: l.zona,
       };
     });
     const subtotal = lineas.reduce((s, l) => s + l.precioTotal, 0);

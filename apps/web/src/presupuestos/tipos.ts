@@ -1,4 +1,5 @@
 import type { Operacion } from '@taller/shared';
+import type { Zona } from '@taller/shared';
 
 export type Posicion = 'izquierda' | 'derecha' | 'no_aplica';
 export type Lado = 'izquierda' | 'derecha';
@@ -18,6 +19,7 @@ export interface LineaPresupuesto {
   repuestoPrecio: number;
   precioTotal: number;
   descripcion: string | null;
+  zona: Zona | null;
 }
 
 export interface Presupuesto {
@@ -123,6 +125,8 @@ export interface PiezaCatalogo {
   usaPosicion: boolean;
   tarifaPintura: number | null;
   desabolladoSugerido: number | null;
+  /** Zona del plano del auto; null = solo en la lista. */
+  zona: Zona | null;
 }
 
 export interface ServicioCatalogo {

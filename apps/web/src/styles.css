@@ -51,6 +51,12 @@
   --color-interruptor-apagado: #8a8f98;
   --color-velo: rgb(11 20 36 / 0.62);
 
+  /* Plano del auto (paso 2) */
+  --color-auto-linea: #1c2a44;
+  --color-auto-chapa: #ffffff;
+  --color-auto-vidrio: #bfccdd;
+  --color-auto-franja: #ffffff;
+
   /* Espacios */
   --esp-1: 4px;
   --esp-2: 8px;
@@ -1466,4 +1472,114 @@ canvas.pdf-pagina {
 
 .sin-corte {
   white-space: nowrap;
+}
+
+/* Plano del auto (paso 2): se toca una pieza en cualquier vista y se marca en todas. */
+.segmentos.compactos .segmento {
+  padding: 0 var(--esp-1);
+  font-size: 14px;
+}
+
+.plano {
+  display: grid;
+  gap: var(--esp-3);
+}
+
+.plano-dibujo {
+  padding: var(--esp-1);
+  border-radius: var(--radio-m);
+  background: var(--color-campo);
+}
+
+.plano-dibujo svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: manipulation;
+}
+
+.plano-rotulo {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  fill: var(--color-texto-suave);
+}
+
+.plano-linea {
+  fill: var(--color-auto-linea);
+  pointer-events: none;
+}
+
+.plano-vidrio {
+  fill: var(--color-auto-vidrio);
+  pointer-events: none;
+}
+
+.plano-chapa {
+  fill: var(--color-auto-chapa);
+  transition: fill var(--t-rapida);
+}
+
+.plano-ventana {
+  fill: var(--color-auto-vidrio);
+}
+
+.plano-area {
+  fill: transparent;
+}
+
+.plano-pieza {
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.plano-pieza:focus-visible .plano-chapa {
+  stroke: var(--color-foco);
+  stroke-width: 6;
+}
+
+.plano-pieza.marcada .plano-chapa {
+  fill: url(#plano-marcada);
+}
+
+.plano-pieza.marcada .plano-ventana {
+  fill: var(--color-tinte);
+}
+
+.plano-franja-fondo {
+  fill: var(--color-acento);
+}
+
+.plano-franja {
+  fill: var(--color-auto-franja);
+  fill-opacity: 0.38;
+}
+
+.plano-leyenda {
+  display: flex;
+  justify-content: center;
+  gap: var(--esp-4);
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.plano-leyenda span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-2);
+}
+
+.plano-muestra {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--color-auto-linea);
+  border-radius: var(--radio-s);
+  background: var(--color-auto-chapa);
+}
+
+.plano-muestra.marcada {
+  border-color: var(--color-acento);
+  background: repeating-linear-gradient(45deg, var(--color-acento) 0 4px, var(--color-tinte) 4px 7px);
 }
