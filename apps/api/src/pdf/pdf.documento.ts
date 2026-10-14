@@ -179,7 +179,7 @@ function encabezado(t: TallerParaPdf, p: PresupuestoParaPdf): Content {
         alignment: 'right',
         stack: [
           { text: 'PRESUPUESTO', fontSize: 8.5, color: SOBRE_GRIS, characterSpacing: 3 },
-          { text: `N° ${p.numero}`, fontSize: 24, bold: true, color: ACENTO, margin: [0, 1, 0, 1] },
+          { text: `N° ${p.numero}`, fontSize: 24, bold: true, color: MARCA, margin: [0, 1, 0, 1] },
           { text: `Fecha: ${fechaCl(p.fecha)} · Válido hasta: ${fechaCl(p.validoHasta)}`, fontSize: 8.5, color: SOBRE_GRIS },
         ],
       },
@@ -518,14 +518,14 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
     pageMargins: [LADO, ARRIBA, LADO, 50],
     info: { title: `Presupuesto N° ${p.numero} - ${taller.nombre}`, author: taller.nombre },
     defaultStyle: { font: 'Roboto', fontSize: 10, color: TINTA, lineHeight: 1.15 },
-    // Banda crema con franja naranja: alta (con el encabezado completo) en la primera pagina, delgada en las demas.
+    // Banda crema con franja azul: alta (con el encabezado completo) en la primera pagina, delgada en las demas.
     background: (pagina: number) => {
       const alto = pagina === 1 ? BANDA : BANDA_DELGADA;
       const banda: Content = {
         absolutePosition: { x: 0, y: 0 },
         canvas: [
           { type: 'rect', x: 0, y: 0, w: ANCHO_PAGINA, h: alto, color: FONDO_ENCABEZADO },
-          { type: 'rect', x: 0, y: alto, w: ANCHO_PAGINA, h: FRANJA, color: ACENTO },
+          { type: 'rect', x: 0, y: alto, w: ANCHO_PAGINA, h: FRANJA, color: MARCA },
         ],
       };
       const contenido: Content =
@@ -535,7 +535,7 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
               margin: [LADO, 14, LADO, 0],
               columns: [
                 { text: taller.nombre.toUpperCase(), bold: true, fontSize: 11, color: MARCA, characterSpacing: 0.5 },
-                { text: `Presupuesto N° ${p.numero}`, bold: true, fontSize: 11, color: ACENTO, alignment: 'right' },
+                { text: `Presupuesto N° ${p.numero}`, bold: true, fontSize: 11, color: MARCA, alignment: 'right' },
               ],
             };
       return [banda, contenido];

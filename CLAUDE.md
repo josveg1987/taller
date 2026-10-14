@@ -387,8 +387,8 @@ orden de la plantilla según el esquema 1-17 (Alerón y Tolva sin zona, al final
 Todo/Arriba/Izq./Der./Frente/Atrás; tocar una zona agrega la pieza en ese lado) arriba del paso 2; la ficha de pieza tiene
 "Zona en el dibujo del auto". PDF: bloque "Piezas a trabajar" (solo si alguna línea tiene zona) con las 5 vistas, reparar = franjas
 naranjas, cambiar = azul claro, y leyenda. **Diseño del PDF (2026-10-14, propuesta HTML del dueño):** banda
-crema `#FFF7ED` con franja naranja (alta en la página 1 con el logo para fondo claro, dirección y teléfono con íconos, N° en
-naranja y fechas; delgada en las demás con nombre y N°), dibujada en `background` con posición fija → tarjetas Cliente / Vehículo
+crema `#FFF7ED` con franja azul de la marca (alta en la página 1 con el logo para fondo claro, dirección y teléfono con íconos, N° en
+azul y fechas; delgada en las demás con nombre y N°), dibujada en `background` con posición fija → tarjetas Cliente / Vehículo
 (fondo suave, borde naranja; insignia de la marca en la del vehículo) → PIEZAS A TRABAJAR (pastillas por tipo, auto en recuadro
 redondeado, leyenda con los nombres de las piezas) → QUÉ INCLUYE (lista con check) → [salto: siempre página 2] DETALLE DEL TRABAJO (Pieza · Trabajo · Precio, filas alternadas) → totales
 (TOTAL en caja crema `#FFF7ED`, monto en naranja) → Anticipo y Plazo en cajas punteadas →
