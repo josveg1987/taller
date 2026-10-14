@@ -40,3 +40,37 @@ export const LOGOS_AUTOS: Record<string, string> = {
   tesla: 'M12 5.362l2.475-3.026s4.245.09 8.471 2.054c-1.082 1.636-3.231 2.438-3.231 2.438-.146-1.439-1.154-1.79-4.354-1.79L12 24 8.619 5.034c-3.18 0-4.188.354-4.335 1.792 0 0-2.146-.795-3.229-2.43C5.28 2.431 9.525 2.34 9.525 2.34L12 5.362l-.004.002H12v-.002zm0-3.899c3.415-.03 7.326.528 11.328 2.28.535-.968.672-1.395.672-1.395C19.625.612 15.528.015 12 0 8.472.015 4.375.61 0 2.349c0 0 .195.525.672 1.396C4.674 1.989 8.585 1.435 12 1.46v.003z',
   dacia: 'M0 8.646v2.23h8.252v2.248H0v2.23h9.112a.62.62 0 00.489-.201L12 12.819l2.399 2.334a.62.62 0 00.49.201H24v-2.23h-8.252v-2.248H24v-2.23h-9.112a.62.62 0 00-.489.201L12 11.181 9.601 8.847a.62.62 0 00-.49-.201Z',
 };
+
+// Marcas combinantes de Unicode (las tildes tras normalizar a NFD).
+const SIN_TILDES = new RegExp('[̀-ͯ]', 'g');
+
+/** "Citroën" -> "citroen", "Mercedes-Benz" -> "mercedesbenz": minusculas, sin tildes, espacios ni guiones. */
+export const claveMarca = (marca: string): string =>
+  marca
+    .normalize('NFD')
+    .replace(SIN_TILDES, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+
+// Como la gente escribe la marca a mano (el catalogo guarda texto libre).
+const ALIAS: Record<string, string> = { vw: 'volkswagen', chevy: 'chevrolet' };
+
+/** Trazo del logo de la marca (viewBox 0 0 24 24), o null si no lo tenemos. */
+export function logoDeMarca(marca: string | null | undefined): string | null {
+  const nombre = marca?.trim();
+  if (!nombre) return null;
+  const clave = claveMarca(nombre);
+  return LOGOS_AUTOS[ALIAS[clave] ?? clave] ?? null;
+}
+
+/** Iniciales: dos palabras -> primera letra de cada una ("Land Rover" = LR); una palabra -> sus dos primeras letras. */
+export function iniciales(texto: string): string {
+  const palabras = texto
+    .normalize('NFD')
+    .replace(SIN_TILDES, '')
+    .split(/[\s-]+/)
+    .filter((p) => /[A-Za-z0-9]/.test(p));
+  if (palabras.length === 0) return '?';
+  const letras = palabras.length >= 2 ? palabras[0][0] + palabras[1][0] : palabras[0].slice(0, 2);
+  return letras.toUpperCase();
+}

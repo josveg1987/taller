@@ -1,4 +1,5 @@
 import { clavePlano, COLORES_PLANO_PDF, svgPlano, type MarcaPlano, type VistaPlano, type Zona } from '@taller/shared/plano';
+import { iniciales, logoDeMarca } from '@taller/shared';
 import type { Column, Content, TDocumentDefinitions } from 'pdfmake/interfaces';
 
 export interface CuentaParaPdf {
@@ -111,7 +112,64 @@ function destacado(contenido: Content, margin: [number, number, number, number])
   };
 }
 
-/** Direccion (una linea, con icono) y telefono del taller, en un recuadro destacado. */
+/** Circulo con el logo de la marca del auto (como en la app): logo, o iniciales si no lo tenemos, o un auto si no hay marca. */
+function insigniaAuto(marca: string | null): Column {
+  const circulo = `<circle cx="20" cy="20" r="19.25" fill="#ffffff" stroke="${COLOR_LINEA}" stroke-width="1.5"/>`;
+  const trazo = logoDeMarca(marca);
+  if (trazo) {
+    return { width: 36, svg: `<svg viewBox="0 0 40 40">${circulo}<path transform="translate(9 9) scale(0.9167)" fill="${COLOR_BORDE_DESTACADO}" d="${trazo}"/></svg>` };
+  }
+  if (!marca?.trim()) {
+    return { width: 36, svg: `<svg viewBox="0 0 40 40">${circulo}<path transform="translate(10 10) scale(0.8333)" fill="none" stroke="${COLOR_BORDE_DESTACADO}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 15v-3l2-5h12l2 5v3M4 15h16M4 15v3h3v-3M17 15v3h3v-3"/></svg>` };
+  }
+  return {
+    width: 36,
+    stack: [
+      { svg: `<svg viewBox="0 0 40 40">${circulo}</svg>`, width: 36 },
+      { text: iniciales(marca), bold: true, fontSize: 12, color: COLOR_BORDE_DESTACADO, alignment: 'center', margin: [0, -26, 0, 0] },
+    ],
+  };
+}
+
+/** Cliente y vehiculo en un recuadro de esquinas redondeadas, con la insignia de la marca del auto. */
+function bloqueClienteVehiculo(p: PresupuestoParaPdf): Content {
+  const vehiculo = [p.vehiculo.marca, p.vehiculo.modelo, p.vehiculo.anio].filter(Boolean).join(' ');
+  // pdfmake no redondea tablas: se dibuja el fondo redondeado (fuera del flujo) y el contenido encima.
+  // El alto se estima por las lineas que ocuparan el nombre y el vehiculo.
+  const lineasNombre = Math.max(1, Math.ceil(p.cliente.nombre.length / 34));
+  const lineasVehiculo = Math.max(1, Math.ceil(vehiculo.length / 28));
+  const alto = Math.max(26 + 13.5 * lineasNombre, 26 + 12.5 * lineasVehiculo, 38) + 24;
+  const etiqueta = (t: string) => ({ text: t, fontSize: 8.5, color: COLOR_SUAVE, characterSpacing: 1 });
+  return {
+    unbreakable: true,
+    margin: [0, 0, 0, 2],
+    stack: [
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: alto, r: 12, color: COLOR_FONDO, lineColor: COLOR_LINEA, lineWidth: 0.8 }], relativePosition: { x: 0, y: 0 } },
+      {
+        margin: [16, 12, 16, 12],
+        columnGap: 16,
+        columns: [
+          {
+            width: '*',
+            stack: [etiqueta('CLIENTE'), { text: p.cliente.nombre, bold: true, fontSize: 11, margin: [0, 2, 0, 0] }, { text: p.cliente.telefono, color: COLOR_SUAVE }],
+          },
+          {
+            width: '*',
+            columnGap: 10,
+            columns: [
+              insigniaAuto(p.vehiculo.marca),
+              {
+                width: '*',
+                stack: [etiqueta('VEHÍCULO'), { text: p.vehiculo.patente, bold: true, fontSize: 11, margin: [0, 2, 0, 0] }, ...(vehiculo ? [{ text: vehiculo, color: COLOR_SUAVE }] : [])],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
 /** Direccion y telefono bajo el nombre (o logo) del taller, cada uno con su icono. */
 function contactoTaller(t: TallerParaPdf): Content[] {
   const fila = (icono: string, texto: string): Content => ({
@@ -219,8 +277,6 @@ function bloqueDetalle(t: TallerParaPdf, p: PresupuestoParaPdf): Content | null 
 
 /** Arma el documento (A4) con los datos ya calculados por el servidor. */
 export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf): TDocumentDefinitions {
-  const vehiculo = [p.vehiculo.marca, p.vehiculo.modelo, p.vehiculo.anio].filter(Boolean).join(' ');
-
   const filas = p.lineas.map((l) => {
     const detalle = queSeHace(l);
     return [
@@ -291,24 +347,9 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
         ],
       },
       { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: COLOR_LINEA }], margin: [0, 12, 0, 12] },
-      {
-        columns: [
-          {
-            stack: [
-              { text: 'CLIENTE', fontSize: 8.5, color: COLOR_SUAVE, characterSpacing: 1 },
-              { text: p.cliente.nombre, bold: true, margin: [0, 2, 0, 0] },
-              { text: p.cliente.telefono, color: COLOR_SUAVE },
-            ],
-          },
-          {
-            stack: [
-              { text: 'VEHÍCULO', fontSize: 8.5, color: COLOR_SUAVE, characterSpacing: 1 },
-              { text: p.vehiculo.patente, bold: true, margin: [0, 2, 0, 0] },
-              ...(vehiculo ? [{ text: vehiculo, color: COLOR_SUAVE }] : []),
-            ],
-          },
-        ],
-      },
+      bloqueClienteVehiculo(p),
+      // Orden acordado: cliente y vehiculo, piezas a trabajar (el auto), detalle con precios, que incluye.
+      ...(plano ? [plano] : []),
       { text: 'Detalle del trabajo', bold: true, fontSize: 12, margin: [0, 18, 0, 6] },
       {
         table: { widths: ['*', 'auto'], headerRows: 1, dontBreakRows: true, body: [[{ text: 'Trabajo', bold: true, color: COLOR_SUAVE }, { text: 'Precio', bold: true, color: COLOR_SUAVE, alignment: 'right' }], ...filas] },
@@ -322,8 +363,7 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
         },
       },
       { margin: [285, 12, 0, 0], unbreakable: true, stack: totales },
-      ...(datos.length ? [{ margin: [0, 16, 0, 0] as [number, number, number, number], stack: datos }] : []),
-      ...(plano ? [plano] : []),
+      ...(datos.length ? [{ margin: [0, 16, 0, 0] as [number, number, number, number], unbreakable: true, stack: datos }] : []),
       ...(detalle ? [detalle] : []),
       ...bloques,
       ...(cuentas ? [cuentas] : []),

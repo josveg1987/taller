@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { logoDeMarca } from '@taller/shared';
 import { construirDocumento, fechaCl, formatoRut, marcasDelPlano, pesos, type CuentaParaPdf, type PresupuestoParaPdf, type TallerParaPdf } from '../src/pdf/pdf.documento';
 
 const falabella: CuentaParaPdf = {
@@ -82,10 +83,11 @@ describe('documento del presupuesto', () => {
     expect(t).toContain('Av. Pajaritos 1234, Maipú');
     expect(t).toContain('+56 9 1111 2222');
     const sinPlano = { ...base, lineas: [base.lineas[2]] };
-    expect((textoDe(sinPlano).match(/"svg"/g) ?? []).length).toBe(2); // ubicacion y telefono
+    // Ubicacion y telefono, mas la insignia de la marca del auto.
+    expect((textoDe(sinPlano).match(/"svg"/g) ?? []).length).toBe(3);
     // Solo la direccion: un icono.
-    expect((textoDe(sinPlano, { ...taller, telefono: null }).match(/"svg"/g) ?? []).length).toBe(1);
-    expect(textoDe(sinPlano, { ...taller, direccion: null, telefono: null })).not.toContain('"svg"');
+    expect((textoDe(sinPlano, { ...taller, telefono: null }).match(/"svg"/g) ?? []).length).toBe(2);
+    expect((textoDe(sinPlano, { ...taller, direccion: null, telefono: null }).match(/"svg"/g) ?? []).length).toBe(1);
   });
 
   it('muestra todas las cuentas para transferir, con RUT con puntos, y la nota de pago', () => {
@@ -163,6 +165,22 @@ describe('documento del presupuesto', () => {
     expect(textoDe({ ...base, lineas: [base.lineas[2]] })).not.toContain('Piezas a trabajar');
     // Solo reparaciones: la leyenda no muestra "cambiar".
     expect(textoDe({ ...base, lineas: [base.lineas[0]] })).not.toContain('Cambiar pieza y pintar');
+  });
+
+  it('cliente y vehiculo van en un recuadro redondeado con la insignia de la marca', () => {
+    const t = textoDe(base);
+    expect(t).toContain('"r":12'); // esquinas redondeadas del fondo
+    expect(t).toContain(logoDeMarca('Toyota')!.slice(0, 40));
+    // Marca sin logo: sus iniciales; sin marca: el icono de auto.
+    expect(textoDe({ ...base, vehiculo: { ...base.vehiculo, marca: 'Great Wall' } })).toContain('"text":"GW"');
+    expect(textoDe({ ...base, vehiculo: { ...base.vehiculo, marca: null } })).toContain('M4 15v-3l2-5h12l2 5v3');
+  });
+
+  it('orden: cliente, piezas a trabajar, detalle con precios y que incluye', () => {
+    const t = textoDe(base);
+    const pos = ['CLIENTE', 'Piezas a trabajar', 'Detalle del trabajo', 'Qué incluye el trabajo'].map((x) => t.indexOf(x));
+    expect(pos.every((x) => x >= 0)).toBe(true);
+    expect([...pos].sort((x, y) => x - y)).toEqual(pos);
   });
 
   it('un dia de plazo va en singular', () => {
