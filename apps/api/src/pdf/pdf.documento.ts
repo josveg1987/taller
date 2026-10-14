@@ -20,7 +20,7 @@ export interface TallerParaPdf {
   telefono: string | null;
   /** Nota opcional bajo las cuentas (p. ej. "envía el comprobante por WhatsApp"). */
   notaPago: string | null;
-  /** Logo SVG para fondo OSCURO (el encabezado es azul; ya validado al guardarlo). Si falta, se escribe el nombre. */
+  /** Logo SVG para fondo CLARO (el encabezado es gris claro; ya validado al guardarlo). Si falta, se escribe el nombre. */
   logoSvg: string | null;
   /** Cuentas activas, en el orden del taller. */
   cuentas: CuentaParaPdf[];
@@ -62,8 +62,9 @@ export interface PresupuestoParaPdf {
 // llegaran aqui como parametro.
 const MARCA = '#11223d';
 const ACENTO = '#c2410c';
-const ACENTO_SOBRE_OSCURO = '#f0612e';
-const SOBRE_MARCA_SUAVE = '#c9ced6';
+// Encabezados de pagina y caja del TOTAL: gris claro (pedido del dueño), con texto oscuro encima.
+const GRIS_ENCABEZADO = '#d1d5db';
+const SOBRE_GRIS = '#374151';
 const TINTA = '#1f2937';
 const SUAVE = '#6b7280';
 const LINEA = '#e5e7eb';
@@ -150,8 +151,8 @@ const fondoRedondeado = (w: number, h: number, r: number, opciones: { color?: st
 function contactoTaller(t: TallerParaPdf): Content[] {
   const fila = (trazo: string, texto: string): Content => ({
     columns: [
-      { svg: icono(trazo, SOBRE_MARCA_SUAVE), width: 9, margin: [0, 1, 0, 0] },
-      { text: texto, fontSize: 9.5, color: SOBRE_MARCA_SUAVE, width: '*' },
+      { svg: icono(trazo, SOBRE_GRIS), width: 9, margin: [0, 1, 0, 0] },
+      { text: texto, fontSize: 9.5, color: SOBRE_GRIS, width: '*' },
     ],
     columnGap: 5,
     margin: [0, 3, 0, 0],
@@ -159,7 +160,7 @@ function contactoTaller(t: TallerParaPdf): Content[] {
   return [...(t.direccion ? [fila(TRAZO_UBICACION, t.direccion)] : []), ...(t.telefono ? [fila(TRAZO_TELEFONO, t.telefono)] : [])];
 }
 
-/** Encabezado de la primera pagina: se dibuja en el fondo de la pagina, sobre la banda azul (alto fijo). */
+/** Encabezado de la primera pagina: se dibuja en el fondo de la pagina, sobre la banda gris (alto fijo). */
 function encabezado(t: TallerParaPdf, p: PresupuestoParaPdf): Content {
   return {
     margin: [LADO, 20, LADO, 0],
@@ -169,7 +170,7 @@ function encabezado(t: TallerParaPdf, p: PresupuestoParaPdf): Content {
         stack: [
           t.logoSvg
             ? { svg: t.logoSvg, fit: [210, 44] }
-            : { text: t.nombre.toUpperCase(), fontSize: 17, bold: true, color: '#ffffff', characterSpacing: 0.5 },
+            : { text: t.nombre.toUpperCase(), fontSize: 17, bold: true, color: MARCA, characterSpacing: 0.5 },
           ...contactoTaller(t),
         ],
       },
@@ -177,9 +178,9 @@ function encabezado(t: TallerParaPdf, p: PresupuestoParaPdf): Content {
         width: 'auto',
         alignment: 'right',
         stack: [
-          { text: 'PRESUPUESTO', fontSize: 8.5, color: SOBRE_MARCA_SUAVE, characterSpacing: 3 },
-          { text: `N° ${p.numero}`, fontSize: 24, bold: true, color: ACENTO_SOBRE_OSCURO, margin: [0, 1, 0, 1] },
-          { text: `Fecha: ${fechaCl(p.fecha)} · Válido hasta: ${fechaCl(p.validoHasta)}`, fontSize: 8.5, color: SOBRE_MARCA_SUAVE },
+          { text: 'PRESUPUESTO', fontSize: 8.5, color: SOBRE_GRIS, characterSpacing: 3 },
+          { text: `N° ${p.numero}`, fontSize: 24, bold: true, color: ACENTO, margin: [0, 1, 0, 1] },
+          { text: `Fecha: ${fechaCl(p.fecha)} · Válido hasta: ${fechaCl(p.validoHasta)}`, fontSize: 8.5, color: SOBRE_GRIS },
         ],
       },
     ],
@@ -386,11 +387,11 @@ function bloqueTotales(p: PresupuestoParaPdf): Content {
       {
         margin: [0, 6, 0, 0],
         stack: [
-          fondoRedondeado(ancho, 34, 6, { color: MARCA }),
+          fondoRedondeado(ancho, 34, 6, { color: GRIS_ENCABEZADO }),
           {
             columns: [
-              { text: 'TOTAL', bold: true, fontSize: 13, color: '#ffffff' },
-              { text: pesos(p.total), bold: true, fontSize: 15, color: ACENTO_SOBRE_OSCURO, alignment: 'right' },
+              { text: 'TOTAL', bold: true, fontSize: 13, color: MARCA },
+              { text: pesos(p.total), bold: true, fontSize: 15, color: ACENTO, alignment: 'right' },
             ],
             margin: [12, 8, 12, 8],
           },
@@ -517,13 +518,13 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
     pageMargins: [LADO, ARRIBA, LADO, 50],
     info: { title: `Presupuesto N° ${p.numero} - ${taller.nombre}`, author: taller.nombre },
     defaultStyle: { font: 'Roboto', fontSize: 10, color: TINTA, lineHeight: 1.15 },
-    // Banda azul con franja naranja: alta (con el encabezado completo) en la primera pagina, delgada en las demas.
+    // Banda gris con franja naranja: alta (con el encabezado completo) en la primera pagina, delgada en las demas.
     background: (pagina: number) => {
       const alto = pagina === 1 ? BANDA : BANDA_DELGADA;
       const banda: Content = {
         absolutePosition: { x: 0, y: 0 },
         canvas: [
-          { type: 'rect', x: 0, y: 0, w: ANCHO_PAGINA, h: alto, color: MARCA },
+          { type: 'rect', x: 0, y: 0, w: ANCHO_PAGINA, h: alto, color: GRIS_ENCABEZADO },
           { type: 'rect', x: 0, y: alto, w: ANCHO_PAGINA, h: FRANJA, color: ACENTO },
         ],
       };
@@ -533,8 +534,8 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
           : {
               margin: [LADO, 14, LADO, 0],
               columns: [
-                { text: taller.nombre.toUpperCase(), bold: true, fontSize: 11, color: '#ffffff', characterSpacing: 0.5 },
-                { text: `Presupuesto N° ${p.numero}`, bold: true, fontSize: 11, color: ACENTO_SOBRE_OSCURO, alignment: 'right' },
+                { text: taller.nombre.toUpperCase(), bold: true, fontSize: 11, color: MARCA, characterSpacing: 0.5 },
+                { text: `Presupuesto N° ${p.numero}`, bold: true, fontSize: 11, color: ACENTO, alignment: 'right' },
               ],
             };
       return [banda, contenido];

@@ -226,23 +226,4 @@ describe('logo del taller', () => {
     expect((await llamar('PUT', `/admin/talleres/${tallerId}/logo`, cookieAdmin, { svg: null })).status).toBe(204);
     expect((await llamar('GET', `/admin/talleres/${tallerId}`, cookieAdmin)).json.logoClaroSvg).toBeNull();
   });
-
-  it('el logo para fondo oscuro (encabezado del PDF) se guarda aparte del claro', async () => {
-    expect((await llamar('PUT', `/admin/talleres/${tallerId}/logo`, cookieAdmin, { svg: SVG, fondo: 'oscuro' })).status).toBe(204);
-    const t = (await llamar('GET', `/admin/talleres/${tallerId}`, cookieAdmin)).json;
-    expect(t.logoOscuroSvg).toBe(SVG);
-    expect(t.logoClaroSvg).toBeNull();
-    expect((await llamar('PUT', `/admin/talleres/${tallerId}/logo`, cookieAdmin, { svg: SVG, fondo: 'gris' })).status).toBe(400);
-    const cliente = await pool.connect();
-    try {
-      await cliente.query('BEGIN');
-      await cliente.query('SET LOCAL ROLE taller_app');
-      await expect(cliente.query('UPDATE talleres SET logo_oscuro_svg = $1', ['<svg/>'])).rejects.toThrow();
-    } finally {
-      await cliente.query('ROLLBACK');
-      cliente.release();
-    }
-    expect((await llamar('PUT', `/admin/talleres/${tallerId}/logo`, cookieAdmin, { svg: null, fondo: 'oscuro' })).status).toBe(204);
-    expect((await llamar('GET', `/admin/talleres/${tallerId}`, cookieAdmin)).json.logoOscuroSvg).toBeNull();
-  });
 });

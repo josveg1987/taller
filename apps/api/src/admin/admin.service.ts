@@ -27,7 +27,6 @@ export interface TallerDetalle extends TallerResumen {
   usuarios: UsuarioResumen[];
   /** Logo SVG para fondo claro (el del PDF); null si no tiene. */
   logoClaroSvg: string | null;
-  logoOscuroSvg: string | null;
 }
 
 export interface AdministradorResumen {
@@ -101,14 +100,10 @@ export class AdminService {
       activo: boolean;
       creado_en: Date;
     }>('SELECT id, nombre, email, activo, creado_en FROM usuarios WHERE taller_id = $1 ORDER BY creado_en', [id]);
-    const logo = await this.db.admin<{ logo_claro_svg: string | null; logo_oscuro_svg: string | null }>(
-      'SELECT logo_claro_svg, logo_oscuro_svg FROM talleres WHERE id = $1',
-      [id],
-    );
+    const logo = await this.db.admin<{ logo_claro_svg: string | null }>('SELECT logo_claro_svg FROM talleres WHERE id = $1', [id]);
     return {
       ...taller,
       logoClaroSvg: logo.rows[0]?.logo_claro_svg ?? null,
-      logoOscuroSvg: logo.rows[0]?.logo_oscuro_svg ?? null,
       usuarios: rows.map((u) => ({
         id: u.id,
         nombre: u.nombre,
@@ -214,10 +209,9 @@ export class AdminService {
     await this.db.admin('DELETE FROM sesiones WHERE usuario_id = $1', [id]);
   }
 
-  /** Guarda (o quita, con null) un logo del taller, para fondo claro u oscuro. El SVG ya viene saneado. */
-  async cambiarLogo(id: string, fondo: 'claro' | 'oscuro', svg: string | null): Promise<void> {
-    const columna = fondo === 'oscuro' ? 'logo_oscuro_svg' : 'logo_claro_svg';
-    const r = await this.db.admin(`UPDATE talleres SET ${columna} = $1, actualizado_en = now() WHERE id = $2`, [svg, id]);
+  /** Guarda (o quita, con null) el logo del PDF del taller. El SVG ya viene saneado. */
+  async cambiarLogo(id: string, svg: string | null): Promise<void> {
+    const r = await this.db.admin('UPDATE talleres SET logo_claro_svg = $1, actualizado_en = now() WHERE id = $2', [svg, id]);
     if (!r.rowCount) throw new NotFoundException('El taller no existe');
   }
 

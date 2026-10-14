@@ -6,25 +6,11 @@ const MAX_BYTES = 100_000;
 
 const aDatos = (svg: string) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
-const TEXTOS = {
-  oscuro: {
-    titulo: 'Logo para fondo oscuro (PDF)',
-    ayuda: 'Va en el encabezado azul del PDF: letras claras. Máximo 100 KB, sin scripts ni imágenes incrustadas.',
-    sin: 'Sin este logo, el PDF lleva el nombre del taller en blanco.',
-  },
-  claro: {
-    titulo: 'Logo para fondo claro',
-    ayuda: 'Para documentos con fondo blanco: letras oscuras. Máximo 100 KB, sin scripts ni imágenes incrustadas.',
-    sin: 'Este taller aún no tiene logo para fondo claro.',
-  },
-} as const;
-
 /**
- * Un logo del taller (SVG para fondo oscuro o claro). Solo lo ve y cambia el administrador de la APP.
+ * Logo del taller para el PDF (SVG para fondo claro). Solo lo ve y cambia el administrador de la APP.
  * El servidor valida y limpia el archivo antes de guardarlo.
  */
-export function LogoTaller({ tallerId, fondo, svg, ejecutar }: { tallerId: string; fondo: 'claro' | 'oscuro'; svg: string | null; ejecutar: Ejecutar }) {
-  const t = TEXTOS[fondo];
+export function LogoTaller({ tallerId, svg, ejecutar }: { tallerId: string; svg: string | null; ejecutar: Ejecutar }) {
   async function elegir(e: ChangeEvent<HTMLInputElement>) {
     const archivo = e.target.files?.[0];
     e.target.value = ''; // permite elegir de nuevo el mismo archivo
@@ -34,27 +20,27 @@ export function LogoTaller({ tallerId, fondo, svg, ejecutar }: { tallerId: strin
       return;
     }
     const texto = await archivo.text();
-    await ejecutar(() => api(`/admin/talleres/${tallerId}/logo`, { method: 'PUT', json: { svg: texto, fondo } }), 'Logo guardado');
+    await ejecutar(() => api(`/admin/talleres/${tallerId}/logo`, { method: 'PUT', json: { svg: texto } }), 'Logo guardado');
   }
 
   return (
     <>
-      <h2>{t.titulo}</h2>
+      <h2>Logo del PDF</h2>
       <div className="grupo formulario">
-        <p className="ayuda">{t.ayuda}</p>
+        <p className="ayuda">SVG para fondo claro (letras oscuras). Máximo 100 KB, sin scripts ni imágenes incrustadas.</p>
         {svg ? (
-          <div className={`vista-logo${fondo === 'oscuro' ? ' oscuro' : ''}`}>
+          <div className="vista-logo">
             <img src={aDatos(svg)} alt="Logo actual del taller" />
           </div>
         ) : (
-          <p className="vacio">{t.sin}</p>
+          <p className="vacio">Este taller aún no tiene logo: el PDF lleva su nombre en texto.</p>
         )}
         <label className="boton secundario selector-archivo">
           {svg ? 'Cambiar logo' : 'Subir logo (SVG)'}
           <input type="file" accept=".svg,image/svg+xml" className="oculto" onChange={(e) => void elegir(e)} />
         </label>
         {svg && (
-          <button type="button" className="enlace peligro" onClick={() => void ejecutar(() => api(`/admin/talleres/${tallerId}/logo`, { method: 'PUT', json: { svg: null, fondo } }), 'Logo quitado')}>
+          <button type="button" className="enlace peligro" onClick={() => void ejecutar(() => api(`/admin/talleres/${tallerId}/logo`, { method: 'PUT', json: { svg: null } }), 'Logo quitado')}>
             Quitar logo
           </button>
         )}
