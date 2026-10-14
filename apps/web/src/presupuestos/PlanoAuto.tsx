@@ -101,6 +101,9 @@ export default function PlanoAuto({ piezas, lineas, onAlternar }: Props) {
               </g>
             );
           })}
+          {FONDO.focos.map((f, i) => (
+            <path key={i} transform={f.transform} className="plano-foco" fillRule="evenodd" d={f.d} />
+          ))}
           {FONDO.arte.map((a) => (
             <g key={a.transform} transform={a.transform} className="plano-linea">
               {a.d.map((d, i) => (

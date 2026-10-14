@@ -1515,6 +1515,11 @@ canvas.pdf-pagina {
   pointer-events: none;
 }
 
+.plano-foco {
+  fill: var(--color-auto-chapa);
+  pointer-events: none;
+}
+
 .plano-chapa {
   fill: var(--color-auto-chapa);
   transition: fill var(--t-rapida);

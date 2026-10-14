@@ -1,4 +1,4 @@
-import { ARTE_PLANO, CAJAS_PLANO, REGIONES_PLANO } from './plano-datos';
+import { ARTE_PLANO, CAJAS_PLANO, FOCOS_PLANO, REGIONES_PLANO } from './plano-datos';
 import { clavePlano, ZONAS, type LadoPlano, type Zona } from './zonas';
 
 export * from './zonas';
@@ -126,11 +126,15 @@ export function piezasDelPlano(): PiezaPlano[] {
   return cache;
 }
 
-/** Vidrios decorativos (parabrisas, luneta) y lineas del dibujo, con su transformacion. */
+/**
+ * Vidrios decorativos (parabrisas, luneta), focos (no son de ninguna pieza: se dibujan en blanco encima, asi nunca
+ * quedan pintados) y lineas del dibujo, con su transformacion.
+ */
 type Recorte = Exclude<VistaPlano, 'todo'>;
 
 export function fondoDelPlano(): {
   vidrios: { vista: Recorte; transform: string; d: string }[];
+  focos: { vista: Recorte; transform: string; d: string }[];
   arte: { vista: Recorte; transform: string; d: string[] }[];
 } {
   const ubicaciones: [Vista, number, boolean, Recorte][] = [
@@ -144,6 +148,7 @@ export function fondoDelPlano(): {
     vidrios: ubicaciones
       .map(([v, ty, esp, vista]) => ({ vista, transform: transformacion(v, ty, esp), d: REGIONES_PLANO[v].vidrio?.s ?? '' }))
       .filter((x) => x.d),
+    focos: ubicaciones.flatMap(([v, ty, esp, vista]) => FOCOS_PLANO[v].map((d) => ({ vista, transform: transformacion(v, ty, esp), d }))),
     // El arte viene en el sistema del SVG original (y invertida, escala 0,1).
     arte: ubicaciones.map(([v, ty, esp, vista]) => ({
       vista,
@@ -191,6 +196,7 @@ export function svgPlano(marcas: ReadonlyMap<string, MarcaPlano>, vista: VistaPl
       if (t.gl) cuerpo += `<path transform="${t.transform}" fill="${m ? relleno(m) : colores.vidrio}" fill-opacity="${m ? 0.55 : 1}" fill-rule="evenodd" d="${t.gl}"/>`;
     }
   }
+  for (const f of fondo.focos.filter(ver)) cuerpo += `<path transform="${f.transform}" fill="${colores.chapa}" fill-rule="evenodd" d="${f.d}"/>`;
   for (const a of fondo.arte.filter(ver)) cuerpo += `<g transform="${a.transform}" fill="${colores.linea}">${a.d.map((d) => `<path d="${d}"/>`).join('')}</g>`;
   const patron =
     `<pattern id="plano-reparar" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">` +

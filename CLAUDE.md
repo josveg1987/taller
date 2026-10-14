@@ -383,7 +383,10 @@ orden de la plantilla según el esquema 1-17 (Alerón y Tolva sin zona, al final
 `presupuesto_lineas.zona` (foto; las líneas viejas la toman de su pieza). Una zona por lado exige pieza por lado (400).
 `packages/shared`: `zonas.ts` (liviano, en el índice) y `@taller/shared/plano` (segunda entrada de tsup; dibujo ~70 KB en
 `plano-datos.ts`, GENERADO desde `C:\Users\jose\Desktop\vega-proto` con un script que lee el bloque `/*CARDATA*/` de su
-`index.html`; para otro dibujo, ver `vega-proto/HANDOFF.md`). Web: `presupuestos/PlanoAuto.tsx` (carga diferida, vistas
+`index.html`; para otro dibujo, ver `vega-proto/HANDOFF.md`). **Focos** (2026-10-14): `FOCOS_PLANO` en `plano-datos.ts` son
+los focos, reflectantes y escape, separados a mano de las zonas (lateral: foco delantero y los dos trozos del trasero; atrás:
+focos, reflectantes y escape; superior: los dos focos delanteros, recortados por relleno sobre las líneas rasterizadas). Se
+dibujan en blanco encima de las piezas, así nunca quedan pintados. Si se regenera el dibujo, hay que volver a separarlos. Web: `presupuestos/PlanoAuto.tsx` (carga diferida, vistas
 Todo/Arriba/Izq./Der./Frente/Atrás; tocar una zona agrega la pieza en ese lado) arriba del paso 2; la ficha de pieza tiene
 "Zona en el dibujo del auto". PDF: bloque "Piezas a trabajar" (solo si alguna línea tiene zona) con las 5 vistas, reparar = franjas
 naranjas, cambiar = azul claro, y leyenda. **Diseño del PDF (2026-10-14, propuesta HTML del dueño):** banda

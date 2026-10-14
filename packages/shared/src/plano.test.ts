@@ -19,6 +19,14 @@ describe('plano del auto', () => {
     expect(capot.trozos.filter((t) => t.transform.includes('scale(-')).length).toBe(1);
   });
 
+  it('los focos no son de ninguna pieza y se dibujan en blanco encima', () => {
+    const svg = svgPlano(new Map([['parachoques_delantero', 'reparar']]), 'izquierda');
+    // Despues del ultimo trozo de pieza vienen los focos (blancos) y luego las lineas.
+    const focos = svg.split('fill="#FFFFFF" fill-rule="evenodd"').length - 1;
+    expect(focos).toBeGreaterThanOrEqual(3);
+    expect(svgPlano(new Map(), 'frente')).toContain('viewBox');
+  });
+
   it('claves y zonas', () => {
     expect(clavePlano('puerta_delantera', 'izquierda')).toBe('puerta_delantera|izquierda');
     expect(clavePlano('capot', 'derecha')).toBe('capot');
