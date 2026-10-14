@@ -14,6 +14,8 @@ const TRAZOS = {
   mensaje: 'M4 5h16v11H9l-5 4z',
   documento: 'M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6',
   cerrar: 'M6 6l12 12M18 6L6 18',
+  papelera: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6',
+  filtro: 'M4 6h16M7 12h10M10 18h4',
   auto: 'M4 15v-3l2-5h12l2 5v3M4 15h16M4 15v3h3v-3M17 15v3h3v-3',
 } as const;
 

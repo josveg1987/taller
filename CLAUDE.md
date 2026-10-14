@@ -161,6 +161,23 @@ Si cambias `packages/shared`, vuelve a compilarlo (`npm run build -w @taller/sha
   5. Después de publicar: definir con el dueño las **preguntas para el taller** (base en `docs/preguntas-para-el-taller.md`, agregar
      lo que vea en la app) y cómo recibir sus observaciones (WhatsApp o un botón "Enviar comentario"). Límites del piloto a
      avisarle: primera carga lenta, no se pueden borrar clientes/vehículos/presupuestos, no hay "olvidé mi contraseña", sin fotos.
+- **Acceso de lectura a producción (2026-10-14):** existe el rol `claude_lectura` en Neon (solo `SELECT`, `BYPASSRLS` para ver
+  todos los talleres, `default_transaction_read_only`; sin acceso a `sesiones` ni a `password_hash`; creado por el dueño del
+  proyecto en el SQL Editor de Neon). Su dirección **directa** va en `.env.lectura` (variable `DATABASE_URL_LECTURA`; `.gitignore`
+  ahora ignora todo `.env.*` salvo `.env.example`). Regla: Claude solo ejecuta consultas de lectura; todo lo que modifique datos
+  lo escribe Claude como SQL y lo ejecuta el dueño en el SQL Editor de Neon; no imprimir nunca la dirección; pedir permiso antes
+  de mirar datos personales de clientes (para lo técnico bastan conteos y estructura). **Pendiente: renovar la contraseña de
+  `claude_lectura`** (quedó escrita en el chat) con `ALTER ROLE claude_lectura WITH PASSWORD '...'` (generada en PowerShell y
+  copiada al portapapeles) y actualizar `.env.lectura`.
+- **Eliminar presupuestos y filtros (2026-10-14, hecho en local, SIN publicar):** migración `…presupuestos-eliminados`
+  (`eliminado_en`, `eliminado_por` NULL si lo hizo el administrador de la APP, índice parcial de vigentes). `DELETE /presupuestos/:id`
+  es **lógico** y vale en cualquier estado: lo oculta de lista, detalle, PDF, edición y cambio de estado (404) pero queda
+  guardado y su número no se reutiliza. `GET /presupuestos` ahora devuelve `{ presupuestos, hayMas }` y acepta `?q=` (nombre sin
+  tildes, parte de la patente o número exacto: `12`, `N° 12`, `#12`), `?estado=` (el vencido se calcula), `?desde=YYYY-MM-DD`,
+  `?antes=<número>` (paginación) y `?limite=` (1 a 100, 20 por defecto). Web: la lista tiene buscador, hoja "Filtros" (estado y
+  período), "Ver más" y una papelera por fila con confirmación (avisa si el cliente ya lo recibió); el detalle tiene "Eliminar
+  presupuesto". **Para publicarlo: migrar Neon primero** (`npm.cmd run db:migrate`, conexión directa) y luego `git push`; el formato de
+  la lista cambió, así que API y web deben desplegarse juntas (unos minutos de diferencia pueden dejar la lista vacía). 305 tests.
 - **Respaldo (decidido 2026-10-10):** antes de datos reales, copia manual de Neon con `pg_dump` (explicarle los comandos);
   poco después, copia diaria automática con GitHub Actions: `pg_dump` cifrado con clave, guardado en un lugar privado
   (Cloudflare R2; NO como archivo de Actions si el repo es público), últimas 30 copias. Neon gratis solo guarda un historial

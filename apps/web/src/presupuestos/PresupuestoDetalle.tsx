@@ -6,10 +6,11 @@ import { clp } from '../dinero';
 import { fechaCorta } from '../fechas';
 import { Cargando } from '../Cargando';
 import { Encabezado } from '../Encabezado';
-import { Hoja } from '../Hoja';
+import { Hoja, HojaConfirmar } from '../Hoja';
 import { Icono } from '../Iconos';
 import { InsigniaAuto, InsigniaCliente } from '../marca/insignias';
 import { irA } from '../ruta';
+import { textoEliminar } from './Presupuestos';
 import { ESTADOS, nombreConLado, type Estado, type Presupuesto } from './tipos';
 
 const OPERACION = { reparar: 'Reparar', reemplazar: 'Cambiar', libre: 'Ítem libre' } as const;
@@ -20,6 +21,20 @@ export function PresupuestoDetalle({ id }: { id: string }) {
   const [vistaInterna, setVistaInterna] = useState(false);
   const [cambiandoEstado, setCambiandoEstado] = useState(false);
   const [errorEstado, setErrorEstado] = useState<string | null>(null);
+  const [eliminando, setEliminando] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
+
+  async function eliminar() {
+    setEliminando(true);
+    try {
+      await api(`/presupuestos/${id}`, { method: 'DELETE' });
+      irA('/'); // vuelve a la lista: ya no aparece
+    } catch (e) {
+      setConfirmando(false);
+      setEliminando(false);
+      setErrorEstado(mensajeDe(e, 'No se pudo eliminar el presupuesto'));
+    }
+  }
 
   async function cambiarEstado(estado: Estado) {
     setCambiandoEstado(false);
@@ -153,6 +168,22 @@ export function PresupuestoDetalle({ id }: { id: string }) {
           <p className="grupo texto-largo">{p.condiciones}</p>
         </>
       )}
+
+      <div className="centro">
+        <button type="button" className="enlace peligro" onClick={() => setConfirmando(true)}>
+          Eliminar presupuesto
+        </button>
+      </div>
+
+      <HojaConfirmar
+        abierta={confirmando}
+        titulo={`¿Eliminar el presupuesto N° ${p.numero}?`}
+        texto={`${p.cliente.nombre} · ${p.vehiculo.patente}. ${textoEliminar(p.estado)}`}
+        textoBoton={eliminando ? 'Eliminando…' : 'Eliminar'}
+        peligro
+        onCerrar={() => !eliminando && setConfirmando(false)}
+        onConfirmar={() => void eliminar()}
+      />
 
       <Hoja abierta={cambiandoEstado} titulo="Cambiar estado" onCerrar={() => setCambiandoEstado(false)}>
         <div className="grupo">

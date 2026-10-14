@@ -1418,3 +1418,52 @@ canvas.pdf-pagina {
   background: var(--color-suave);
   box-shadow: none;
 }
+
+/* Buscador y filtros de la lista de presupuestos. */
+.barra-filtros {
+  display: flex;
+  align-items: stretch;
+  gap: var(--esp-2);
+}
+
+.barra-filtros .busqueda {
+  flex: 1;
+  min-width: 0;
+  margin-top: 0;
+}
+
+.boton-filtros {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--esp-2);
+  min-height: var(--toque-grande);
+  padding: 0 var(--esp-4);
+  border: 0;
+  border-radius: var(--radio-m);
+  font-size: var(--texto-s);
+  font-weight: 700;
+  color: var(--color-texto);
+  background: var(--color-superficie);
+  box-shadow: var(--sombra-tarjeta);
+}
+
+.boton-filtros.con-filtros {
+  color: var(--color-tinte-texto);
+  background: var(--color-tinte);
+}
+
+.resumen-filtros {
+  margin: var(--esp-2) var(--esp-1) 0;
+}
+
+.titulo-filtro {
+  margin: var(--esp-4) 0 var(--esp-2);
+  font-size: var(--texto-s);
+  font-weight: 700;
+  color: var(--color-texto-suave);
+}
+
+.sin-corte {
+  white-space: nowrap;
+}

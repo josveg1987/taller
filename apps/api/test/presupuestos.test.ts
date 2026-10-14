@@ -240,7 +240,7 @@ describe('crear un presupuesto', () => {
   });
 
   it('si algo falla no queda nada a medias, ni se consume un numero', async () => {
-    const antes = (await llamar('GET', '/presupuestos', a.cookie)).json[0].numero;
+    const antes = (await llamar('GET', '/presupuestos', a.cookie)).json.presupuestos[0].numero;
     const patenteNueva = `XX${sufijo}`.slice(0, 8);
     // El vehiculo nuevo usa una patente que ya existe: falla todo, incluido el cliente nuevo.
     const r = await presupuesto({
@@ -348,15 +348,15 @@ describe('la foto de cada linea', () => {
 
 describe('ver, listar y editar', () => {
   it('lista solo los del taller, del mas nuevo al mas antiguo, con cliente y vehiculo', async () => {
-    const lista = (await llamar('GET', '/presupuestos', a.cookie)).json as { numero: number; cliente: { nombre: string }; vehiculo: { patente: string } }[];
+    const lista = (await llamar('GET', '/presupuestos?limite=100', a.cookie)).json.presupuestos as { numero: number; cliente: { nombre: string }; vehiculo: { patente: string } }[];
     expect(lista.length).toBeGreaterThan(3);
     const numeros = lista.map((p) => p.numero);
     expect(numeros).toEqual([...numeros].sort((x, y) => y - x));
     expect(lista.some((p) => p.cliente.nombre === 'María José Pérez')).toBe(true);
-    const deB = (await llamar('GET', '/presupuestos', b.cookie)).json;
+    const deB = (await llamar('GET', '/presupuestos', b.cookie)).json.presupuestos;
     expect(deB.every((p: { cliente: { nombre: string } }) => p.cliente.nombre === 'Cliente Beta')).toBe(true);
-    expect((await llamar('GET', '/presupuestos?estado=borrador', a.cookie)).json.length).toBe(lista.length);
-    expect((await llamar('GET', '/presupuestos?estado=aceptado', a.cookie)).json).toEqual([]);
+    expect((await llamar('GET', '/presupuestos?estado=borrador&limite=100', a.cookie)).json.presupuestos.length).toBe(lista.length);
+    expect((await llamar('GET', '/presupuestos?estado=aceptado', a.cookie)).json).toEqual({ presupuestos: [], hayMas: false });
     expect((await llamar('GET', '/presupuestos?estado=perdido', a.cookie)).status).toBe(400);
   });
 
@@ -418,9 +418,9 @@ describe('estado y PDF', () => {
     await cambiar(id, 'enviado');
     await pool.query("UPDATE presupuestos SET fecha = current_date - 20, valido_hasta = current_date - 1 WHERE id = $1", [id]);
     expect((await llamar('GET', `/presupuestos/${id}`, a.cookie)).json.estado).toBe('vencido');
-    const vencidos = (await llamar('GET', '/presupuestos?estado=vencido', a.cookie)).json as { id: string }[];
+    const vencidos = (await llamar('GET', '/presupuestos?estado=vencido', a.cookie)).json.presupuestos as { id: string }[];
     expect(vencidos.map((x) => x.id)).toContain(id);
-    const enviados = (await llamar('GET', '/presupuestos?estado=enviado', a.cookie)).json as { id: string }[];
+    const enviados = (await llamar('GET', '/presupuestos?estado=enviado', a.cookie)).json.presupuestos as { id: string }[];
     expect(enviados.map((x) => x.id)).not.toContain(id);
     expect((await cambiar(id, 'aceptado')).json.estado).toBe('aceptado');
   });
@@ -448,6 +448,117 @@ describe('estado y PDF', () => {
     expect((await pedir(b.cookie)).status).toBe(404);
     expect((await pedir()).status).toBe(401);
     expect((await fetch(`${base}/presupuestos/no-es-un-id/pdf`, { headers: { cookie: a.cookie } })).status).toBe(404);
+  });
+});
+
+describe('eliminar (logico)', () => {
+  const lista = async (cuenta: Cuenta = a, consulta = '') =>
+    (await llamar('GET', `/presupuestos?limite=100${consulta}`, cuenta.cookie)).json.presupuestos as { id: string; numero: number }[];
+
+  it('lo oculta de todo (lista, detalle, PDF, edicion, estado) pero queda guardado con quien y cuando', async () => {
+    const r = await conVehiculoA([linea('Capot')]);
+    const id = r.json.id as string;
+    expect((await llamar('DELETE', `/presupuestos/${id}`, a.cookie)).status).toBe(204);
+
+    expect((await lista()).map((p) => p.id)).not.toContain(id);
+    expect((await llamar('GET', `/presupuestos/${id}`, a.cookie)).status).toBe(404);
+    expect((await fetch(`${base}/presupuestos/${id}/pdf`, { headers: { cookie: a.cookie } })).status).toBe(404);
+    expect((await llamar('PUT', `/presupuestos/${id}`, a.cookie, { vehiculoId: vehiculoA.id, lineas: [linea('Capot')] })).status).toBe(404);
+    expect((await llamar('PATCH', `/presupuestos/${id}/estado`, a.cookie, { estado: 'enviado' })).status).toBe(404);
+    expect((await llamar('DELETE', `/presupuestos/${id}`, a.cookie)).status).toBe(404); // ya no existe para la app
+
+    const { rows } = await pool.query('SELECT eliminado_en, eliminado_por FROM presupuestos WHERE id = $1', [id]);
+    expect(rows[0].eliminado_en).not.toBeNull();
+    expect(rows[0].eliminado_por).toBe(a.usuarioId);
+    // Sus lineas y su historial siguen ahi (no se borra nada).
+    expect((await pool.query('SELECT count(*)::int AS n FROM presupuesto_lineas WHERE presupuesto_id = $1', [id])).rows[0].n).toBe(1);
+    expect((await pool.query('SELECT count(*)::int AS n FROM historial_estados WHERE presupuesto_id = $1', [id])).rows[0].n).toBe(1);
+  });
+
+  it('se puede eliminar en cualquier estado y el numero no se reutiliza', async () => {
+    const aceptado = (await conVehiculoA([linea('Capot')])).json;
+    await llamar('PATCH', `/presupuestos/${aceptado.id}/estado`, a.cookie, { estado: 'enviado' });
+    await llamar('PATCH', `/presupuestos/${aceptado.id}/estado`, a.cookie, { estado: 'aceptado' });
+    expect((await llamar('DELETE', `/presupuestos/${aceptado.id}`, a.cookie)).status).toBe(204);
+
+    const siguiente = (await conVehiculoA([linea('Capot')])).json;
+    expect(siguiente.numero).toBeGreaterThan(aceptado.numero);
+  });
+
+  it('otro taller no puede eliminarlo; sin sesion no se puede; el administrador de la APP queda sin autor', async () => {
+    const r = (await conVehiculoA([linea('Capot')])).json;
+    expect((await llamar('DELETE', `/presupuestos/${r.id}`, b.cookie)).status).toBe(404);
+    expect((await llamar('GET', `/presupuestos/${r.id}`, a.cookie)).status).toBe(200);
+    expect((await llamar('DELETE', `/presupuestos/${r.id}`)).status).toBe(401);
+    expect((await llamar('DELETE', '/presupuestos/no-es-un-id', a.cookie)).status).toBe(404);
+
+    await llamar('POST', `/admin/talleres/${a.tallerId}/entrar`, cookieAdmin);
+    try {
+      expect((await llamar('DELETE', `/presupuestos/${r.id}`, cookieAdmin)).status).toBe(204);
+    } finally {
+      await llamar('POST', '/admin/salir-taller', cookieAdmin);
+    }
+    expect((await pool.query('SELECT eliminado_por FROM presupuestos WHERE id = $1', [r.id])).rows[0].eliminado_por).toBeNull();
+  });
+
+  describe('filtros y paginacion', () => {
+    let nuevo: { id: string; numero: number; cliente: { nombre: string }; vehiculo: { patente: string } };
+
+    beforeAll(async () => {
+      // Un cliente y un auto propios, para buscarlos sin depender del resto de los datos.
+      const r = await presupuesto({
+        vehiculo: { patente: `BU${sufijo}`.slice(0, 8), marca: 'Kia', modelo: 'Rio' },
+        cliente: { nombre: 'Ñandú Búsqueda', telefono: '+56 9 3333 4444' },
+        lineas: [linea('Capot')],
+      });
+      nuevo = r.json;
+    });
+
+    it('busca por nombre (sin tildes ni mayusculas), por parte de la patente y por numero', async () => {
+      expect((await lista(a, '&q=nandu busqueda')).map((p) => p.id)).toEqual([nuevo.id]);
+      expect((await lista(a, '&q=ÑANDÚ')).map((p) => p.id)).toEqual([nuevo.id]);
+      expect((await lista(a, `&q=${nuevo.vehiculo.patente.slice(1, 6).toLowerCase()}`)).map((p) => p.id)).toContain(nuevo.id);
+      for (const q of [String(nuevo.numero), `N° ${nuevo.numero}`, `n${nuevo.numero}`, `%23${nuevo.numero}`]) {
+        expect((await lista(a, `&q=${q}`)).map((p) => p.id)).toContain(nuevo.id);
+      }
+      expect(await lista(a, '&q=zzzzzz-no-existe')).toEqual([]);
+      // El comodin de LIKE no se interpreta: "%" no trae todo.
+      expect((await lista(a, '&q=%25%25%25%25')).length).toBe(0);
+    });
+
+    it('filtra por estado y por fecha, y combina los filtros', async () => {
+      await llamar('PATCH', `/presupuestos/${nuevo.id}/estado`, a.cookie, { estado: 'enviado' });
+      expect((await lista(a, '&q=nandu&estado=enviado')).map((p) => p.id)).toEqual([nuevo.id]);
+      expect(await lista(a, '&q=nandu&estado=borrador')).toEqual([]);
+      const hoy = new Date().toISOString().slice(0, 10);
+      expect((await lista(a, `&q=nandu&desde=${hoy}`)).map((p) => p.id)).toEqual([nuevo.id]);
+      expect(await lista(a, '&q=nandu&desde=2999-01-01')).toEqual([]);
+    });
+
+    it('rechaza filtros mal formados', async () => {
+      for (const malo of ['desde=2026-02-31', 'desde=ayer', 'desde=2026-13-01', 'limite=0', 'limite=101', 'limite=abc', 'antes=0', 'antes=x', 'estado=perdido', `q=${'x'.repeat(101)}`]) {
+        expect((await llamar('GET', `/presupuestos?${malo}`, a.cookie)).status, malo).toBe(400);
+      }
+    });
+
+    it('pagina de a N, del mas nuevo al mas antiguo, sin repetir ni saltarse ninguno', async () => {
+      const todos = await lista();
+      expect(todos.length).toBeGreaterThan(5);
+      const vistos: number[] = [];
+      let antes: number | undefined;
+      for (let vuelta = 0; vuelta < 50; vuelta++) {
+        const r = (await llamar('GET', `/presupuestos?limite=3${antes ? `&antes=${antes}` : ''}`, a.cookie)).json as {
+          presupuestos: { numero: number }[];
+          hayMas: boolean;
+        };
+        expect(r.presupuestos.length).toBeLessThanOrEqual(3);
+        vistos.push(...r.presupuestos.map((p) => p.numero));
+        if (!r.hayMas) break;
+        antes = r.presupuestos[r.presupuestos.length - 1].numero;
+      }
+      expect(vistos).toEqual(todos.map((p) => p.numero));
+      expect((await llamar('GET', '/presupuestos', a.cookie)).json.presupuestos.length).toBeLessThanOrEqual(20); // 20 por defecto
+    });
   });
 });
 

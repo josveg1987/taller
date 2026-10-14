@@ -10,6 +10,7 @@ import {
 import type { PoolClient } from 'pg';
 import type { Contexto } from '../auth/contexto';
 import { DatabaseService } from '../database/database.service';
+import { escaparLike, normalizarPatente } from '../validacion';
 import { insertarVehiculo, type DatosVehiculo } from '../vehiculos/vehiculos.service';
 
 export type Posicion = 'izquierda' | 'derecha' | 'no_aplica';
@@ -82,6 +83,24 @@ export interface Presupuesto {
   /** Plazo total estimado, en dias habiles. */
   plazoDias: number | null;
   condiciones: string;
+}
+
+/** Filtros de la lista (todos opcionales) y paginacion por numero: "antes" pide los de numero menor. */
+export interface FiltrosLista {
+  /** Texto: numero, patente o nombre del cliente. */
+  q?: string;
+  estado?: Estado;
+  /** Fecha minima del presupuesto (YYYY-MM-DD). */
+  desde?: string;
+  /** Solo los de numero menor a este (para "Ver mas"). */
+  antes?: number;
+  limite: number;
+}
+
+export interface ListaPresupuestos {
+  presupuestos: PresupuestoResumen[];
+  /** true si hay mas presupuestos despues del ultimo de esta pagina. */
+  hayMas: boolean;
 }
 
 export interface PresupuestoResumen {
@@ -303,7 +322,10 @@ export class PresupuestosService {
   /** Reemplaza el contenido de un presupuesto en borrador (mantiene su numero, fecha y validez). */
   async actualizar(tallerId: string, id: string, e: EntradaPresupuesto): Promise<Presupuesto> {
     return this.db.conTaller(tallerId, async (c) => {
-      const { rows } = await c.query<{ estado: Estado }>('SELECT estado FROM presupuestos WHERE id = $1 FOR UPDATE', [id]);
+      const { rows } = await c.query<{ estado: Estado }>(
+        'SELECT estado FROM presupuestos WHERE id = $1 AND eliminado_en IS NULL FOR UPDATE',
+        [id],
+      );
       if (!rows[0]) throw new NotFoundException('El presupuesto no existe');
       if (rows[0].estado !== 'borrador') throw new ConflictException('Solo se puede editar un presupuesto en borrador');
       const calc = await this.preparar(c, tallerId, e);
@@ -323,7 +345,10 @@ export class PresupuestosService {
   async cambiarEstado(tallerId: string, quien: Contexto, id: string, nuevo: Estado): Promise<Presupuesto> {
     const usuarioId = quien.tipo === 'taller' ? quien.usuarioId : null;
     return this.db.conTaller(tallerId, async (c) => {
-      const { rows } = await c.query<{ estado: Estado }>('SELECT estado FROM presupuestos WHERE id = $1 FOR UPDATE', [id]);
+      const { rows } = await c.query<{ estado: Estado }>(
+        'SELECT estado FROM presupuestos WHERE id = $1 AND eliminado_en IS NULL FOR UPDATE',
+        [id],
+      );
       if (!rows[0]) throw new NotFoundException('El presupuesto no existe');
       if (!(TRANSICIONES[rows[0].estado] ?? []).includes(nuevo)) {
         throw new ConflictException(`No se puede pasar un presupuesto de "${rows[0].estado}" a "${nuevo}"`);
@@ -373,7 +398,7 @@ export class PresupuestosService {
          FROM presupuestos p
          JOIN clientes c ON c.id = p.cliente_id
          JOIN vehiculos v ON v.id = p.vehiculo_id
-        WHERE p.id = $1`,
+        WHERE p.id = $1 AND p.eliminado_en IS NULL`,
       [id],
     );
     const p = rows[0];
@@ -444,8 +469,41 @@ export class PresupuestosService {
     };
   }
 
-  /** Los mas recientes primero. */
-  async listar(tallerId: string, estado?: Estado): Promise<PresupuestoResumen[]> {
+  /**
+   * Eliminacion logica: deja de verse en la app (lista, detalle, PDF, edicion), pero queda guardado con
+   * la fecha y quien lo elimino, y su numero no se reutiliza. Se puede eliminar en cualquier estado.
+   */
+  async eliminar(tallerId: string, quien: Contexto, id: string): Promise<void> {
+    const usuarioId = quien.tipo === 'taller' ? quien.usuarioId : null;
+    const r = await this.db.conTaller(tallerId, (c) =>
+      c.query('UPDATE presupuestos SET eliminado_en = now(), eliminado_por = $2 WHERE id = $1 AND eliminado_en IS NULL', [id, usuarioId]),
+    );
+    if (!r.rowCount) throw new NotFoundException('El presupuesto no existe');
+  }
+
+  /** Los vigentes, del mas nuevo al mas antiguo, con filtros y de a una pagina. */
+  async listar(tallerId: string, f: FiltrosLista): Promise<ListaPresupuestos> {
+    const params: unknown[] = [];
+    const condiciones = ['p.eliminado_en IS NULL'];
+    const agregar = (valor: unknown) => {
+      params.push(valor);
+      return `$${params.length}`;
+    };
+    if (f.estado) condiciones.push(`(${ESTADO_EFECTIVO}) = ${agregar(f.estado)}`);
+    if (f.desde) condiciones.push(`p.fecha >= ${agregar(f.desde)}::date`);
+    if (f.antes) condiciones.push(`p.numero < ${agregar(f.antes)}`);
+    const q = f.q?.trim();
+    if (q) {
+      // Nombre del cliente sin tildes ni mayusculas, parte de la patente, o el numero exacto ("12", "N° 12").
+      const alguno = [`unaccent(lower(c.nombre)) LIKE unaccent(lower(${agregar(`%${escaparLike(q)}%`)}))`];
+      const patente = normalizarPatente(q);
+      if (patente.length >= 2) alguno.push(`v.patente LIKE ${agregar(`%${escaparLike(patente)}%`)}`);
+      const numero = q.match(/^(?:n\s*[°º.]?\s*|#\s*)?(\d{1,9})$/i);
+      if (numero) alguno.push(`p.numero = ${agregar(Number(numero[1]))}`);
+      condiciones.push(`(${alguno.join(' OR ')})`);
+    }
+    const limite = agregar(f.limite + 1); // uno de mas para saber si hay otra pagina
+
     const { rows } = await this.db.conTaller(tallerId, (c) =>
       c.query<{
         id: string;
@@ -465,13 +523,14 @@ export class PresupuestosService {
            FROM presupuestos p
            JOIN clientes c ON c.id = p.cliente_id
            JOIN vehiculos v ON v.id = p.vehiculo_id
-          ${estado ? `WHERE (${ESTADO_EFECTIVO}) = $1` : ''}
+          WHERE ${condiciones.join(' AND ')}
           ORDER BY p.numero DESC
-          LIMIT 100`,
-        estado ? [estado] : [],
+          LIMIT ${limite}`,
+        params,
       ),
     );
-    return rows.map((r) => ({
+    const hayMas = rows.length > f.limite;
+    const presupuestos = rows.slice(0, f.limite).map((r) => ({
       id: r.id,
       numero: r.numero,
       fecha: r.fecha,
@@ -480,5 +539,6 @@ export class PresupuestosService {
       cliente: { id: r.cliente_id, nombre: r.cliente_nombre },
       vehiculo: { id: r.vehiculo_id, patente: r.patente, marca: r.marca, modelo: r.modelo },
     }));
+    return { presupuestos, hayMas };
   }
 }

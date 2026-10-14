@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Delete, HttpCode, Inject, Param, Patch, Post, Put, Query } from '@nestjs/common';
 import type { Contexto } from '../auth/contexto';
 import { SesionActual, TallerActual } from '../auth/decoradores';
 import { cuerpo, decimal, entero, idValido, opcion, opcional, telefono, texto, textoOpcional } from '../validacion';
@@ -79,9 +79,37 @@ function entrada(body: unknown): EntradaPresupuesto {
 export class PresupuestosController {
   constructor(@Inject(PresupuestosService) private readonly presupuestos: PresupuestosService) {}
 
+  /** ?q= (numero, patente o cliente), ?estado=, ?desde=YYYY-MM-DD, ?antes=<numero> y ?limite= (1 a 100, 20 por defecto). */
   @Get()
-  listar(@TallerActual() tallerId: string, @Query('estado') estado?: string) {
-    return this.presupuestos.listar(tallerId, estado === undefined || estado === '' ? undefined : (opcion(estado, 'El estado', ESTADOS) as Estado));
+  listar(@TallerActual() tallerId: string, @Query() consulta: Record<string, unknown>) {
+    const texto = (v: unknown) => (typeof v === 'string' && v.trim() !== '' ? v.trim() : undefined);
+    const q = texto(consulta.q);
+    if (q && q.length > 100) throw new BadRequestException('La búsqueda es demasiado larga');
+    const estado = texto(consulta.estado);
+    const desde = texto(consulta.desde);
+    // Una fecha real (el 31 de febrero no existe): al convertirla debe volver igual.
+    const fechaReal = (t: string) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(t)) return false;
+      const d = new Date(`${t}T00:00:00Z`);
+      return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === t;
+    };
+    if (desde && !fechaReal(desde)) {
+      throw new BadRequestException('La fecha "desde" no es válida');
+    }
+    const entero = (v: unknown, campo: string, min: number, max: number) => {
+      const t = texto(v);
+      if (t === undefined) return undefined;
+      const n = Number(t);
+      if (!Number.isInteger(n) || n < min || n > max) throw new BadRequestException(`${campo} debe ser un número entre ${min} y ${max}`);
+      return n;
+    };
+    return this.presupuestos.listar(tallerId, {
+      q,
+      estado: estado === undefined ? undefined : (opcion(estado, 'El estado', ESTADOS) as Estado),
+      desde,
+      antes: entero(consulta.antes, 'antes', 1, 2_000_000_000),
+      limite: entero(consulta.limite, 'El límite', 1, 100) ?? 20,
+    });
   }
 
   @Get(':id')
@@ -92,6 +120,13 @@ export class PresupuestosController {
   @Post()
   crear(@TallerActual() tallerId: string, @SesionActual() quien: Contexto, @Body() body: unknown) {
     return this.presupuestos.crear(tallerId, quien, entrada(body));
+  }
+
+  /** Eliminacion logica (en cualquier estado): deja de verse en la app pero queda guardado. */
+  @Delete(':id')
+  @HttpCode(204)
+  async eliminar(@TallerActual() tallerId: string, @SesionActual() quien: Contexto, @Param('id') id: string): Promise<void> {
+    await this.presupuestos.eliminar(tallerId, quien, idValido(id));
   }
 
   @Patch(':id/estado')
