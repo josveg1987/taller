@@ -112,18 +112,17 @@ function destacado(contenido: Content, margin: [number, number, number, number])
 }
 
 /** Direccion (una linea, con icono) y telefono del taller, en un recuadro destacado. */
-function bloqueDireccion(t: TallerParaPdf): Content | null {
-  if (!t.direccion && !t.telefono) return null;
-  const columnas: Column[] = [];
-  if (t.direccion) {
-    columnas.push({ svg: ICONO_UBICACION, width: 13, margin: [0, 1, 6, 0] }, { text: t.direccion, bold: true, fontSize: 11, width: '*' });
-  } else {
-    columnas.push({ text: '', width: '*' });
-  }
-  if (t.telefono) {
-    columnas.push({ svg: ICONO_TELEFONO, width: 12, margin: [8, 2, 4, 0] }, { text: t.telefono, bold: true, fontSize: 11, width: 'auto' });
-  }
-  return destacado({ columns: columnas, columnGap: 0 }, [0, 0, 0, 14]);
+/** Direccion y telefono bajo el nombre (o logo) del taller, cada uno con su icono. */
+function contactoTaller(t: TallerParaPdf): Content[] {
+  const fila = (icono: string, texto: string): Content => ({
+    columns: [
+      { svg: icono, width: 9, margin: [0, 1, 0, 0] },
+      { text: texto, fontSize: 9.5, color: COLOR_SUAVE, width: '*' },
+    ],
+    columnGap: 5,
+    margin: [0, 3, 0, 0],
+  });
+  return [...(t.direccion ? [fila(ICONO_UBICACION, t.direccion)] : []), ...(t.telefono ? [fila(ICONO_TELEFONO, t.telefono)] : [])];
 }
 
 function bloqueCuenta(c: CuentaParaPdf): Column {
@@ -263,7 +262,6 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
   if (p.observaciones?.trim()) bloque('Observaciones', p.observaciones.trim());
   if (p.condiciones.trim()) bloque('Condiciones', p.condiciones.trim());
 
-  const direccion = bloqueDireccion(taller);
   const detalle = bloqueDetalle(taller, p);
   const plano = bloquePlano(p);
   const cuentas = bloqueCuentas(taller);
@@ -278,7 +276,7 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
         columns: [
           {
             width: '*',
-            stack: [taller.logoSvg ? { svg: taller.logoSvg, width: 170 } : { text: taller.nombre, fontSize: 20, bold: true }],
+            stack: [taller.logoSvg ? { svg: taller.logoSvg, width: 170 } : { text: taller.nombre, fontSize: 20, bold: true }, ...contactoTaller(taller)],
           },
           {
             width: 'auto',
@@ -293,7 +291,6 @@ export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf)
         ],
       },
       { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: COLOR_LINEA }], margin: [0, 12, 0, 12] },
-      ...(direccion ? [direccion] : []),
       {
         columns: [
           {

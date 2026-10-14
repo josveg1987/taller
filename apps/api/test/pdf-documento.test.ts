@@ -77,7 +77,7 @@ describe('documento del presupuesto', () => {
     expect(textoDe({ ...base, montoInicio: 0 })).not.toContain('Anticipo');
   });
 
-  it('la direccion y el telefono van destacados, con iconos', () => {
+  it('la direccion y el telefono van bajo el nombre del taller, con iconos', () => {
     const t = textoDe(base);
     expect(t).toContain('Av. Pajaritos 1234, Maipú');
     expect(t).toContain('+56 9 1111 2222');

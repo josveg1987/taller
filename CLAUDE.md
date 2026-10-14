@@ -369,8 +369,8 @@ pregunta "¿Ya se lo enviaste?" para marcarlo Enviado. El detalle tiene "Ver PDF
 migración nueva (`1791600300000_cuentas-detalle-servicios-anticipo`): publicar = migrar Neon primero y luego `git push` (API y
 web juntas; ver "Cómo se aplican las migraciones"). (1) **Cuentas para transferir** (`cuentas_bancarias`, API `src/cuentas/`,
 pantalla `cuentas/Cuentas.tsx` desde Mi taller): varias por taller, las activas salen en el PDF en el recuadro "DATOS PARA
-TRANSFERIR"; `talleres.datos_transferencia` pasó a ser "Notas de pago (opcional)". La dirección y el teléfono salen destacados con
-ícono. (2) **Detalle del trabajo**: textos estándar en `packages/shared/src/detalle-trabajo.ts`, editables por taller
+TRANSFERIR"; `talleres.datos_transferencia` pasó a ser "Notas de pago (opcional)". La dirección y el teléfono van bajo el
+logo, con un ícono cada uno (el dueño prefirió eso a un recuadro destacado). (2) **Detalle del trabajo**: textos estándar en `packages/shared/src/detalle-trabajo.ts`, editables por taller
 (`talleres.detalle_pintura/detalle_desabollado`, NULL = estándar); el PDF imprime "Qué incluye el trabajo" solo con los bloques
 que el presupuesto lleva. (3) **Servicios** (`servicios`, API `src/servicios/`, `servicios/Servicios.tsx`; se siembran con
 `sembrarServicios` al crear un taller): en el paso 2 son botones que agregan una línea `libre` con `descripcion` (columna
