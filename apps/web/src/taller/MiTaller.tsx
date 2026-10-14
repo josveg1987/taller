@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { DETALLE_DESABOLLADO_ESTANDAR, DETALLE_PINTURA_ESTANDAR, detalleEfectivo } from '@taller/shared';
 import { api } from '../api';
 import { mensajeDe, useAcciones } from '../acciones';
 import { clp } from '../dinero';
@@ -16,6 +17,8 @@ interface Config {
   direccion: string | null;
   telefono: string | null;
   datosTransferencia: string | null;
+  detallePintura: string;
+  detalleDesabollado: string;
   margenRepuestosPct: number;
   tarifaPintura: number;
   montosDesabollado: number[];
@@ -51,6 +54,8 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
   const [direccion, setDireccion] = useState(config.direccion ?? '');
   const [telefono, setTelefono] = useState(config.telefono ?? '');
   const [transferencia, setTransferencia] = useState(config.datosTransferencia ?? '');
+  const [detallePintura, setDetallePintura] = useState(detalleEfectivo(config.detallePintura, DETALLE_PINTURA_ESTANDAR));
+  const [detalleDesabollado, setDetalleDesabollado] = useState(detalleEfectivo(config.detalleDesabollado, DETALLE_DESABOLLADO_ESTANDAR));
   const [margen, setMargen] = useState(String(config.margenRepuestosPct).replace('.', ','));
   const [tarifa, setTarifa] = useState(String(config.tarifaPintura));
   const [montos, setMontos] = useState<number[]>(config.montosDesabollado);
@@ -96,6 +101,8 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
           direccion,
           telefono,
           datosTransferencia: transferencia,
+          detallePintura,
+          detalleDesabollado,
           margenRepuestosPct: margenNum,
           tarifaPintura: tarifaNum,
           montosDesabollado: montos,
@@ -123,6 +130,16 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
           </span>
           <Icono nombre="chevron" />
         </button>
+        <button type="button" className="item" onClick={() => irA('/cuentas')}>
+          <span className="icono-circulo">
+            <Icono nombre="banco" />
+          </span>
+          <span className="item-texto">
+            <span className="item-titulo">Cuentas para transferir</span>
+            <span className="detalle">Las que se muestran en el PDF</span>
+          </span>
+          <Icono nombre="chevron" />
+        </button>
         <button type="button" className="item" onClick={() => irA('/piezas')}>
           <span className="icono-circulo">
             <Icono nombre="ajustes" />
@@ -130,6 +147,16 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
           <span className="item-texto">
             <span className="item-titulo">Piezas</span>
             <span className="detalle">Qué cotizas y a qué tarifa</span>
+          </span>
+          <Icono nombre="chevron" />
+        </button>
+        <button type="button" className="item" onClick={() => irA('/servicios')}>
+          <span className="icono-circulo">
+            <Icono nombre="servicio" />
+          </span>
+          <span className="item-texto">
+            <span className="item-titulo">Servicios</span>
+            <span className="detalle">Pulido y otros trabajos con precio sugerido</span>
           </span>
           <Icono nombre="chevron" />
         </button>
@@ -154,6 +181,7 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
           </label>
           <label className="campo">
             Dirección
+            <span className="ayuda">Sale destacada en el PDF, junto al teléfono.</span>
             <input maxLength={200} autoComplete="street-address" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
           </label>
           <label className="campo">
@@ -161,10 +189,31 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
             <input type="tel" maxLength={40} autoComplete="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
           </label>
           <label className="campo">
-            Datos de transferencia
-            <span className="ayuda">Van en el PDF: banco, tipo y número de cuenta, RUT y titular.</span>
+            Notas de pago (opcional)
+            <span className="ayuda">Texto extra bajo las cuentas del PDF. Por ejemplo: “Envía el comprobante por WhatsApp”. Las cuentas se agregan en “Cuentas para transferir”.</span>
             <textarea rows={4} maxLength={1000} value={transferencia} onChange={(e) => setTransferencia(e.target.value)} />
           </label>
+        </div>
+
+        <h2>Detalle del trabajo</h2>
+        <div className="grupo formulario">
+          <p className="ayuda">
+            En el PDF aparece “Qué incluye el trabajo”, solo con lo que lleva el presupuesto. Un paso por línea.
+          </p>
+          <label className="campo">
+            Pintura
+            <textarea rows={7} maxLength={1500} value={detallePintura} onChange={(e) => setDetallePintura(e.target.value)} />
+          </label>
+          <button type="button" className="enlace" onClick={() => setDetallePintura(DETALLE_PINTURA_ESTANDAR)}>
+            Restablecer el texto estándar de pintura
+          </button>
+          <label className="campo">
+            Desabolladura
+            <textarea rows={5} maxLength={1500} value={detalleDesabollado} onChange={(e) => setDetalleDesabollado(e.target.value)} />
+          </label>
+          <button type="button" className="enlace" onClick={() => setDetalleDesabollado(DETALLE_DESABOLLADO_ESTANDAR)}>
+            Restablecer el texto estándar de desabolladura
+          </button>
         </div>
 
         <h2>Presupuestos</h2>
@@ -222,7 +271,7 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
           </label>
           <button type="button" className="item" onClick={() => setEligiendoAnticipo(true)}>
             <span className="item-texto">
-              <span className="item-titulo">Anticipo para iniciar</span>
+              <span className="item-titulo">Anticipo</span>
               <span className="detalle">{textoAnticipo}</span>
             </span>
             <Icono nombre="chevron" />
@@ -271,7 +320,7 @@ function Formulario({ config, alGuardar }: { config: Config; alGuardar: (c: Conf
 
       <HojaSelector<TipoAnticipo>
         abierta={eligiendoAnticipo}
-        titulo="Anticipo para iniciar el trabajo"
+        titulo="Anticipo"
         opciones={OPCIONES_ANTICIPO}
         valor={tipoAnticipo}
         onElegir={setTipoAnticipo}

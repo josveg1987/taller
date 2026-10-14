@@ -4,7 +4,7 @@ import { Hoja } from '../Hoja';
 import { Icono } from '../Iconos';
 import type { Actualizar } from './Asistente';
 import type { DatosPresupuesto } from './datos';
-import type { Borrador, ComboCatalogo, Lado, LineaBorrador, PiezaCatalogo, Posicion } from './tipos';
+import type { Borrador, ComboCatalogo, Lado, LineaBorrador, PiezaCatalogo, Posicion, ServicioCatalogo } from './tipos';
 
 /** Una pieza entra como "reparar + pintura", con la tarifa y el desabollado sugerido que correspondan. */
 function nuevaLinea(p: PiezaCatalogo, posicion: Posicion, d: DatosPresupuesto): LineaBorrador {
@@ -54,6 +54,31 @@ export function PasoPiezas({ b, actualizar, datos }: { b: Borrador; actualizar: 
   }
 
   const libres = b.lineas.filter((l) => l.operacion === 'libre');
+
+  function alternarServicio(s: ServicioCatalogo) {
+    actualizar((x) => ({
+      lineas: x.lineas.some((l) => l.servicioId === s.id)
+        ? x.lineas.filter((l) => l.servicioId !== s.id)
+        : [
+            ...x.lineas,
+            {
+              clave: crypto.randomUUID(),
+              piezaId: null,
+              nombre: s.nombre,
+              usaPosicion: false,
+              posicion: 'no_aplica',
+              operacion: 'libre',
+              pintura: 0,
+              desabollado: 0,
+              repuestoCosto: 0,
+              margenPct: 0,
+              precio: s.precioSugerido ?? 0,
+              servicioId: s.id,
+              descripcion: s.descripcion,
+            },
+          ],
+    }));
+  }
 
   return (
     <>
@@ -107,6 +132,26 @@ export function PasoPiezas({ b, actualizar, datos }: { b: Borrador; actualizar: 
             );
           })}
         </div>
+      )}
+
+      {(datos.servicios ?? []).length > 0 && (
+        <>
+          <h2>Servicios</h2>
+          <div className="fila-montos">
+            {datos.servicios.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className="chip-monto"
+                aria-pressed={b.lineas.some((l) => l.servicioId === s.id)}
+                onClick={() => alternarServicio(s)}
+              >
+                <Icono nombre={b.lineas.some((l) => l.servicioId === s.id) ? 'check' : 'mas'} /> {s.nombre}
+              </button>
+            ))}
+          </div>
+          <p className="ayuda">El precio de cada servicio lo puedes cambiar en el paso 3.</p>
+        </>
       )}
 
       <h2>Otros</h2>

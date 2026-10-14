@@ -74,11 +74,13 @@ export function IniciarBorrador({ modo }: { modo: Modo }) {
               repuestoCosto: l.repuestoCosto,
               margenPct: l.margenPct,
               precio: l.operacion === 'libre' ? l.precioTotal : 0,
+              descripcion: l.descripcion,
             })),
             descuento: p.descuento,
             observaciones: p.observaciones ?? '',
             plazoDias: p.plazoDias ?? 0,
             condiciones: p.condiciones,
+            solicitaAnticipo: p.solicitaAnticipo,
           });
         }
         reemplazarRuta(`/presupuestos/borrador/${id}`);

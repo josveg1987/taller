@@ -17,6 +17,7 @@ export interface LineaPresupuesto {
   margenPct: number;
   repuestoPrecio: number;
   precioTotal: number;
+  descripcion: string | null;
 }
 
 export interface Presupuesto {
@@ -32,6 +33,7 @@ export interface Presupuesto {
   descuento: number;
   total: number;
   montoInicio: number;
+  solicitaAnticipo: boolean;
   costoRepuestos: number;
   precioRepuestos: number;
   gananciaRepuestos: number;
@@ -66,6 +68,10 @@ export interface LineaBorrador {
   margenPct: number;
   /** Solo items libres. */
   precio: number;
+  /** Servicio del catalogo del que salio la linea (para quitarla al tocarlo de nuevo). */
+  servicioId?: string;
+  /** Texto que va bajo el nombre en el PDF (servicios). */
+  descripcion?: string | null;
 }
 
 /** Cliente y vehiculo encontrados por la patente. */
@@ -104,6 +110,8 @@ export interface Borrador {
   plazoDias: number;
   /** null = todavia no se tocan: se usan las del taller. */
   condiciones: string | null;
+  /** undefined = todavia no se decide: parte con lo que diga la configuracion del taller. */
+  solicitaAnticipo?: boolean;
   actualizado: number;
   /** Texto con que parte el buscador del paso 1 (p. ej. el nombre de un cliente con varios vehiculos). */
   busqueda?: string;
@@ -115,6 +123,13 @@ export interface PiezaCatalogo {
   usaPosicion: boolean;
   tarifaPintura: number | null;
   desabolladoSugerido: number | null;
+}
+
+export interface ServicioCatalogo {
+  id: string;
+  nombre: string;
+  precioSugerido: number | null;
+  descripcion: string | null;
 }
 
 export interface ComboCatalogo {

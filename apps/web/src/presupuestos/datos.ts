@@ -1,11 +1,12 @@
 import { api } from '../api';
 import { guardarEnCache, leerDeCache } from './local';
-import type { ComboCatalogo, ConfigTaller, PiezaCatalogo } from './tipos';
+import type { ComboCatalogo, ConfigTaller, PiezaCatalogo, ServicioCatalogo } from './tipos';
 
 export interface DatosPresupuesto {
   config: ConfigTaller;
   piezas: PiezaCatalogo[];
   combos: ComboCatalogo[];
+  servicios: ServicioCatalogo[];
   /** true si no hubo conexion y se usa la ultima copia guardada en el telefono. */
   desdeCopia: boolean;
 }
@@ -17,17 +18,18 @@ export interface DatosPresupuesto {
 export async function cargarDatosPresupuesto(tallerId: string): Promise<DatosPresupuesto> {
   const clave = `datos-presupuesto-${tallerId}`;
   try {
-    const [config, piezas, combos] = await Promise.all([
+    const [config, piezas, combos, servicios] = await Promise.all([
       api<ConfigTaller>('/taller'),
       api<PiezaCatalogo[]>('/piezas'),
       api<ComboCatalogo[]>('/combos'),
+      api<ServicioCatalogo[]>('/servicios'),
     ]);
-    const datos = { config, piezas, combos: combos.filter((c) => c.activo) };
+    const datos = { config, piezas, combos: combos.filter((c) => c.activo), servicios };
     await guardarEnCache(clave, datos);
     return { ...datos, desdeCopia: false };
   } catch (e) {
     const copia = await leerDeCache<Omit<DatosPresupuesto, 'desdeCopia'>>(clave);
-    if (copia) return { ...copia, desdeCopia: true };
+    if (copia) return { ...copia, servicios: copia.servicios ?? [], desdeCopia: true };
     throw e;
   }
 }

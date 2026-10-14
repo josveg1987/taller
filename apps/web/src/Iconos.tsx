@@ -16,6 +16,8 @@ const TRAZOS = {
   cerrar: 'M6 6l12 12M18 6L6 18',
   papelera: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6',
   filtro: 'M4 6h16M7 12h10M10 18h4',
+  banco: 'M3 10l9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18',
+  servicio: 'M12 3l2 5 5 .5-4 3.5 1.3 5L12 14.3 7.7 17l1.3-5L5 8.5 10 8z',
   auto: 'M4 15v-3l2-5h12l2 5v3M4 15h16M4 15v3h3v-3M17 15v3h3v-3',
 } as const;
 

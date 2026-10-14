@@ -15,6 +15,8 @@ import { Administradores } from './admin/Administradores';
 import { TallerNuevo } from './admin/TallerNuevo';
 import { Talleres } from './admin/Talleres';
 import { Combos } from './piezas/Combos';
+import { Cuentas } from './cuentas/Cuentas';
+import { Servicios } from './servicios/Servicios';
 import { Piezas } from './piezas/Piezas';
 import { Asistente } from './presupuestos/Asistente';
 import { IniciarBorrador } from './presupuestos/IniciarBorrador';
@@ -99,6 +101,8 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
     else if (primero === 'usuarios') pantalla = <UsuariosTaller />;
     else if (primero === 'piezas') pantalla = <Piezas />;
     else if (primero === 'combos') pantalla = <Combos />;
+    else if (primero === 'cuentas') pantalla = <Cuentas />;
+    else if (primero === 'servicios') pantalla = <Servicios />;
     else if (primero === 'clientes' && segundo === 'nuevo') pantalla = <ClienteNuevo />;
     else if (primero === 'clientes' && segundo) pantalla = <ClienteDetalle key={segundo} id={segundo} />;
     else if (primero === 'clientes') pantalla = <Clientes />;
@@ -111,7 +115,7 @@ export function Aplicacion({ perfil }: { perfil: Perfil }) {
     ? 'talleres'
     : primerTramo === 'clientes' || primerTramo === 'vehiculos'
       ? 'clientes'
-      : primerTramo === 'mi-taller' || primerTramo === 'usuarios' || primerTramo === 'piezas' || primerTramo === 'combos'
+      : primerTramo === 'mi-taller' || primerTramo === 'usuarios' || primerTramo === 'piezas' || primerTramo === 'combos' || primerTramo === 'cuentas' || primerTramo === 'servicios'
         ? 'mi-taller'
         : 'inicio';
 

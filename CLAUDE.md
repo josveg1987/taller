@@ -365,6 +365,18 @@ no muestran PDFs dentro de la página); botón "Enviar por WhatsApp": en el celu
 con el archivo (`navigator.share`); en el computador (o si falla) descarga el PDF y abre WhatsApp con el mensaje, y
 pregunta "¿Ya se lo enviaste?" para marcarlo Enviado. El detalle tiene "Ver PDF y enviar", "Editar" (borrador),
 "Cambiar estado" y "Duplicar como borrador". Falta: logo, colores y datos de pago por taller (ver Siguiente).
+**Hecho en local (2026-10-14, SIN publicar): cuentas, servicios, detalle del trabajo y anticipo por presupuesto.** Una sola
+migración nueva (`1791600300000_cuentas-detalle-servicios-anticipo`): publicar = migrar Neon primero y luego `git push` (API y
+web juntas; ver "Cómo se aplican las migraciones"). (1) **Cuentas para transferir** (`cuentas_bancarias`, API `src/cuentas/`,
+pantalla `cuentas/Cuentas.tsx` desde Mi taller): varias por taller, las activas salen en el PDF en el recuadro "DATOS PARA
+TRANSFERIR"; `talleres.datos_transferencia` pasó a ser "Notas de pago (opcional)". La dirección y el teléfono salen destacados con
+ícono. (2) **Detalle del trabajo**: textos estándar en `packages/shared/src/detalle-trabajo.ts`, editables por taller
+(`talleres.detalle_pintura/detalle_desabollado`, NULL = estándar); el PDF imprime "Qué incluye el trabajo" solo con los bloques
+que el presupuesto lleva. (3) **Servicios** (`servicios`, API `src/servicios/`, `servicios/Servicios.tsx`; se siembran con
+`sembrarServicios` al crear un taller): en el paso 2 son botones que agregan una línea `libre` con `descripcion` (columna
+`presupuesto_lineas.descripcion`) y precio editable en el paso 3. (4) "Para iniciar el trabajo" ahora se llama **Anticipo**.
+(5) `presupuestos.solicita_anticipo`: interruptor por presupuesto (parte según la configuración: activo salvo tipo 'ninguno');
+apagado, `monto_inicio` = 0 y el PDF no muestra anticipo. 328 tests API + 14 shared.
 Nota: no correr `npm run build` (raíz) con `dev:api` abierto: borra `apps/api/dist` y la API se cae; usar `-w @taller/web`.
 
 Permisos de Claude Code: `.claude/settings.json` lista los comandos de solo lectura, build y tests permitidos

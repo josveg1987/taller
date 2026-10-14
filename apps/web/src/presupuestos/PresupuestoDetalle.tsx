@@ -136,7 +136,7 @@ export function PresupuestoDetalle({ id }: { id: string }) {
         <Fila texto="Subtotal" monto={p.subtotal} />
         {p.descuento > 0 && <Fila texto="Descuento" monto={-p.descuento} />}
         <Fila texto="Total" monto={p.total} fuerte />
-        <Fila texto="Para iniciar el trabajo" monto={p.montoInicio} />
+        {p.solicitaAnticipo ? <Fila texto="Anticipo" monto={p.montoInicio} /> : <Fila texto="Anticipo" valor="No se solicita" />}
       </div>
 
       <div className="grupo">
@@ -208,11 +208,11 @@ export function PresupuestoDetalle({ id }: { id: string }) {
   );
 }
 
-function Fila({ texto, monto, fuerte }: { texto: string; monto: number; fuerte?: boolean }) {
+function Fila({ texto, monto, valor, fuerte }: { texto: string; monto?: number; valor?: string; fuerte?: boolean }) {
   return (
     <div className="item">
       <span className={`item-texto ${fuerte ? 'item-titulo' : ''}`}>{texto}</span>
-      <span className={fuerte ? 'monto-fuerte' : undefined}>{clp(monto)}</span>
+      <span className={fuerte ? 'monto-fuerte' : undefined}>{valor ?? clp(monto ?? 0)}</span>
     </div>
   );
 }

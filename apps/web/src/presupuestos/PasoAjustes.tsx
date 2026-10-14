@@ -5,6 +5,7 @@ import { irA } from '../ruta';
 import type { Actualizar } from './Asistente';
 import type { Totales } from './calculo';
 import type { DatosPresupuesto } from './datos';
+import { anticipoPorDefecto } from './calculo';
 import { nombreConLado, type Borrador, type LineaBorrador } from './tipos';
 
 interface Props {
@@ -19,6 +20,7 @@ export function PasoAjustes({ b, actualizar, datos, totales }: Props) {
   // Tarifa sin definir: las piezas parten con pintura en $0 (el taller nuevo aun no la configura).
   const sinTarifa = datos.config.tarifaPintura === 0 && b.lineas.some((l) => l.operacion !== 'libre' && l.pintura === 0);
 
+  const solicitaAnticipo = b.solicitaAnticipo ?? anticipoPorDefecto(datos.config);
   const cambiarLinea = (clave: string, cambio: Partial<LineaBorrador>) =>
     actualizar((x) => ({ lineas: x.lineas.map((l) => (l.clave === clave ? { ...l, ...cambio } : l)) }));
   const quitar = (clave: string) => actualizar((x) => ({ lineas: x.lineas.filter((l) => l.clave !== clave) }));
@@ -74,7 +76,20 @@ export function PasoAjustes({ b, actualizar, datos, totales }: Props) {
         <FilaMonto texto="Subtotal" monto={totales.subtotal} />
         {b.descuento > 0 && <FilaMonto texto="Descuento" monto={-Math.min(b.descuento, totales.subtotal)} />}
         <FilaMonto texto="Total" monto={totales.total} fuerte />
-        <FilaMonto texto="Para iniciar el trabajo" monto={totales.montoInicio} />
+        {solicitaAnticipo && <FilaMonto texto="Anticipo" monto={totales.montoInicio} />}
+        <label className="item campo-fila">
+          <span className="item-texto">
+            <span className="item-titulo">Solicitar anticipo</span>
+            <span className="detalle">Si lo apagas, este presupuesto no pide anticipo en el PDF.</span>
+          </span>
+          <input
+            type="checkbox"
+            role="switch"
+            className="interruptor"
+            checked={solicitaAnticipo}
+            onChange={(e) => actualizar({ solicitaAnticipo: e.target.checked })}
+          />
+        </label>
       </div>
       {b.descuento > totales.subtotal && (
         <p className="error" role="alert">
@@ -129,7 +144,7 @@ function Linea({
       <div className="item">
         <span className="item-texto">
           <span className="item-titulo">{nombreConLado(l.nombre, l.posicion)}</span>
-          {l.operacion === 'libre' && <span className="detalle">Ítem libre</span>}
+          {l.operacion === 'libre' && <span className="detalle">{l.servicioId ? 'Servicio' : 'Ítem libre'}</span>}
         </span>
         <button type="button" className="enlace peligro" aria-label={`Quitar ${l.nombre}`} onClick={onQuitar}>
           Quitar

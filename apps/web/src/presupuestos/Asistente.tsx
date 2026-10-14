@@ -4,7 +4,7 @@ import { clp } from '../dinero';
 import { Encabezado } from '../Encabezado';
 import { irA, reemplazarRuta } from '../ruta';
 import { useTallerActual } from '../sesion';
-import { aEnvio, calcularTotales, normalizarPatente } from './calculo';
+import { anticipoPorDefecto, aEnvio, calcularTotales, normalizarPatente } from './calculo';
 import { cargarDatosPresupuesto, type DatosPresupuesto } from './datos';
 import { borrarBorrador, guardarBorrador, leerBorrador } from './local';
 import { PasoAjustes } from './PasoAjustes';
@@ -59,7 +59,7 @@ export function Asistente({ borradorId }: { borradorId: string }) {
     });
   }, []);
 
-  const totales = useMemo(() => (b && datos ? calcularTotales(b.lineas, b.descuento, datos.config) : null), [b, datos]);
+  const totales = useMemo(() => (b && datos ? calcularTotales(b.lineas, b.descuento, datos.config, b.solicitaAnticipo ?? anticipoPorDefecto(datos.config)) : null), [b, datos]);
 
   if (!b || !datos || !totales) {
     return errorCarga ? (
@@ -91,7 +91,7 @@ export function Asistente({ borradorId }: { borradorId: string }) {
     window.clearTimeout(temporizador.current);
     await guardarBorrador(b);
     try {
-      const cuerpo = aEnvio(b, datos.config.condiciones);
+      const cuerpo = aEnvio(b, datos.config.condiciones, datos.config);
       const p = b.presupuestoId
         ? await api<Presupuesto>(`/presupuestos/${b.presupuestoId}`, { method: 'PUT', json: cuerpo })
         : await api<Presupuesto>('/presupuestos', { method: 'POST', json: cuerpo });

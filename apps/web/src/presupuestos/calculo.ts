@@ -15,7 +15,7 @@ function regla(c: ConfigTaller): ReglaAnticipo {
  * Totales en vivo con las MISMAS reglas que usa el servidor (@taller/shared). Son una vista previa:
  * al guardar, el servidor recalcula y su resultado es el oficial.
  */
-export function calcularTotales(lineas: LineaBorrador[], descuento: number, config: ConfigTaller): Totales {
+export function calcularTotales(lineas: LineaBorrador[], descuento: number, config: ConfigTaller, solicitaAnticipo = true): Totales {
   const calc = calcularPresupuesto(
     lineas.map((l) => ({
       operacion: l.operacion,
@@ -27,11 +27,14 @@ export function calcularTotales(lineas: LineaBorrador[], descuento: number, conf
     })),
     Math.min(descuento, Number.MAX_SAFE_INTEGER),
   );
-  return { ...calc, montoInicio: calcularMontoInicio(calc, regla(config)) };
+  return { ...calc, montoInicio: solicitaAnticipo ? calcularMontoInicio(calc, regla(config)) : 0 };
 }
 
 /** Lo que se envia a la API. Los totales no se mandan: los calcula el servidor. */
-export function aEnvio(b: Borrador, condicionesTaller: string) {
+/** El anticipo se pide por defecto salvo que el taller lo tenga en "ninguno". */
+export const anticipoPorDefecto = (c: ConfigTaller) => c.anticipo.tipo !== 'ninguno';
+
+export function aEnvio(b: Borrador, condicionesTaller: string, config: ConfigTaller) {
   const anio = b.nuevo.anio.trim() ? Number(b.nuevo.anio) : null;
   const vehiculoNuevo = {
     patente: b.patente,
@@ -54,9 +57,10 @@ export function aEnvio(b: Borrador, condicionesTaller: string) {
       desabollado: l.desabollado,
       repuestoCosto: l.repuestoCosto,
       margenPct: l.margenPct,
-      ...(l.operacion === 'libre' ? { precio: l.precio } : {}),
+      ...(l.operacion === 'libre' ? { precio: l.precio, descripcion: l.descripcion ?? null } : {}),
     })),
     descuento: b.descuento,
+    solicitaAnticipo: b.solicitaAnticipo ?? anticipoPorDefecto(config),
     observaciones: b.observaciones.trim() || null,
     plazoDias: (b.plazoDias ?? 0) > 0 ? b.plazoDias : null,
     condiciones: b.condiciones ?? condicionesTaller,
