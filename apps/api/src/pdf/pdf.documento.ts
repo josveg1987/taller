@@ -1,5 +1,5 @@
-import { clavePlano, COLORES_PLANO_PDF, svgPlano, type MarcaPlano, type VistaPlano, type Zona } from '@taller/shared/plano';
 import { iniciales, logoDeMarca } from '@taller/shared';
+import { clavePlano, COLORES_PLANO_PDF, svgPlano, ZONAS, type MarcaPlano, type VistaPlano, type Zona } from '@taller/shared/plano';
 import type { Column, Content, TDocumentDefinitions } from 'pdfmake/interfaces';
 
 export interface CuentaParaPdf {
@@ -15,12 +15,12 @@ export interface CuentaParaPdf {
 /** Lo que el PDF necesita del taller. */
 export interface TallerParaPdf {
   nombre: string;
-  /** Una linea (calle y comuna). Sale destacada con un icono. */
+  /** Una linea (calle y comuna). Va en el encabezado, con un icono. */
   direccion: string | null;
   telefono: string | null;
   /** Nota opcional bajo las cuentas (p. ej. "envía el comprobante por WhatsApp"). */
   notaPago: string | null;
-  /** Logo SVG para fondo claro (ya validado al guardarlo). Si falta, se escribe el nombre. */
+  /** Logo SVG para fondo OSCURO (el encabezado es azul; ya validado al guardarlo). Si falta, se escribe el nombre. */
   logoSvg: string | null;
   /** Cuentas activas, en el orden del taller. */
   cuentas: CuentaParaPdf[];
@@ -58,16 +58,32 @@ export interface PresupuestoParaPdf {
   condiciones: string;
 }
 
-const COLOR_TEXTO = '#111827';
-const COLOR_SUAVE = '#4b5563';
-const COLOR_LINEA = '#d1d5db';
-const COLOR_FONDO = '#f3f4f6';
-const COLOR_DESTACADO = '#eef2f7';
-const COLOR_BORDE_DESTACADO = '#11223d';
+// Colores de la marca (los mismos de la app: apps/web/src/styles.css). Cuando cada taller tenga su paleta,
+// llegaran aqui como parametro.
+const MARCA = '#11223d';
+const ACENTO = '#c2410c';
+const ACENTO_SOBRE_OSCURO = '#f0612e';
+const SOBRE_MARCA_SUAVE = '#c9ced6';
+const TINTA = '#1f2937';
+const SUAVE = '#6b7280';
+const LINEA = '#e5e7eb';
+const FONDO = '#f6f7f9';
+const PELIGRO = '#b91c1c';
 
-// Iconos simples (viewBox 24) para los recuadros destacados: pdfmake los dibuja como vectores.
-const ICONO_UBICACION = `<svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" fill="none" stroke="${COLOR_BORDE_DESTACADO}" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="10" r="2.6" fill="none" stroke="${COLOR_BORDE_DESTACADO}" stroke-width="2.2"/></svg>`;
-const ICONO_TELEFONO = `<svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z" fill="none" stroke="${COLOR_BORDE_DESTACADO}" stroke-width="2.2" stroke-linejoin="round"/></svg>`;
+// Medidas (puntos). A4 = 595,28 x 841,89.
+const ANCHO_PAGINA = 595.28;
+const LADO = 34;
+const ANCHO = ANCHO_PAGINA - 2 * LADO;
+const BANDA = 104; // encabezado de la primera pagina
+const BANDA_DELGADA = 42; // encabezado de las demas
+const FRANJA = 5; // linea naranja bajo el encabezado
+const ARRIBA = BANDA_DELGADA + FRANJA + 18; // margen superior de todas las paginas
+
+const icono = (trazo: string, color: string) =>
+  `<svg viewBox="0 0 24 24"><path d="${trazo}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+const TRAZO_UBICACION = 'M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12zM12 7.4a2.6 2.6 0 1 0 0 5.2a2.6 2.6 0 0 0 0-5.2z';
+const TRAZO_TELEFONO = 'M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z';
+const CHECK = `<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="8" fill="${ACENTO}"/><path d="M4.5 8.3l2.3 2.3 4.7-5" fill="none" stroke="#ffffff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
 /** 80000 -> "$80.000"; -10000 -> "-$10.000". */
 export const pesos = (n: number): string =>
@@ -87,134 +103,159 @@ const TIPO_CUENTA = { corriente: 'Cuenta corriente', vista: 'Cuenta vista', ahor
 
 const lado = (posicion: string) => (posicion === 'izquierda' ? ' izquierda' : posicion === 'derecha' ? ' derecha' : '');
 
-function queSeHace(l: PresupuestoParaPdf['lineas'][number]): string | null {
+/** Columna "Trabajo" de la tabla. */
+function queSeHace(l: PresupuestoParaPdf['lineas'][number]): string {
   if (l.operacion === 'reemplazar') return 'Cambio de pieza y pintura';
   if (l.operacion === 'reparar') return l.desabollado > 0 ? 'Desabollado y pintura' : 'Pintura';
-  return l.descripcion; // servicios e items libres: su propia descripcion (puede no tener)
+  return 'Servicio';
 }
 
-/** Recuadro destacado: fondo suave y una franja oscura a la izquierda. */
-function destacado(contenido: Content, margin: [number, number, number, number]): Content {
-  return {
-    margin,
-    unbreakable: true,
-    table: { widths: ['*'], body: [[{ stack: [contenido], margin: [4, 2, 4, 2] }]] },
-    layout: {
-      fillColor: () => COLOR_DESTACADO,
-      hLineWidth: () => 0,
-      vLineWidth: (i: number) => (i === 0 ? 4 : 0),
-      vLineColor: () => COLOR_BORDE_DESTACADO,
-      paddingLeft: () => 10,
-      paddingRight: () => 10,
-      paddingTop: () => 8,
-      paddingBottom: () => 8,
-    },
-  };
-}
+const MARCAS_TEXTO: Record<MarcaPlano, string> = { reparar: 'Reparar y pintar', reemplazar: 'Cambiar pieza y pintar' };
 
-/** Circulo con el logo de la marca del auto (como en la app): logo, o iniciales si no lo tenemos, o un auto si no hay marca. */
-function insigniaAuto(marca: string | null): Column {
-  const circulo = `<circle cx="20" cy="20" r="19.25" fill="#ffffff" stroke="${COLOR_LINEA}" stroke-width="1.5"/>`;
-  const trazo = logoDeMarca(marca);
-  if (trazo) {
-    return { width: 36, svg: `<svg viewBox="0 0 40 40">${circulo}<path transform="translate(9 9) scale(0.9167)" fill="${COLOR_BORDE_DESTACADO}" d="${trazo}"/></svg>` };
-  }
-  if (!marca?.trim()) {
-    return { width: 36, svg: `<svg viewBox="0 0 40 40">${circulo}<path transform="translate(10 10) scale(0.8333)" fill="none" stroke="${COLOR_BORDE_DESTACADO}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 15v-3l2-5h12l2 5v3M4 15h16M4 15v3h3v-3M17 15v3h3v-3"/></svg>` };
-  }
+/** Etiqueta redondeada (pastilla) de color, con el texto en blanco. El ancho se estima por el largo del texto. */
+function pastilla(texto: string, color: string): Column {
+  const ancho = texto.length * 4.6 + 16;
   return {
-    width: 36,
+    width: ancho,
     stack: [
-      { svg: `<svg viewBox="0 0 40 40">${circulo}</svg>`, width: 36 },
-      { text: iniciales(marca), bold: true, fontSize: 12, color: COLOR_BORDE_DESTACADO, alignment: 'center', margin: [0, -26, 0, 0] },
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: ancho, h: 15, r: 7.5, color }], relativePosition: { x: 0, y: 0 } },
+      { text: texto, color: '#ffffff', bold: true, fontSize: 8, alignment: 'center', margin: [0, 3, 0, 0] },
     ],
   };
 }
 
-/** Cliente y vehiculo en un recuadro de esquinas redondeadas, con la insignia de la marca del auto. */
-function bloqueClienteVehiculo(p: PresupuestoParaPdf): Content {
-  const vehiculo = [p.vehiculo.marca, p.vehiculo.modelo, p.vehiculo.anio].filter(Boolean).join(' ');
-  // pdfmake no redondea tablas: se dibuja el fondo redondeado (fuera del flujo) y el contenido encima.
-  // El alto se estima por las lineas que ocuparan el nombre y el vehiculo.
-  const lineasNombre = Math.max(1, Math.ceil(p.cliente.nombre.length / 34));
-  const lineasVehiculo = Math.max(1, Math.ceil(vehiculo.length / 28));
-  const alto = Math.max(26 + 13.5 * lineasNombre, 26 + 12.5 * lineasVehiculo, 38) + 24;
-  const etiqueta = (t: string) => ({ text: t, fontSize: 8.5, color: COLOR_SUAVE, characterSpacing: 1 });
+/** Titulo de seccion: mayusculas en azul con linea azul debajo; a la derecha, pastillas opcionales. */
+function titulo(texto: string, pastillas: Column[] = [], arriba = 18): Content {
   return {
-    unbreakable: true,
-    margin: [0, 0, 0, 2],
+    margin: [0, arriba, 0, 8],
     stack: [
-      { canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: alto, r: 12, color: COLOR_FONDO, lineColor: COLOR_LINEA, lineWidth: 0.8 }], relativePosition: { x: 0, y: 0 } },
       {
-        margin: [16, 12, 16, 12],
-        columnGap: 16,
-        columns: [
-          {
-            width: '*',
-            stack: [etiqueta('CLIENTE'), { text: p.cliente.nombre, bold: true, fontSize: 11, margin: [0, 2, 0, 0] }, { text: p.cliente.telefono, color: COLOR_SUAVE }],
-          },
-          {
-            width: '*',
-            columnGap: 10,
-            columns: [
-              insigniaAuto(p.vehiculo.marca),
-              {
-                width: '*',
-                stack: [etiqueta('VEHÍCULO'), { text: p.vehiculo.patente, bold: true, fontSize: 11, margin: [0, 2, 0, 0] }, ...(vehiculo ? [{ text: vehiculo, color: COLOR_SUAVE }] : [])],
-              },
-            ],
-          },
+        columns: [{ text: texto.toUpperCase(), bold: true, fontSize: 9.5, color: MARCA, characterSpacing: 1.6, width: '*', margin: [0, 2, 0, 0] }, ...pastillas],
+        columnGap: 6,
+      },
+      { canvas: [{ type: 'line', x1: 0, y1: 0, x2: ANCHO, y2: 0, lineWidth: 2, lineColor: MARCA }], margin: [0, 5, 0, 0] },
+    ],
+  };
+}
+
+/** Fondo redondeado (fuera del flujo) bajo un contenido de alto conocido. */
+const fondoRedondeado = (w: number, h: number, r: number, opciones: { color?: string; lineColor?: string; lineWidth?: number; dash?: { length: number; space: number } }): Content => ({
+  canvas: [{ type: 'rect', x: 0, y: 0, w, h, r, ...opciones }],
+  relativePosition: { x: 0, y: 0 },
+});
+
+// --- Encabezado ----------------------------------------------------------------------------------------
+
+/** Direccion y telefono del taller, con iconos, sobre el fondo azul. */
+function contactoTaller(t: TallerParaPdf): Content[] {
+  const fila = (trazo: string, texto: string): Content => ({
+    columns: [
+      { svg: icono(trazo, SOBRE_MARCA_SUAVE), width: 9, margin: [0, 1, 0, 0] },
+      { text: texto, fontSize: 9.5, color: SOBRE_MARCA_SUAVE, width: '*' },
+    ],
+    columnGap: 5,
+    margin: [0, 3, 0, 0],
+  });
+  return [...(t.direccion ? [fila(TRAZO_UBICACION, t.direccion)] : []), ...(t.telefono ? [fila(TRAZO_TELEFONO, t.telefono)] : [])];
+}
+
+/** Encabezado de la primera pagina: se dibuja en el fondo de la pagina, sobre la banda azul (alto fijo). */
+function encabezado(t: TallerParaPdf, p: PresupuestoParaPdf): Content {
+  return {
+    margin: [LADO, 20, LADO, 0],
+    columns: [
+      {
+        width: '*',
+        stack: [
+          t.logoSvg
+            ? { svg: t.logoSvg, fit: [210, 44] }
+            : { text: t.nombre.toUpperCase(), fontSize: 17, bold: true, color: '#ffffff', characterSpacing: 0.5 },
+          ...contactoTaller(t),
+        ],
+      },
+      {
+        width: 'auto',
+        alignment: 'right',
+        stack: [
+          { text: 'PRESUPUESTO', fontSize: 8.5, color: SOBRE_MARCA_SUAVE, characterSpacing: 3 },
+          { text: `N° ${p.numero}`, fontSize: 24, bold: true, color: ACENTO_SOBRE_OSCURO, margin: [0, 1, 0, 1] },
+          { text: `Fecha: ${fechaCl(p.fecha)} · Válido hasta: ${fechaCl(p.validoHasta)}`, fontSize: 8.5, color: SOBRE_MARCA_SUAVE },
         ],
       },
     ],
   };
 }
 
-/** Direccion y telefono bajo el nombre (o logo) del taller, cada uno con su icono. */
-function contactoTaller(t: TallerParaPdf): Content[] {
-  const fila = (icono: string, texto: string): Content => ({
-    columns: [
-      { svg: icono, width: 9, margin: [0, 1, 0, 0] },
-      { text: texto, fontSize: 9.5, color: COLOR_SUAVE, width: '*' },
-    ],
-    columnGap: 5,
-    margin: [0, 3, 0, 0],
-  });
-  return [...(t.direccion ? [fila(ICONO_UBICACION, t.direccion)] : []), ...(t.telefono ? [fila(ICONO_TELEFONO, t.telefono)] : [])];
-}
+// --- Cliente y vehiculo ----------------------------------------------------------------------------------
 
-function bloqueCuenta(c: CuentaParaPdf): Column {
+/** Circulo con el logo de la marca del auto (como en la app): logo, o iniciales si no lo tenemos, o un auto si no hay marca. */
+function insigniaAuto(marca: string | null): Column {
+  const circulo = `<circle cx="20" cy="20" r="19.25" fill="#ffffff" stroke="${LINEA}" stroke-width="1.5"/>`;
+  const trazo = logoDeMarca(marca);
+  if (trazo) {
+    return { width: 30, svg: `<svg viewBox="0 0 40 40">${circulo}<path transform="translate(9 9) scale(0.9167)" fill="${MARCA}" d="${trazo}"/></svg>` };
+  }
+  if (!marca?.trim()) {
+    return {
+      width: 30,
+      svg: `<svg viewBox="0 0 40 40">${circulo}<path transform="translate(10 10) scale(0.8333)" fill="none" stroke="${MARCA}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 15v-3l2-5h12l2 5v3M4 15h16M4 15v3h3v-3M17 15v3h3v-3"/></svg>`,
+    };
+  }
   return {
-    width: '*',
+    width: 30,
     stack: [
-      { text: [{ text: c.banco, bold: true }, { text: `  ·  ${TIPO_CUENTA[c.tipoCuenta]}`, color: COLOR_SUAVE }], fontSize: 10.5 },
-      { text: `N° ${c.numero}`, bold: true, fontSize: 13, margin: [0, 2, 0, 2] },
-      { text: c.titular, fontSize: 9.5 },
-      { text: `RUT ${formatoRut(c.rut)}`, fontSize: 9.5 },
-      ...(c.email ? [{ text: c.email, fontSize: 9.5, color: COLOR_SUAVE }] : []),
+      { svg: `<svg viewBox="0 0 40 40">${circulo}</svg>`, width: 30 },
+      { text: iniciales(marca), bold: true, fontSize: 10, color: MARCA, alignment: 'center', margin: [0, -21, 0, 0] },
     ],
   };
 }
 
-/** "Datos para transferir": todas las cuentas activas, de a dos por fila, en un recuadro destacado. */
-function bloqueCuentas(t: TallerParaPdf): Content | null {
-  if (t.cuentas.length === 0 && !t.notaPago?.trim()) return null;
-  const filas: Content[] = [];
-  for (let i = 0; i < t.cuentas.length; i += 2) {
-    const par = t.cuentas.slice(i, i + 2);
-    filas.push({ columns: [...par.map(bloqueCuenta), ...(par.length === 1 ? [{ text: '', width: '*' }] : [])], columnGap: 16, margin: [0, i === 0 ? 0 : 8, 0, 0] });
-  }
-  return destacado(
-    {
-      stack: [
-        { text: 'DATOS PARA TRANSFERIR', fontSize: 8.5, bold: true, color: COLOR_SUAVE, characterSpacing: 1, margin: [0, 0, 0, 6] },
-        ...filas,
-        ...(t.notaPago?.trim() ? [{ text: t.notaPago.trim(), fontSize: 9, color: COLOR_SUAVE, margin: [0, 8, 0, 0] as [number, number, number, number] }] : []),
-      ],
+/** Tarjeta con fondo suave y borde naranja a la izquierda. */
+function tarjeta(contenido: Content): Content {
+  return {
+    table: { widths: ['*'], body: [[contenido]] },
+    layout: {
+      fillColor: () => FONDO,
+      hLineWidth: () => 0,
+      vLineWidth: (i: number) => (i === 0 ? 4 : 0),
+      vLineColor: () => ACENTO,
+      paddingLeft: () => 12,
+      paddingRight: () => 12,
+      paddingTop: () => 8,
+      paddingBottom: () => 8,
     },
-    [0, 16, 0, 0],
-  );
+  };
 }
+
+const etiqueta = (t: string): Content => ({ text: t, fontSize: 8, bold: true, color: SUAVE, characterSpacing: 1.6, margin: [0, 0, 0, 2] });
+
+function bloqueClienteVehiculo(p: PresupuestoParaPdf): Content {
+  const modelo = [p.vehiculo.marca, p.vehiculo.modelo, p.vehiculo.anio].filter(Boolean).join(' ');
+  return {
+    // El flujo parte a la altura de la banda delgada: en la primera pagina se baja hasta despues de la banda alta.
+    margin: [0, BANDA + FRANJA - ARRIBA + 18, 0, 0],
+    columnGap: 14,
+    columns: [
+      tarjeta({ stack: [etiqueta('CLIENTE'), { text: p.cliente.nombre, bold: true }, { text: p.cliente.telefono, color: SUAVE }] }),
+      tarjeta({
+        columns: [
+          {
+            width: '*',
+            stack: [
+              etiqueta('VEHÍCULO'),
+              { text: modelo || `Patente ${p.vehiculo.patente}`, bold: true },
+              ...(modelo ? [{ text: `Patente ${p.vehiculo.patente}`, color: SUAVE }] : []),
+            ],
+          },
+          insigniaAuto(p.vehiculo.marca),
+        ],
+        columnGap: 8,
+      }),
+    ],
+  };
+}
+
+// --- Piezas a trabajar (plano del auto) -------------------------------------------------------------------
 
 /** Piezas del presupuesto marcadas en el plano: clave del plano → reparar o cambiar (cambiar gana si hay ambas). */
 export function marcasDelPlano(p: PresupuestoParaPdf): Map<string, MarcaPlano> {
@@ -228,152 +269,301 @@ export function marcasDelPlano(p: PresupuestoParaPdf): Map<string, MarcaPlano> {
   return marcas;
 }
 
-/** El auto dibujado con las piezas del presupuesto coloreadas (solo si alguna pieza esta en el dibujo). */
+/** Nombres de las piezas marcadas, por tipo, para la leyenda ("capot, puerta delantera izquierda…"). */
+function nombresMarcados(marcas: Map<string, MarcaPlano>, tipo: MarcaPlano): string[] {
+  const nombres: string[] = [];
+  for (const [clave, m] of marcas) {
+    if (m !== tipo) continue;
+    const [zona, l] = clave.split('|') as [Zona, string | undefined];
+    nombres.push((ZONAS[zona].nombre + (l ? ` ${l}` : '')).toLowerCase());
+  }
+  return nombres;
+}
+
+/** El auto con las piezas del presupuesto coloreadas, en un recuadro redondeado (solo si alguna pieza esta en el dibujo). */
 function bloquePlano(p: PresupuestoParaPdf): Content | null {
   const marcas = marcasDelPlano(p);
   if (marcas.size === 0) return null;
-  const vista = (v: VistaPlano, titulo: string, ancho: number): Column => ({
+  const pad = 10;
+  const interior = ANCHO - 2 * pad;
+  const gap = 12;
+  const anchoLateral = (interior - gap) / 2;
+  const anchoChico = (anchoLateral - gap) / 2;
+  // Alto de cada recorte del plano (sus viewBox: laterales 360x128-130, superior 360x174, frente/atras 180x142).
+  const altoLateral = (anchoLateral * 130) / 360;
+  const altoFila2 = Math.max((anchoLateral * 174) / 360, (anchoChico * 142) / 180);
+  const vista = (v: VistaPlano, texto: string, ancho: number): Column => ({
     width: ancho,
     stack: [
-      { text: titulo, fontSize: 7.5, color: COLOR_SUAVE, characterSpacing: 0.8, margin: [0, 0, 0, 2] },
       { svg: svgPlano(marcas, v), width: ancho },
+      { text: texto, fontSize: 7, color: SUAVE, characterSpacing: 1.4, alignment: 'center', margin: [0, 2, 0, 0] },
     ],
   });
-  const muestra = (m: MarcaPlano) => ({
-    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" width="12" height="12"><rect x="0.5" y="0.5" width="11" height="11" rx="2" fill="${m === 'reparar' ? COLORES_PLANO_PDF.reparar : COLORES_PLANO_PDF.reemplazar}" stroke="${COLORES_PLANO_PDF.linea}"/>${m === 'reparar' ? `<path d="M0 6L6 0M3 12L12 3" stroke="#fff" stroke-width="1.6" stroke-opacity="0.6"/>` : ''}</svg>`,
-    width: 10,
+  const usadas = (['reparar', 'reemplazar'] as const).filter((m) => [...marcas.values()].includes(m));
+  const muestra = (m: MarcaPlano): Column => ({
+    width: 14,
+    margin: [0, 1, 0, 0],
+    svg: `<svg viewBox="0 0 14 10"><rect x="0.75" y="0.75" width="12.5" height="8.5" rx="2" fill="${m === 'reparar' ? COLORES_PLANO_PDF.reparar : COLORES_PLANO_PDF.reemplazar}" stroke="${COLORES_PLANO_PDF.linea}" stroke-width="1"/>${m === 'reparar' ? '<path d="M2 10L10 0M7 10L14 1" stroke="#ffffff" stroke-width="1.4" stroke-opacity="0.6"/>' : ''}</svg>`,
   });
-  const usadas = new Set(marcas.values());
-  const leyenda: Column[] = [];
-  if (usadas.has('reparar')) leyenda.push({ width: 'auto', columns: [muestra('reparar'), { text: 'Reparar y pintar', fontSize: 8.5, margin: [4, 0, 0, 0] }] });
-  if (usadas.has('reemplazar')) leyenda.push({ width: 'auto', columns: [muestra('reemplazar'), { text: 'Cambiar pieza y pintar', fontSize: 8.5, margin: [4, 0, 0, 0] }] });
+  const leyenda: Content[] = usadas.map((m) => ({
+    columns: [muestra(m), { text: [{ text: `${MARCAS_TEXTO[m]}: `, bold: true }, nombresMarcados(marcas, m).join(', ')], fontSize: 8.5, color: SUAVE, width: '*' }],
+    columnGap: 6,
+    margin: [0, 3, 0, 0],
+  }));
+  // Alto del recuadro: dibujos y rotulos (fijos) + leyenda (se estima por el largo del texto).
+  const lineasLeyenda = usadas.reduce((s, m) => s + Math.ceil((MARCAS_TEXTO[m].length + nombresMarcados(marcas, m).join(', ').length) / 105), 0);
+  const alto = pad + altoLateral + 11 + 8 + altoFila2 + 11 + 8 + 1 + 4 + lineasLeyenda * 12.5 + pad;
   return {
     unbreakable: true,
     stack: [
-      { text: 'Piezas a trabajar', bold: true, fontSize: 12, margin: [0, 16, 0, 6] },
-      { columns: [vista('izquierda', 'LATERAL IZQUIERDO', 250), vista('derecha', 'LATERAL DERECHO', 250)], columnGap: 15 },
-      { columns: [vista('superior', 'VISTA SUPERIOR', 220), vista('frente', 'FRENTE', 130), vista('atras', 'ATRÁS', 130)], columnGap: 17, margin: [0, 8, 0, 0] },
-      { columns: leyenda, columnGap: 18, margin: [0, 6, 0, 0] },
+      titulo('Piezas a trabajar', usadas.map((m) => pastilla(MARCAS_TEXTO[m], m === 'reparar' ? ACENTO : COLORES_PLANO_PDF.reemplazar))),
+      fondoRedondeado(ANCHO, alto, 8, { color: FONDO, lineColor: LINEA, lineWidth: 1 }),
+      {
+        margin: [pad, pad, pad, pad],
+        stack: [
+          { columns: [vista('izquierda', 'LATERAL IZQUIERDO', anchoLateral), vista('derecha', 'LATERAL DERECHO', anchoLateral)], columnGap: gap },
+          {
+            columns: [vista('superior', 'VISTA SUPERIOR', anchoLateral), vista('frente', 'FRENTE', anchoChico), vista('atras', 'ATRÁS', anchoChico)],
+            columnGap: gap,
+            margin: [0, 8, 0, 0],
+          },
+          { canvas: [{ type: 'line', x1: 0, y1: 0, x2: interior, y2: 0, lineWidth: 1, lineColor: LINEA, dash: { length: 3, space: 3 } }], margin: [0, 8, 0, 2] },
+          ...leyenda,
+        ],
+      },
     ],
   };
 }
 
-/** "Que incluye el trabajo": solo lo que ese presupuesto lleva (pintura y/o desabolladura). */
+// --- Detalle, totales, anticipo y plazo ----------------------------------------------------------------------
+
+function tablaDetalle(p: PresupuestoParaPdf): Content {
+  const encabezados = ['PIEZA', 'TRABAJO', 'PRECIO'].map((t, i) => ({
+    text: t,
+    fontSize: 8,
+    bold: true,
+    color: SUAVE,
+    characterSpacing: 1.4,
+    alignment: i === 2 ? ('right' as const) : ('left' as const),
+  }));
+  const filas = p.lineas.map((l) => [
+    {
+      stack: [
+        { text: l.nombre + (l.operacion === 'libre' ? '' : lado(l.posicion)) },
+        ...(l.operacion === 'libre' && l.descripcion ? [{ text: l.descripcion, color: SUAVE, fontSize: 8.5, margin: [0, 2, 0, 0] as [number, number, number, number] }] : []),
+      ],
+    },
+    { text: queSeHace(l) },
+    { text: pesos(l.precioTotal), alignment: 'right' as const },
+  ]);
+  return {
+    table: { widths: ['*', 140, 70], headerRows: 1, dontBreakRows: true, body: [encabezados, ...filas] },
+    layout: {
+      fillColor: (fila: number) => (fila > 0 && fila % 2 === 0 ? FONDO : null),
+      hLineColor: () => LINEA,
+      hLineWidth: (i: number) => (i === 0 ? 0 : 1),
+      vLineWidth: () => 0,
+      paddingLeft: () => 8,
+      paddingRight: () => 8,
+      paddingTop: (i: number) => (i === 0 ? 2 : 7),
+      paddingBottom: (i: number) => (i === 0 ? 5 : 7),
+    },
+  };
+}
+
+function bloqueTotales(p: PresupuestoParaPdf): Content {
+  const ancho = 300;
+  const fila = (texto: string, monto: string, color = TINTA): Content => ({
+    columns: [{ text: texto, color }, { text: monto, alignment: 'right', color }],
+    margin: [8, 3, 8, 3],
+  });
+  return {
+    unbreakable: true,
+    margin: [ANCHO - ancho, 10, 0, 0],
+    stack: [
+      fila('Subtotal', pesos(p.subtotal)),
+      ...(p.descuento > 0 ? [fila('Descuento', pesos(-p.descuento), PELIGRO)] : []),
+      {
+        margin: [0, 6, 0, 0],
+        stack: [
+          fondoRedondeado(ancho, 34, 6, { color: MARCA }),
+          {
+            columns: [
+              { text: 'TOTAL', bold: true, fontSize: 13, color: '#ffffff' },
+              { text: pesos(p.total), bold: true, fontSize: 15, color: ACENTO_SOBRE_OSCURO, alignment: 'right' },
+            ],
+            margin: [12, 8, 12, 8],
+          },
+        ],
+      },
+    ],
+  };
+}
+
+/** Anticipo y plazo en cajas con borde naranja punteado (solo los que hay). */
+function bloquePago(p: PresupuestoParaPdf): Content | null {
+  const cajas: [string, string][] = [];
+  if (p.montoInicio > 0) cajas.push(['ANTICIPO', pesos(p.montoInicio)]);
+  if (p.plazoDias) cajas.push(['PLAZO ESTIMADO', `${p.plazoDias} ${p.plazoDias === 1 ? 'día hábil' : 'días hábiles'}`]);
+  if (cajas.length === 0) return null;
+  const gap = 14;
+  const ancho = (ANCHO - gap) / 2;
+  return {
+    unbreakable: true,
+    margin: [0, 14, 0, 0],
+    columnGap: gap,
+    columns: cajas.map(([etq, valor]) => ({
+      width: ancho,
+      stack: [
+        fondoRedondeado(ancho, 46, 6, { lineColor: ACENTO, lineWidth: 1, dash: { length: 3, space: 2 } }),
+        {
+          margin: [12, 8, 12, 8],
+          stack: [
+            { text: etq, fontSize: 7.5, color: SUAVE, characterSpacing: 1.4 },
+            { text: valor, fontSize: 14, bold: true, margin: [0, 2, 0, 0] },
+          ],
+        },
+      ],
+    })),
+  };
+}
+
+// --- Que incluye, notas y cuentas ------------------------------------------------------------------------------
+
+/** Lista con un check naranja, en dos columnas. */
+function listaCheck(pasos: string[]): Content {
+  const item = (texto: string): Content => ({ columns: [{ svg: CHECK, width: 11, margin: [0, 1, 0, 0] }, { text: texto, width: '*' }], columnGap: 7, margin: [0, 0, 0, 5] });
+  const mitad = Math.ceil(pasos.length / 2);
+  return { columns: [{ width: '*', stack: pasos.slice(0, mitad).map(item) }, { width: '*', stack: pasos.slice(mitad).map(item) }], columnGap: 20 };
+}
+
+/** "Que incluye el trabajo": solo lo que ese presupuesto lleva (desabolladura y/o pintura). */
 function bloqueDetalle(t: TallerParaPdf, p: PresupuestoParaPdf): Content | null {
   const conPintura = p.lineas.some((l) => l.operacion !== 'libre' && l.pintura > 0);
   const conDesabollado = p.lineas.some((l) => l.operacion === 'reparar' && l.desabollado > 0);
-  const columnas: Column[] = [];
-  const agregar = (titulo: string, pasos: string[]) => {
-    if (pasos.length) columnas.push({ width: '*', stack: [{ text: titulo, bold: true, fontSize: 10, margin: [0, 0, 0, 3] }, { ul: pasos, fontSize: 9, color: COLOR_SUAVE, lineHeight: 1.25 }] });
-  };
-  if (conDesabollado) agregar('Desabolladura', t.detalleDesabollado);
-  if (conPintura) agregar('Pintura', t.detallePintura);
-  if (columnas.length === 0) return null;
+  const partes: [string, string[]][] = [];
+  if (conDesabollado && t.detalleDesabollado.length) partes.push(['Desabolladura', t.detalleDesabollado]);
+  if (conPintura && t.detallePintura.length) partes.push(['Pintura', t.detallePintura]);
+  if (partes.length === 0) return null;
   return {
     unbreakable: true,
-    stack: [{ text: 'Qué incluye el trabajo', bold: true, fontSize: 12, margin: [0, 16, 0, 6] }, { columns: columnas, columnGap: 20 }],
+    stack: [
+      titulo('Qué incluye el trabajo'),
+      ...partes.flatMap(([sub, pasos], i): Content[] => [
+        ...(partes.length > 1 ? [{ text: sub, bold: true, color: MARCA, margin: [0, i === 0 ? 0 : 6, 0, 5] as [number, number, number, number] }] : []),
+        listaCheck(pasos),
+      ]),
+    ],
   };
 }
 
+function bloqueTexto(tituloTexto: string, texto: string): Content {
+  return { unbreakable: true, stack: [titulo(tituloTexto), { text: texto, color: TINTA, fontSize: 10, lineHeight: 1.3 }] };
+}
+
+/** "Datos para transferir": el titular arriba si es el mismo en todas; una tarjeta por cuenta, de a dos por fila. */
+function bloqueCuentas(t: TallerParaPdf): Content | null {
+  if (t.cuentas.length === 0 && !t.notaPago?.trim()) return null;
+  const persona = (c: CuentaParaPdf) => `${c.titular}|${c.rut}|${c.email ?? ''}`;
+  const mismoTitular = t.cuentas.length > 0 && t.cuentas.every((c) => persona(c) === persona(t.cuentas[0]));
+  const datosTitular = (c: CuentaParaPdf) => [c.titular, `RUT ${formatoRut(c.rut)}`, ...(c.email ? [c.email] : [])];
+
+  const gap = 14;
+  const ancho = (ANCHO - gap) / 2;
+  const altoTarjeta = mismoTitular ? 58 : 58 + 3 * 12;
+  const tarjetaCuenta = (c: CuentaParaPdf): Column => ({
+    width: ancho,
+    stack: [
+      fondoRedondeado(ancho, altoTarjeta, 6, { color: FONDO }),
+      {
+        margin: [14, 10, 14, 10],
+        stack: [
+          { text: c.banco, bold: true, fontSize: 11, color: MARCA },
+          { text: TIPO_CUENTA[c.tipoCuenta], fontSize: 9.5, color: SUAVE },
+          { text: `N° ${c.numero}`, bold: true, fontSize: 12, margin: [0, 2, 0, 0] },
+          ...(mismoTitular ? [] : datosTitular(c).map((x) => ({ text: x, fontSize: 9, margin: [0, 1, 0, 0] as [number, number, number, number] }))),
+        ],
+      },
+    ],
+  });
+  const filas: Content[] = [];
+  for (let i = 0; i < t.cuentas.length; i += 2) {
+    filas.push({ columns: t.cuentas.slice(i, i + 2).map(tarjetaCuenta), columnGap: gap, margin: [0, i === 0 ? 0 : 10, 0, 0] });
+  }
+  return {
+    unbreakable: true,
+    stack: [
+      titulo('Datos para transferir'),
+      ...(mismoTitular
+        ? [{ text: [{ text: t.cuentas[0].titular, bold: true }, ...datosTitular(t.cuentas[0]).slice(1).map((x) => `  ·  ${x}`)], margin: [0, 0, 0, 10] as [number, number, number, number] }]
+        : []),
+      ...filas,
+      ...(t.notaPago?.trim() ? [{ text: t.notaPago.trim(), fontSize: 9.5, color: SUAVE, margin: [0, 10, 0, 0] as [number, number, number, number] }] : []),
+    ],
+  };
+}
+
+// --- Documento ------------------------------------------------------------------------------------------------
+
 /** Arma el documento (A4) con los datos ya calculados por el servidor. */
 export function construirDocumento(taller: TallerParaPdf, p: PresupuestoParaPdf): TDocumentDefinitions {
-  const filas = p.lineas.map((l) => {
-    const detalle = queSeHace(l);
-    return [
-      {
-        stack: [{ text: l.nombre + (l.operacion === 'libre' ? '' : lado(l.posicion)), bold: true }, ...(detalle ? [{ text: detalle, color: COLOR_SUAVE, fontSize: 9 }] : [])],
-      },
-      { text: pesos(l.precioTotal), alignment: 'right' as const },
-    ];
-  });
-
-  const totales: Content[] = [
-    {
-      columns: [{ text: 'Subtotal', color: COLOR_SUAVE }, { text: pesos(p.subtotal), alignment: 'right' }],
-      margin: [0, 2, 0, 2],
-    },
-  ];
-  if (p.descuento > 0) {
-    totales.push({ columns: [{ text: 'Descuento', color: COLOR_SUAVE }, { text: pesos(-p.descuento), alignment: 'right' }], margin: [0, 2, 0, 2] });
-  }
-  totales.push({
-    columns: [{ text: 'TOTAL', bold: true, fontSize: 13 }, { text: pesos(p.total), bold: true, fontSize: 13, alignment: 'right' }],
-    margin: [0, 6, 0, 0],
-  });
-
-  const datos: Content[] = [];
-  if (p.montoInicio > 0) {
-    datos.push({ text: [{ text: 'Anticipo: ', bold: true }, pesos(p.montoInicio)], margin: [0, 0, 0, 4] });
-  }
-  if (p.plazoDias) {
-    datos.push({
-      text: [{ text: 'Plazo estimado: ', bold: true }, `${p.plazoDias} ${p.plazoDias === 1 ? 'día hábil' : 'días hábiles'}`],
-      margin: [0, 0, 0, 4],
-    });
-  }
-
-  const bloques: Content[] = [];
-  const bloque = (titulo: string, texto: string) =>
-    bloques.push({ text: titulo, bold: true, margin: [0, 14, 0, 3] }, { text: texto, color: COLOR_SUAVE, fontSize: 9.5, lineHeight: 1.3 });
-  if (p.observaciones?.trim()) bloque('Observaciones', p.observaciones.trim());
-  if (p.condiciones.trim()) bloque('Condiciones', p.condiciones.trim());
-
-  const detalle = bloqueDetalle(taller, p);
   const plano = bloquePlano(p);
+  const pago = bloquePago(p);
+  const detalle = bloqueDetalle(taller, p);
   const cuentas = bloqueCuentas(taller);
 
   return {
     pageSize: 'A4',
-    pageMargins: [40, 40, 40, 56],
+    pageMargins: [LADO, ARRIBA, LADO, 50],
     info: { title: `Presupuesto N° ${p.numero} - ${taller.nombre}`, author: taller.nombre },
-    defaultStyle: { font: 'Roboto', fontSize: 10.5, color: COLOR_TEXTO },
-    content: [
-      {
-        columns: [
-          {
-            width: '*',
-            stack: [taller.logoSvg ? { svg: taller.logoSvg, width: 170 } : { text: taller.nombre, fontSize: 20, bold: true }, ...contactoTaller(taller)],
-          },
-          {
-            width: 'auto',
-            alignment: 'right',
-            stack: [
-              { text: 'PRESUPUESTO', fontSize: 9, color: COLOR_SUAVE, characterSpacing: 1.5 },
-              { text: `N° ${p.numero}`, fontSize: 20, bold: true },
-              { text: `Fecha: ${fechaCl(p.fecha)}`, color: COLOR_SUAVE, fontSize: 9.5, margin: [0, 3, 0, 0] },
-              { text: `Válido hasta: ${fechaCl(p.validoHasta)}`, color: COLOR_SUAVE, fontSize: 9.5 },
-            ],
-          },
+    defaultStyle: { font: 'Roboto', fontSize: 10, color: TINTA, lineHeight: 1.15 },
+    // Banda azul con franja naranja: alta (con el encabezado completo) en la primera pagina, delgada en las demas.
+    background: (pagina: number) => {
+      const alto = pagina === 1 ? BANDA : BANDA_DELGADA;
+      const banda: Content = {
+        absolutePosition: { x: 0, y: 0 },
+        canvas: [
+          { type: 'rect', x: 0, y: 0, w: ANCHO_PAGINA, h: alto, color: MARCA },
+          { type: 'rect', x: 0, y: alto, w: ANCHO_PAGINA, h: FRANJA, color: ACENTO },
         ],
-      },
-      { canvas: [{ type: 'line', x1: 0, y1: 0, x2: 515, y2: 0, lineWidth: 1, lineColor: COLOR_LINEA }], margin: [0, 12, 0, 12] },
+      };
+      const contenido: Content =
+        pagina === 1
+          ? encabezado(taller, p)
+          : {
+              margin: [LADO, 14, LADO, 0],
+              columns: [
+                { text: taller.nombre.toUpperCase(), bold: true, fontSize: 11, color: '#ffffff', characterSpacing: 0.5 },
+                { text: `Presupuesto N° ${p.numero}`, bold: true, fontSize: 11, color: ACENTO_SOBRE_OSCURO, alignment: 'right' },
+              ],
+            };
+      return [banda, contenido];
+    },
+    content: [
       bloqueClienteVehiculo(p),
       // Orden acordado: cliente y vehiculo, piezas a trabajar (el auto), detalle con precios, que incluye.
       ...(plano ? [plano] : []),
-      { text: 'Detalle del trabajo', bold: true, fontSize: 12, margin: [0, 18, 0, 6] },
-      {
-        table: { widths: ['*', 'auto'], headerRows: 1, dontBreakRows: true, body: [[{ text: 'Trabajo', bold: true, color: COLOR_SUAVE }, { text: 'Precio', bold: true, color: COLOR_SUAVE, alignment: 'right' }], ...filas] },
-        layout: {
-          fillColor: (fila: number) => (fila === 0 ? COLOR_FONDO : null),
-          hLineColor: () => COLOR_LINEA,
-          vLineWidth: () => 0,
-          hLineWidth: (i: number, nodo: { table: { body: unknown[] } }) => (i === 0 || i === nodo.table.body.length ? 0 : 0.5),
-          paddingTop: () => 6,
-          paddingBottom: () => 6,
-        },
-      },
-      { margin: [285, 12, 0, 0], unbreakable: true, stack: totales },
-      ...(datos.length ? [{ margin: [0, 16, 0, 0] as [number, number, number, number], unbreakable: true, stack: datos }] : []),
+      titulo('Detalle del trabajo'),
+      tablaDetalle(p),
+      bloqueTotales(p),
+      ...(pago ? [pago] : []),
       ...(detalle ? [detalle] : []),
-      ...bloques,
+      ...(p.observaciones?.trim() ? [bloqueTexto('Observaciones', p.observaciones.trim())] : []),
+      ...(p.condiciones.trim() ? [bloqueTexto('Condiciones', p.condiciones.trim())] : []),
       ...(cuentas ? [cuentas] : []),
     ],
     footer: (pagina: number, total: number) => ({
-      columns: [
-        { text: `Presupuesto N° ${p.numero} · ${taller.nombre}`, color: COLOR_SUAVE, fontSize: 8 },
-        { text: `Página ${pagina} de ${total}`, color: COLOR_SUAVE, fontSize: 8, alignment: 'right' },
+      margin: [LADO, 14, LADO, 0],
+      stack: [
+        { canvas: [{ type: 'line', x1: 0, y1: 0, x2: ANCHO, y2: 0, lineWidth: 1, lineColor: LINEA }] },
+        {
+          margin: [0, 6, 0, 0],
+          columns: [
+            { text: `Presupuesto N° ${p.numero} · ${taller.nombre}`, color: SUAVE, fontSize: 8 },
+            { text: `Página ${pagina} de ${total}`, color: SUAVE, fontSize: 8, alignment: 'right' },
+          ],
+        },
       ],
-      margin: [40, 20, 40, 0],
     }),
   };
 }

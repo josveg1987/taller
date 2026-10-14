@@ -33,10 +33,10 @@ export class PdfService {
         direccion: string | null;
         telefono: string | null;
         datos_transferencia: string | null;
-        logo_claro_svg: string | null;
+        logo_oscuro_svg: string | null;
         detalle_pintura: string | null;
         detalle_desabollado: string | null;
-      }>('SELECT nombre, direccion, telefono, datos_transferencia, logo_claro_svg, detalle_pintura, detalle_desabollado FROM talleres');
+      }>('SELECT nombre, direccion, telefono, datos_transferencia, logo_oscuro_svg, detalle_pintura, detalle_desabollado FROM talleres');
       const k = await c.query<{ titular: string; rut: string; banco: string; tipo_cuenta: CuentaParaPdf['tipoCuenta']; numero: string; email: string | null }>(
         'SELECT titular, rut, banco, tipo_cuenta, numero, email FROM cuentas_bancarias WHERE activa ORDER BY orden, creado_en',
       );
@@ -47,7 +47,8 @@ export class PdfService {
       direccion: taller.direccion,
       telefono: taller.telefono,
       notaPago: taller.datos_transferencia,
-      logoSvg: taller.logo_claro_svg,
+      // El encabezado del PDF es azul: va el logo para fondo oscuro.
+      logoSvg: taller.logo_oscuro_svg,
       cuentas: cuentas.map((x) => ({ titular: x.titular, rut: x.rut, banco: x.banco, tipoCuenta: x.tipo_cuenta, numero: x.numero, email: x.email })),
       detallePintura: pasosDeDetalle(detalleEfectivo(taller.detalle_pintura, DETALLE_PINTURA_ESTANDAR)),
       detalleDesabollado: pasosDeDetalle(detalleEfectivo(taller.detalle_desabollado, DETALLE_DESABOLLADO_ESTANDAR)),

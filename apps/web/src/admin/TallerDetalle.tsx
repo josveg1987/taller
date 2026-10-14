@@ -68,7 +68,8 @@ export function TallerDetalle({ id }: { id: string }) {
 
       <DatosTaller taller={taller} ejecutar={ejecutar} />
 
-      <LogoTaller tallerId={taller.id} svg={taller.logoClaroSvg} ejecutar={ejecutar} />
+      <LogoTaller tallerId={taller.id} fondo="oscuro" svg={taller.logoOscuroSvg} ejecutar={ejecutar} />
+      <LogoTaller tallerId={taller.id} fondo="claro" svg={taller.logoClaroSvg} ejecutar={ejecutar} />
 
       <GestionUsuarios
         usuarios={taller.usuarios}

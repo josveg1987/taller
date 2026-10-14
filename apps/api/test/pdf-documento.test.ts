@@ -43,7 +43,12 @@ const base: PresupuestoParaPdf = {
   condiciones: 'Garantía de 6 meses.',
 };
 
-const textoDe = (p: PresupuestoParaPdf, t: TallerParaPdf = taller) => JSON.stringify(construirDocumento(t, p));
+// Incluye el encabezado de la primera pagina, que va en el fondo de pagina (una funcion).
+const textoDe = (p: PresupuestoParaPdf, t: TallerParaPdf = taller) => {
+  const doc = construirDocumento(t, p);
+  const fondo = (doc.background as (pagina: number, tamano: unknown) => unknown)(1, {});
+  return JSON.stringify(fondo) + JSON.stringify(doc);
+};
 
 describe('formato', () => {
   it('pesos, fechas y RUT al estilo chileno', () => {
@@ -72,10 +77,10 @@ describe('documento del presupuesto', () => {
   });
 
   it('el anticipo se llama "Anticipo" (ya no "Para iniciar el trabajo") y solo sale si se solicita', () => {
-    expect(textoDe(base)).toContain('Anticipo: ');
+    expect(textoDe(base)).toContain('ANTICIPO');
     expect(textoDe(base)).toContain('$125.000');
     expect(textoDe(base)).not.toContain('Para iniciar el trabajo');
-    expect(textoDe({ ...base, montoInicio: 0 })).not.toContain('Anticipo');
+    expect(textoDe({ ...base, montoInicio: 0 })).not.toContain('ANTICIPO');
   });
 
   it('la direccion y el telefono van bajo el nombre del taller, con iconos', () => {
@@ -115,7 +120,7 @@ describe('documento del presupuesto', () => {
 
   it('"Qué incluye el trabajo" muestra solo lo que el presupuesto lleva', () => {
     const t = textoDe(base);
-    expect(t).toContain('Qué incluye el trabajo');
+    expect(t).toContain('QUÉ INCLUYE EL TRABAJO');
     expect(t).toContain('Lijado y preparación de la superficie.');
     expect(t).toContain('Enderezado de la chapa.');
     // Solo pintura (sin desabollado): no sale el bloque de desabolladura.
@@ -123,7 +128,7 @@ describe('documento del presupuesto', () => {
     expect(soloPintura).toContain('Aplicación de barniz.');
     expect(soloPintura).not.toContain('Enderezado de la chapa.');
     // Solo un servicio libre: no hay detalle de trabajo.
-    expect(textoDe({ ...base, lineas: [base.lineas[2]] })).not.toContain('Qué incluye el trabajo');
+    expect(textoDe({ ...base, lineas: [base.lineas[2]] })).not.toContain('QUÉ INCLUYE EL TRABAJO');
     // Reparar con desabollado en $0 no cuenta como desabolladura.
     expect(textoDe({ ...base, lineas: [{ ...base.lineas[0], desabollado: 0 }] })).not.toContain('Enderezado de la chapa.');
   });
@@ -138,17 +143,16 @@ describe('documento del presupuesto', () => {
       { ...base, descuento: 0, montoInicio: 0, plazoDias: null, observaciones: null, condiciones: '' },
       { ...taller, cuentas: [], notaPago: null, direccion: null, telefono: null },
     );
-    for (const ausente of ['Descuento', 'Anticipo', 'Plazo estimado', 'Observaciones', 'Condiciones', 'DATOS PARA TRANSFERIR']) {
+    for (const ausente of ['Descuento', 'ANTICIPO', 'PLAZO ESTIMADO', 'OBSERVACIONES', 'CONDICIONES', 'DATOS PARA TRANSFERIR']) {
       expect(t).not.toContain(ausente);
     }
   });
 
   it('con logo lo dibuja en vez del nombre en texto grande', () => {
     const logo = '<svg viewBox="0 0 10 10"><path d="M0 0h10v10z"/></svg>';
-    const con = construirDocumento({ ...taller, logoSvg: logo }, base);
-    expect(JSON.stringify(con)).toContain(logo.replace(/"/g, '\\"'));
-    expect(JSON.stringify(con)).not.toContain('"text":"Taller Sur","fontSize":20');
-    expect(JSON.stringify(construirDocumento(taller, base))).toContain('"text":"Taller Sur","fontSize":20');
+    expect(textoDe(base, { ...taller, logoSvg: logo })).toContain(logo.replace(/"/g, '\\"'));
+    expect(textoDe(base, { ...taller, logoSvg: logo })).not.toContain('"text":"TALLER SUR","fontSize":17');
+    expect(textoDe(base)).toContain('"text":"TALLER SUR","fontSize":17');
   });
 
   it('dibuja el auto con las piezas del presupuesto: franjas al reparar, lleno al cambiar', () => {
@@ -157,19 +161,21 @@ describe('documento del presupuesto', () => {
       ['puerta_delantera|izquierda', 'reemplazar'],
     ]);
     const t = textoDe(base);
-    expect(t).toContain('Piezas a trabajar');
+    expect(t).toContain('PIEZAS A TRABAJAR');
     expect(t).toContain('LATERAL IZQUIERDO');
     expect(t).toContain('Reparar y pintar');
+    // La leyenda nombra las piezas de cada tipo.
+    expect(t).toContain('capot');
+    expect(t).toContain('puerta delantera izquierda');
     expect(t).toContain('Cambiar pieza y pintar');
     // Solo servicios (sin zona): no hay dibujo.
-    expect(textoDe({ ...base, lineas: [base.lineas[2]] })).not.toContain('Piezas a trabajar');
+    expect(textoDe({ ...base, lineas: [base.lineas[2]] })).not.toContain('PIEZAS A TRABAJAR');
     // Solo reparaciones: la leyenda no muestra "cambiar".
     expect(textoDe({ ...base, lineas: [base.lineas[0]] })).not.toContain('Cambiar pieza y pintar');
   });
 
-  it('cliente y vehiculo van en un recuadro redondeado con la insignia de la marca', () => {
+  it('cliente y vehiculo van en tarjetas, con la insignia de la marca en la del vehiculo', () => {
     const t = textoDe(base);
-    expect(t).toContain('"r":12'); // esquinas redondeadas del fondo
     expect(t).toContain(logoDeMarca('Toyota')!.slice(0, 40));
     // Marca sin logo: sus iniciales; sin marca: el icono de auto.
     expect(textoDe({ ...base, vehiculo: { ...base.vehiculo, marca: 'Great Wall' } })).toContain('"text":"GW"');
@@ -178,7 +184,7 @@ describe('documento del presupuesto', () => {
 
   it('orden: cliente, piezas a trabajar, detalle con precios y que incluye', () => {
     const t = textoDe(base);
-    const pos = ['CLIENTE', 'Piezas a trabajar', 'Detalle del trabajo', 'Qué incluye el trabajo'].map((x) => t.indexOf(x));
+    const pos = ['CLIENTE', 'PIEZAS A TRABAJAR', 'DETALLE DEL TRABAJO', 'QUÉ INCLUYE EL TRABAJO'].map((x) => t.indexOf(x));
     expect(pos.every((x) => x >= 0)).toBe(true);
     expect([...pos].sort((x, y) => x - y)).toEqual(pos);
   });

@@ -386,10 +386,17 @@ orden de la plantilla según el esquema 1-17 (Alerón y Tolva sin zona, al final
 `index.html`; para otro dibujo, ver `vega-proto/HANDOFF.md`). Web: `presupuestos/PlanoAuto.tsx` (carga diferida, vistas
 Todo/Arriba/Izq./Der./Frente/Atrás; tocar una zona agrega la pieza en ese lado) arriba del paso 2; la ficha de pieza tiene
 "Zona en el dibujo del auto". PDF: bloque "Piezas a trabajar" (solo si alguna línea tiene zona) con las 5 vistas, reparar = franjas
-naranjas, cambiar = azul claro, y leyenda. Orden del PDF (pedido por el dueño): encabezado (logo, dirección y
-teléfono con íconos) → recuadro redondeado de cliente y vehículo con la insignia de la marca → Piezas a trabajar →
-Detalle del trabajo (tabla, totales, anticipo y plazo) → Qué incluye el trabajo → observaciones, condiciones y cuentas.
-pdfmake no redondea tablas: el fondo es un `canvas` con `relativePosition` y el alto se estima por el largo de los textos. En `vitest.config.mts` de la API el alias de `@taller/shared/plano` va antes que el
+naranjas, cambiar = azul claro, y leyenda. **Diseño del PDF (2026-10-14, propuesta HTML del dueño):** banda azul de
+la marca con franja naranja (alta en la página 1 con logo para fondo oscuro, dirección y teléfono con íconos, N° en naranja y
+fechas; delgada en las demás con nombre y N°), dibujada en `background` con posición fija → tarjetas Cliente / Vehículo (fondo
+suave, borde naranja; insignia de la marca en la del vehículo) → PIEZAS A TRABAJAR (pastillas por tipo, auto en recuadro
+redondeado, leyenda con los nombres de las piezas) → DETALLE DEL TRABAJO (Pieza · Trabajo · Precio, filas alternadas) →
+totales (TOTAL en caja azul) → Anticipo y Plazo en cajas punteadas → QUÉ INCLUYE (lista con check) → Observaciones →
+Condiciones → Datos para transferir (titular una vez si es el mismo en todas; una tarjeta por cuenta). Colores = los de la
+marca en la app (`MARCA`, `ACENTO`… al inicio de `pdf.documento.ts`). pdfmake no redondea tablas: los fondos redondeados son
+`canvas` con `relativePosition` y alto calculado. Migración `1791600500000_logo-oscuro`: `talleres.logo_oscuro_svg` (solo el
+administrador de la APP: `PUT /admin/talleres/:id/logo` con `fondo: 'oscuro'`; tarjeta "Logo para fondo oscuro (PDF)" en el
+detalle del taller); sin él, el nombre del taller en blanco. Para Vega: `vega-logo-pack/vega-logo/logos/svg/horizontal-fondo-oscuro-naranja.svg`. En `vitest.config.mts` de la API el alias de `@taller/shared/plano` va antes que el
 del índice. 335 tests API + 18 shared.
 Nota: no correr `npm run build` (raíz) con `dev:api` abierto: borra `apps/api/dist` y la API se cae; usar `-w @taller/web`.
 Nota: `TaskStop` sobre `npm run dev:api` deja vivo el proceso de Node en el puerto 3000: matarlo por PID (`netstat -ano`).

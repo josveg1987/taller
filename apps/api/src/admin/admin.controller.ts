@@ -3,7 +3,7 @@ import { Contexto } from '../auth/contexto';
 import { SesionActual, SoloAdminApp } from '../auth/decoradores';
 import { sanearSvg } from '../marca/svg';
 import { AdminService } from './admin.service';
-import { booleano, cuerpo, email, entero, idValido, password, texto } from '../validacion';
+import { booleano, cuerpo, email, entero, idValido, opcion, password, texto } from '../validacion';
 
 const MAX_USUARIOS = 50;
 
@@ -43,12 +43,16 @@ export class AdminController {
     });
   }
 
-  /** Logo SVG del taller (el del PDF). svg: null lo quita. Se valida y limpia antes de guardarlo. */
+  /**
+   * Logo SVG del taller. fondo: 'claro' (por defecto) u 'oscuro' (el del encabezado azul del PDF). svg: null lo quita.
+   * Se valida y limpia antes de guardarlo.
+   */
   @Put('talleres/:id/logo')
   @HttpCode(204)
   async cambiarLogo(@Param('id') id: string, @Body() body: unknown): Promise<void> {
     const b = cuerpo(body);
-    await this.admin.cambiarLogo(idValido(id), b.svg === null ? null : sanearSvg(b.svg));
+    const fondo = b.fondo === undefined ? 'claro' : opcion(b.fondo, 'El fondo del logo', ['claro', 'oscuro'] as const);
+    await this.admin.cambiarLogo(idValido(id), fondo, b.svg === null ? null : sanearSvg(b.svg));
   }
 
   @Get('administradores')
